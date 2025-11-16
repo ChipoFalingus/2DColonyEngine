@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Creatures">
+      <UniqueIdentifier>{07651387-fbf3-417d-b0bb-e15927eba067}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Creatures\Monsters">
+      <UniqueIdentifier>{5ac9281f-3562-4269-ab47-890e84247eef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Creatures\Villagers">
+      <UniqueIdentifier>{4ecdcd19-ce3f-4746-bd8e-042be4eddd8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Creatures\Animals">
+      <UniqueIdentifier>{622f5f23-84d7-4f47-9f7b-cd8b342b7041}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Creatures">
+      <UniqueIdentifier>{df7a4a30-0ccb-433e-912c-f50d40ffb776}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Creatures\Villagers">
+      <UniqueIdentifier>{6caf0129-b10a-4f3b-95eb-b986a4710313}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Creatures\Animals">
+      <UniqueIdentifier>{2b7258e7-0071-4e21-a542-dcb3bff18393}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utility">
+      <UniqueIdentifier>{23987ade-2158-49c3-af1c-1445db30867d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Items">
+      <UniqueIdentifier>{28d06bfe-4130-4634-85b2-00f72584a41d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\UI">
+      <UniqueIdentifier>{ab881432-058b-447f-b824-e432d3c79d6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Objects">
+      <UniqueIdentifier>{6aab908d-0d06-40b7-b4ec-fd650da79ade}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Creatures\Monsters">
+      <UniqueIdentifier>{8bb8e708-36cc-4d1f-b9b8-175c75679677}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mathUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Chunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Villager.cpp">
+      <Filter>Source Files\Creatures\Villagers</Filter>
+    </ClCompile>
+    <ClCompile Include="Creature.cpp">
+      <Filter>Source Files\Creatures</Filter>
+    </ClCompile>
+    <ClCompile Include="Pig.cpp">
+      <Filter>Source Files\Creatures\Animals</Filter>
+    </ClCompile>
+    <ClCompile Include="Animal.cpp">
+      <Filter>Source Files\Creatures\Animals</Filter>
+    </ClCompile>
+    <ClCompile Include="Furniture.cpp">
+      <Filter>Source Files\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Source Files\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="Crop.cpp">
+      <Filter>Source Files\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="Building.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Zombie.cpp">
+      <Filter>Source Files\Creatures\Monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="Monster.cpp">
+      <Filter>Source Files\Creatures\Monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="Gun.cpp">
+      <Filter>Source Files\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="JobManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CreatureUtils.cpp">
+      <Filter>Source Files\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="Brain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Inputs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIElements.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Dot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Chunk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Villager.h">
+      <Filter>Header Files\Creatures\Villagers</Filter>
+    </ClInclude>
+    <ClInclude Include="Pig.h">
+      <Filter>Header Files\Creatures\Animals</Filter>
+    </ClInclude>
+    <ClInclude Include="Animal.h">
+      <Filter>Header Files\Creatures\Animals</Filter>
+    </ClInclude>
+    <ClInclude Include="Creature.h">
+      <Filter>Header Files\Creatures</Filter>
+    </ClInclude>
+    <ClInclude Include="mathUtils.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Pair.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec2.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Furniture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Crop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Building.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Zombie.h">
+      <Filter>Header Files\Creatures\Monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>Header Files\Creatures\Monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="Gun.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatureUtils.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Brain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JobType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIElements.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inputs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JobCompare.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Menu.txt">
+      <Filter>Resource Files\UI</Filter>
+    </Text>
+    <Text Include="Info.txt">
+      <Filter>Resource Files\UI</Filter>
+    </Text>
+    <Text Include="House.txt">
+      <Filter>Resource Files\Objects</Filter>
+    </Text>
+    <Text Include="FlingGames.txt">
+      <Filter>Resource Files\Objects</Filter>
+    </Text>
+    <Text Include="Cart.txt">
+      <Filter>Resource Files\Objects</Filter>
+    </Text>
+    <Text Include="WorldMenu.txt">
+      <Filter>Resource Files\UI</Filter>
+    </Text>
+    <Text Include="Art.txt">
+      <Filter>Resource Files\Objects</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shader.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="glsl shader.frag" />
+    <None Include="glsl shader.vert" />
+    <None Include="Recipes.json">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>
