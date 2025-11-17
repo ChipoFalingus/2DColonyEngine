@@ -74,6 +74,9 @@ extern Item chest;
 
 extern Item stockPile;
 extern Item wall;
+extern Item stonePath;
+extern Item woodenFence;
+
 
 extern Item DISPLAY;
 extern Item EMPTY_ITEM;

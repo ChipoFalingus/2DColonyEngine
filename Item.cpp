@@ -45,5 +45,8 @@ Item EMPTY_ITEM("IF YOU SEE THIS PLEASE TELL ME", L' ', sf::Color::Transparent);
 
 
 std::unordered_map<Item, Item> harvestItems = {
-	{tree, wood}
+	{tree, wood},
+	{tree2, wood},
+	{rock, wood},
+	{flower, wood}
 };

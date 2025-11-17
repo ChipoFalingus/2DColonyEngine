@@ -17,7 +17,7 @@ void JobManager::findBestColonistForJob(Job& job) {
 
 
 	for (auto* i : Villager::allVillagers) {
-		if (i->jobType == job.preferredJob) {
+		if (i->jobType == job.preferredJob && !i->busy) {
 			job.villager = i;
 			i->jobQueue.push(&job);
 			i->busy = true;
@@ -30,20 +30,22 @@ void JobManager::findBestColonistForJob(Job& job) {
 		}
 	}
 
+	if (!bestVillager && job.preferredJob == JobType::None) {
 
-	if (job.preferredJob == JobType::None) {
-		int num = getRandomInt(0, Villager::allVillagers.size() - 1);
-		Villager* villager = Villager::allVillagers[num];
-		job.villager = villager;
-		villager->jobQueue.push(&job);
-		villager->busy = true;
+		for (auto* i : Villager::allVillagers) {
+			if (!i->busy) {
+				job.villager = i;
+				i->jobQueue.push(&job);
+				i->busy = true;
 
-		auto it = std::find(JobList.begin(), JobList.end(), &job);
-		if (it != JobList.end()) {
-			JobList.erase(it);
+				auto it = std::find(JobList.begin(), JobList.end(), &job);
+				if (it != JobList.end()) {
+					JobList.erase(it);
+				}
+				return;
+			}
 		}
 	}
-
 }
 
 

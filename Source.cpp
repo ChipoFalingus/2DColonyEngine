@@ -661,7 +661,7 @@ int main() {
     //   }
 
 
-       for (int i = 0; i < 0; i++) {
+       for (int i = 0; i < 100; i++) {
 		   int x = getRandomInt(-100, 100);
 		   int y = getRandomInt(-100, 100);
            if (getTileRef(x, y).walkable) {
@@ -670,7 +670,7 @@ int main() {
        }
 
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 1; i++) {
         Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
 		v->jobType = JobType::Lumberjack;
         v->itemInHand = &MINIGUN;
@@ -678,7 +678,7 @@ int main() {
 		Creature::allCreatures.push_back(v);
     }
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 1; i++) {
         Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
         v->jobType = JobType::Miner;
         v->itemInHand = &MINIGUN;
@@ -686,7 +686,7 @@ int main() {
         Creature::allCreatures.push_back(v);
     }
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 1; i++) {
         Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
         v->jobType = JobType::Farmer;
         v->itemInHand = &MINIGUN;

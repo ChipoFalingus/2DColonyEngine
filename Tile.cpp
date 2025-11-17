@@ -14,16 +14,13 @@
 #include "Light.h"
 #include "Globals.h"
 
+// A lot of this stuff is world generation, so it should be moved to a separate file later
+// A real big mess this all is :(
+
 std::vector<Dot> voronoiDots;
 float waterLevel = -100.0f;
-
-
-
 std::vector<Island> islands;
 
-
-
-//this exists, ok sure
 float hashNoise(int x, int y, int seed) {
     unsigned int h = x * 374761393u + y * 668265263u + seed * 374761393u;
     h = (h ^ (h >> 13)) * 1274126177u;
@@ -311,15 +308,54 @@ void Tile::getTile(int x, int y) {
     addItem(std::make_unique<Item>("DISPLAY", L'■', sf::Color(getRandomInt(0, 255), getRandomInt(0, 255), getRandomInt(0, 255))));
     animationType = BREATHE;*/
 
-    if (x == 10 && y == 10) {
+    /*if (x == 10 && y == 10) {
         items.clear();
 
-        auto gun = std::make_unique<Item>(ASSAULT_RIFLE);
-        Item* gunPtr = gun.get();        
-        addItem(std::move(gun));      
-        itemsToMove.push_back({ gunPtr, {x, y} });
-        std::cout << gunPtr->name << std::endl;
-    }
+        auto item = std::make_unique<Item>(ASSAULT_RIFLE);
+        Item* ptr = item.get();        
+        addItem(std::move(item));      
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(iron);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(iron);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(iron);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(woodenFence);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(woodenFence);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(stonePath);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(PEPPER_GUN);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+
+        item = std::make_unique<Item>(MINIGUN);
+        ptr = item.get();
+        addItem(std::move(item));
+        itemsToMove.push_back({ ptr, {x, y} });
+    }*/
 
 
 

@@ -31,7 +31,7 @@ std::pair<int, int> findClosestTileItem(Item item, int xPos, int yPos) {
             }
         }
     }
-    //Returns an adjacent tile and I dont feel like changing it
+    
     return { xPos, yPos };
 }
 

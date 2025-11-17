@@ -77,9 +77,12 @@ void processInput(GLFWwindow* window) {
                                     item = &flower;
                                 }
 
-								Job* job = new HarvestTile(nullptr, jobType, item, x, y);
-								job->priority = 10;
-								JobManager::JobList.push_back(job);
+                                if (item) {
+                                    Job* job = new HarvestTile(nullptr, jobType, item, x, y);
+                                    job->priority = 10;
+                                    JobManager::JobList.push_back(job);
+                                }
+								
                             }
                         }
                         else if (plantMode) {
