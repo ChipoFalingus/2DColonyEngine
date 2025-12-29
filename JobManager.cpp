@@ -4,6 +4,7 @@
 #include "CreatureUtils.h"
 #include "Villager.h"
 #include "Globals.h"
+#include "HarvestRules.h"
 
 std::vector<Job*> JobManager::JobList;
 bool isAtTile(int xPos, int yPos, int xLoc, int yLoc);
@@ -73,6 +74,24 @@ void Harvest::update() {
 
 void HarvestTile::update() {
 
+	Rule* rule = HarvestRuleRegistry::getInstance().get(item.name);
+
+	// Check for required tool
+
+	if (requiredTool) {
+		if (villager->toolInHand != requiredTool) {
+			std::cout << "Villager does not have required tool: " << requiredTool->name << std::endl;
+			completed = true;
+			return;
+		}
+	}
+
+	if (!rule) {
+		std::cout << "No harvest rule found for item: " << item.name << std::endl;
+		completed = true;
+		return;
+	}
+
 	x = locX;
 	y = locY;
 
@@ -90,28 +109,16 @@ void HarvestTile::update() {
 		}
 
 		if (villager->clock.getElapsedTime().asSeconds() > villager->harvestTime) {
-			
-			Item* aaa;
 
-			if (harvestItems.find(item) != harvestItems.end()) {
-				Tile& tile = getTileRef(locX, locY);
-				std::unique_ptr<Item> droppedItem = std::make_unique<Item>(harvestItems.at(item));
-				std::cout << droppedItem->name << " harvested from " << item.name << std::endl;
-				tile.removeItem(item);
-				Item* ptr = droppedItem.get();
-				itemsToMove.push_back({ ptr, {locX, locY} });
-				tile.addItem(std::move(droppedItem));
+			Tile& tile = getTileRef(locX, locY);
+			Item* droppedItem = ItemRegistry::getInstance().get(rule->produces);
 
-				aaa = ptr;
+			tile.removeItem(item);
+
+			for (int i = 0; i < rule->amount; i++) {
+				itemsToMove.push_back({ droppedItem, {locX, locY} });
+				tile.addItem(std::make_unique<Item>(*droppedItem));
 			}
-			else {
-				//itemsToMove.push_back(&item);
-				itemsToMove.push_back({ &item, {locX, locY} });
-
-				aaa = &item;
-			}
-
-			std::cout << "Added " << aaa->name << " to Move Items List. New list size is " << itemsToMove.size() << std::endl;
 			
 
 			villager->clock.restart();
@@ -132,7 +139,6 @@ void Build::update() {
 	
 
 	if (!tile.walkable) {
-		std::cout << "unwalkable";
 		completed = true;
 		return;
 	}
@@ -148,7 +154,7 @@ void Build::update() {
 		tile.items.clear();
 
 		tile.addItem(std::make_unique<Item>(itemToBuild));
-		tile.walkable = false;
+		//tile.walkable = false;
 		completed = true;
 	}
 }
@@ -200,6 +206,8 @@ void Plant::update() {
 	x = closestAdj.first;
 	y = closestAdj.second;
 
+	Item soil = *ItemRegistry::getInstance().get("Soil");
+
 	if (tile.containsItem(soil)) {
 		needsSoil = false;
 	}
@@ -236,7 +244,7 @@ void Attack::update() {
 		return;
 	}
 
-	if (target->dead || target->health <= 0) {
+	if (target->dead) {
 		std::cout << "Target already dead\n";
 		completed = true;
 		return;
@@ -327,6 +335,40 @@ void Sleep::update() {
 		completed = true;
 	}
 }
+
+void Craft::update() {
+
+	if (!ingredients.empty()) {
+
+		std::pair<int, int> itemLoc = findClosestTileItem(ingredients[0], villager->xPos, villager->yPos);
+		std::pair<int, int> itemAdj = findClosestAdjTile(villager->xPos, villager->yPos, itemLoc.first, itemLoc.second);
+
+		x = itemAdj.first;
+		y = itemAdj.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, itemLoc.first, itemLoc.second)) {
+			getTileRef(itemLoc.first, itemLoc.second).removeItem(ingredients[0]);
+			ingredients.erase(ingredients.begin());
+		}
+	}
+	else {
+
+		std::pair<int, int> stationLoc = findClosestTileItem(*recipe->requiredStation, villager->xPos, villager->yPos);
+		std::pair<int, int> stationAdj = findClosestAdjTile(villager->xPos, villager->yPos, stationLoc.first, stationLoc.second);
+
+		x = stationAdj.first;
+		y = stationAdj.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, stationLoc.first, stationLoc.second)) {
+			std::unique_ptr<Item> resultItem = std::make_unique<Item>(recipe->result);
+			auto ptr = resultItem.get();
+			getTileRef(stationLoc.first, stationLoc.second).addItem(std::move(resultItem));
+			itemsToMove.push_back({ ptr, {stationLoc.first, stationLoc.second} });
+			completed = true;
+		}
+	}
+}
+
 
 void Move::update() {
 	if (villager->xPos == x && villager->yPos == y) {

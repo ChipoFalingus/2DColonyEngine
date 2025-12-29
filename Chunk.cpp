@@ -10,10 +10,6 @@ std::unordered_map<std::pair<int, int>, Chunk, pair_hash> Chunks;
 
 Chunk& loadOrGenerateChunk(int x, int y) {
     std::pair<int, int> pair = { x, y };
-    std::map<tileType, int> typeTracker;
-
-    float avgAlt = 0.0f;
-
     
     auto it = Chunks.find(pair);
     if (it == Chunks.end()) {
@@ -27,22 +23,40 @@ Chunk& loadOrGenerateChunk(int x, int y) {
                 int worldX = x * chunkDim + i;
                 int worldY = y * chunkDim + j;
 
-
+                
                 Tile tile = assignTileTypes(worldX, worldY);
-
-                auto it = typeTracker.find(tile.type);
-
-                if (it != typeTracker.end()) {
-                    it->second += 1;
-                }
-                else {
-					typeTracker[tile.type] = 1;
-                }
-                avgAlt += tile.altitude;
                 newChunk.tiles[i][j] = std::move(tile);
             }
         }
 
+        
+        
+        addChunkToMiniMap(newChunk);
+        auto insertResult = Chunks.emplace(std::make_pair(pair, std::move(newChunk)));
+
+        std::cout << "Chunk Rendered at " << newChunk.chunkX * chunkDim << " " << newChunk.chunkY * chunkDim << std::endl;
+		
+        return insertResult.first->second;
+    }
+    else {
+        return it->second;
+    }
+}
+
+void addChunkToMiniMap(Chunk& chunk) {
+        std::map<tileType, int> typeTracker;
+        for (int j = 0; j < chunkDim; j++) {
+            for (int k = 0; k < chunkDim; k++) {
+                Tile& tile = chunk.tiles[j][k];
+                auto it = typeTracker.find(tile.type);
+                if (it != typeTracker.end()) {
+                    it->second += 1;
+                }
+                else {
+                    typeTracker[tile.type] = 1;
+                }
+            }
+        }
         tileType type;
         int maxCount = 0;
         for (auto& i : typeTracker) {
@@ -51,16 +65,33 @@ Chunk& loadOrGenerateChunk(int x, int y) {
                 type = i.first;
             }
         }
-        newChunk.avgHeight = avgAlt / 256;
-        newChunk.dominantDisplay = getTileDisplay(type);
-        
+        chunk.dominantDisplay = getTileDisplay(type);
+}
 
-        auto insertResult = Chunks.emplace(std::make_pair(pair, std::move(newChunk)));
+// Beefy method that is super slow
+void updateMiniMap() {
 
-        std::cout << "Chunk Rendered at " << newChunk.chunkX * chunkDim << " " << newChunk.chunkY * chunkDim << std::endl;
-        return insertResult.first->second;
-    }
-    else {
-        return it->second;
+    for (auto& chunkPair : Chunks) {
+
+        std::map<tileType, int> typeTracker;
+
+        for (int j = 0; j < chunkDim; j++) {
+            for (int k = 0; k < chunkDim; k++) {
+                Tile& tile = chunkPair.second.tiles[j][k];
+                typeTracker[tile.type]++;
+            }
+        }
+
+        tileType type = tileType::GRASS;
+        int maxCount = 0;
+
+        for (auto& pair : typeTracker) {
+            if (pair.second > maxCount) {
+                maxCount = pair.second;
+                type = pair.first;
+            }
+        }
+
+        chunkPair.second.dominantDisplay = getTileDisplay(type);
     }
 }

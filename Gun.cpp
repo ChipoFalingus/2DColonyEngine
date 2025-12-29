@@ -8,7 +8,7 @@
 
 Gun PISTOL("Pistol", L'⌐', sf::Color(200, 200, 200), 7, 10, 10.0f, 0.7f);
 
-Gun PEPPER_GUN("Pepper Gun", L'-', sf::Color(200, 200, 200), 5, 4, 5.0f, 1.0f);
+Gun PEPPER_GUN("Pepper Gun", L'-', sf::Color(200, 200, 200), 5, 4, 50.0f, 1.0f);
 
 Gun ASSAULT_RIFLE("Assault Rifle", L'╬', sf::Color(200, 200, 200), 30, 7, 20.0f, 0.1f);
 

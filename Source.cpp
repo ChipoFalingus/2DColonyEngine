@@ -17,6 +17,8 @@
 #include "Job.h"
 #include "Globals.h"
 #include "UIElements.h"
+#include "Crafting.h"
+#include "HarvestRules.h"
 
 #include "Pig.h"
 #include "Zombie.h"
@@ -49,7 +51,7 @@ const int MAP_WIDTH = 10; //420
 const int MAP_HEIGHT = 10; //275
 
 
-float water = -100.0f;
+float water = 0.0f;
 
 int hue = 0;
 
@@ -58,7 +60,7 @@ static std::vector<float> batchVertices; // flattened: x,y,u,v,r,g,b per vertex
 static const size_t BATCH_VERTEX_SIZE = 7; // floats per vertex
 static const size_t QUAD_VERTS = 6; // two triangles per quad
 
-
+std::vector<unsigned char> wallData;
 
 std::vector<std::vector<wchar_t>> menuArray;
 std::vector<std::vector<wchar_t>> worldMenuArray;
@@ -102,6 +104,9 @@ std::map<wchar_t, Character> Characters;
 GLuint fontTexture;
 
 std::vector<float> vertices;
+
+
+std::vector<std::pair<int, int>> activeWater;
 
 void generateFontAtlas(const std::string& fontPath, int fontSize) {
     FT_Library ft;
@@ -183,7 +188,7 @@ void drawTxtToMap(const std::string& filePath, int x, int y) {
             int tileY = y + offsetY;
             Tile& tile = getTileRef(tileX, tileY);
             tile.walkable = false;
-            tile.items[0] = std::make_unique<Item>(DISPLAY);
+            //tile.items[0] = std::make_unique<Item>(DISPLAY);
             tile.items[0]->displayChar = ch;
         }
         offsetY++;
@@ -214,6 +219,35 @@ static void FlushBatch(Shader& shader) {
         shader.setFloat(base + ".radius", LightManager::lights[i].radius);
         shader.setFloat(base + ".additionalIntensity", LightManager::lights[i].additionalIntensity);
     }
+
+
+    int width = xFrustum;
+    int height = yFrustum;
+
+    std::vector<unsigned char> wallData(width * height);
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            wallData[y * width + x] = getTileRef(x, y).walkable ? 1 : 0;
+        }
+    }
+
+    GLuint wallTex;
+    glGenTextures(1, &wallTex);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0,
+    GL_RED, GL_UNSIGNED_BYTE, wallData.data());
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    shader.setInt("wallMap", 0);
+    
+	shader.setInt("mapWidth", width);
+	shader.setInt("mapHeight", height);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, fontTexture);
@@ -274,14 +308,38 @@ void renderMap() {
     }
     
 
-    /*for (int y = -mapDim; y < mapDim; y++) {
-        for (int x = -mapDim; x < mapDim; x++) {
-            Tile& tile = getTileRef(x, y);
-            if (30.0f < tile.altitude && getRandomInt(0, 500) == 0) {
-                makeRiver(x, y);
-            }
-        }
-    }*/
+  //  for (int y = -mapDim; y < mapDim; y++) {
+  //      for (int x = -mapDim; x < mapDim; x++) {
+  //          Tile& tile = getTileRef(x, y);
+  //          if (110.0f < tile.altitude && getRandomInt(0, 0) == 0) {
+  //             // makeRiver(x, y);
+  //              //tile.water = 1.0f;
+		//		
+  //              auto basin = makeRiver(x, y);
+  //              getTileRef(basin.first, basin.second).water = 10000.0f;
+  //              
+
+  //              addBasin(basin.first, basin.second);
+
+
+  //          }
+  //      }
+  //  }
+
+  //  for (int k = 0; k < 0; k++) {
+  //      for (int i = -mapDim; i < mapDim; i++) {
+  //          for (int j = -mapDim; j < mapDim; j++) {
+  //              Tile& tile = getTileRef(i, j);
+  //              tile.simulateWaterTile();
+  //          }
+  //      }
+		//std::cout << k << " water simulation step complete." << std::endl;
+  //  }
+
+    
+
+    
+	updateMiniMap();
 }
 
 void RenderText(Shader& shader, const std::wstring& text, float x, float y, float scale, glm::vec3 color, bool ui) {
@@ -481,13 +539,7 @@ void drawMap(Shader& shader)
 
             // Tile contents
             if (!foundCreature) {
-                if (tile.furnitureOnTile) {
-                    string = tile.furnitureOnTile->baseItem->displayChar;
-                    color = glm::vec3(tile.furnitureOnTile->baseItem->displayColor.r / 255.0f,
-                        tile.furnitureOnTile->baseItem->displayColor.g / 255.0f,
-                        tile.furnitureOnTile->baseItem->displayColor.b / 255.0f);
-                }
-                else if (tile.items.size() != 0) {
+                if (tile.items.size() != 0) {
                     if (tile.items[0]->name == "") {
                         string = tile.character;
                         color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
@@ -514,11 +566,38 @@ void drawMap(Shader& shader)
                         (y == bottom && x >= left && x <= right) ||
                         (x == left && y >= top && y <= bottom) ||
                         (x == right && y >= top && y <= bottom)) {
-                        string = L"#";
+                        string = L"+";
                         color = glm::vec3(1.0f, 0.0f, 0.0f);
                     }
                 }
             }
+
+            if (tile.water > 0.0f) {
+
+                // Water character
+                string = L'≈';
+
+                // Clamp water level (0.0 → 1.0)
+                float w = glm::clamp(tile.water, 0.0f, 1.0f);
+
+                // Water color fades with small amounts:
+                float r = (1.0f - w) * 1.0f;   // fades toward blue
+                float g = (1.0f - w) * 1.0f;
+                float b = 1.0f;
+
+                color = glm::vec3(r, g, b);
+            }
+
+            /*if (tile.water > 0.01f) {
+                string = L'▼';
+                color = glm::vec3(0.0f, 0.0f, 1.0f);
+            }
+
+            if (tile.water > 0.4f) {
+                string = L'≈';
+                color = glm::vec3(0.0f, 0.0f, 1.0f);
+            }*/
+
 
             if (viewHeightMap) {
                 string = L'■';
@@ -531,9 +610,14 @@ void drawMap(Shader& shader)
             }
 
 
+
+            
+
+            
+
+
             if (!string.empty()) {
                 RenderText(shader, string, screenX, screenY, fontSize, color, false);
-				//line += string;
             }
         }
         //RenderText(shader, line, 0.0f, screenY, fontSize, glm::vec3(1.0f), false);
@@ -584,7 +668,20 @@ int main() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
+    //scrWidth = mode->width;
+    //scrHeight = mode->height;
+
+	scrWidth = 1920;
+	scrHeight = 1080;
+
+	xFrustum = scrWidth / xTextSpacing;
+    yFrustum = scrHeight / yTextSpacing;
+
+    
+
     GLFWwindow* window = glfwCreateWindow(scrWidth, scrHeight, "Me ASCII Game", NULL, NULL);
+	//glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -648,20 +745,27 @@ int main() {
     srand(seed);
 
 
-    // World setup is here
+    // Item setup
+    loadItems();
+    loadTools();
+
+	loadHarvestRules();
+
+    // World setup
     initializePermutation();
     createVoronoiMap();
     createMapIslands();
     renderMap();
     setSeaLevel(water);
     calculateMapSize();
+    
 
     //   for (int i = 0; i < 0; i++) {
     //       Creature::allCreatures.push_back(new Pig(getRandomInt(-5,5), getRandomInt(-5, 5)));
     //   }
 
 
-       for (int i = 0; i < 100; i++) {
+       for (int i = 0; i < 0; i++) {
 		   int x = getRandomInt(-100, 100);
 		   int y = getRandomInt(-100, 100);
            if (getTileRef(x, y).walkable) {
@@ -669,38 +773,52 @@ int main() {
            }
        }
 
+       int range = 1;
 
-    for (int i = 0; i < 1; i++) {
-        Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
+
+       Tool* axe = ToolRegistry::getInstance().get("Axe");
+       axe->material = ToolMaterial::WOOD;
+    for (int i = 0; i < 10; i++) {
+        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
 		v->jobType = JobType::Lumberjack;
-        v->itemInHand = &MINIGUN;
+        v->toolInHand = axe;
 		Villager::allVillagers.push_back(v);
 		Creature::allCreatures.push_back(v);
     }
 
-    for (int i = 0; i < 1; i++) {
-        Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
+    for (int i = 0; i < 10; i++) {
+        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
         v->jobType = JobType::Miner;
-        v->itemInHand = &MINIGUN;
+        v->itemInHand = &PEPPER_GUN;
+        Villager::allVillagers.push_back(v);
+        Creature::allCreatures.push_back(v);
+    }
+
+    for (int i = 0; i < 10; i++) {
+        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
+        v->jobType = JobType::Farmer;
+        v->itemInHand = &PEPPER_GUN;
+        Villager::allVillagers.push_back(v);
+        Creature::allCreatures.push_back(v);
+    }
+
+    for (int i = 0; i < 10; i++) {
+        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
+        v->jobType = JobType::Builder;
+        v->itemInHand = &PEPPER_GUN;
         Villager::allVillagers.push_back(v);
         Creature::allCreatures.push_back(v);
     }
 
     for (int i = 0; i < 1; i++) {
-        Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
-        v->jobType = JobType::Farmer;
-        v->itemInHand = &MINIGUN;
+        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
+        v->jobType = JobType::Carpenter;
+        //v->itemInHand = &PEPPER_GUN;
         Villager::allVillagers.push_back(v);
         Creature::allCreatures.push_back(v);
     }
 
-    for (int i = 0; i < 0; i++) {
-        Villager* v = new Villager(getRandomInt(-1, 1), getRandomInt(-1, 1));
-        v->jobType = JobType::Builder;
-        v->itemInHand = &MINIGUN;
-        Villager::allVillagers.push_back(v);
-        Creature::allCreatures.push_back(v);
-    }
+    JobManager::addJob(new Craft(nullptr, JobType::Carpenter, &getWoodenPlankRecipe()));
 
     auto function = [](Creature* c) {
         return dynamic_cast<Zombie*>(c) != nullptr;
@@ -777,6 +895,7 @@ int main() {
 
     
     ui.init("Info.txt");
+    ui.resizeUI(xFrustum, yFrustum);
     /*ui.UIButtons.push_back(Start);
     ui.UIButtons.push_back(Options);
     ui.UIButtons.push_back(Exit);*/
@@ -789,6 +908,7 @@ int main() {
     
 
     sf::Clock lightClock;
+	sf::Clock waterClock;
 
     sf::Music music;
 
@@ -801,10 +921,12 @@ int main() {
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    std::vector<std::pair<int, int>> nextActive = getWater();
+
     while (!glfwWindowShouldClose(window)) {
 
 
-        //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         ClearBatch();
@@ -826,8 +948,10 @@ int main() {
 
 		FlushBatch(shader);
 
+        // Inputs
         processInput(window);
 
+        // Update creatures
         float deltaTime = lightClock.restart().asSeconds();
         LightManager::update(deltaTime);
 
@@ -835,12 +959,14 @@ int main() {
             Creature* v = *it;
             if (v->health < 1) {
                 it = Creature::allCreatures.erase(it);
+                //getTileRef(v->xPos, v->yPos).addItem(std::make_unique<Item>(blood));
             }
             else {
                 v->doWork();
                 it++;
             }
         }
+        
 
         glfwGetCursorPos(window, &mouseX, &mouseY);
 
@@ -848,6 +974,28 @@ int main() {
         mouseTileY = (int)(mouseY / yTextSpacing) + yPlayer - (scrHeight / (2 * yTextSpacing));
         Tile& tile = getTileRef(mouseTileX, mouseTileY);
         
+        
+
+        for (auto& pos : activeWater) {
+            Tile& tile = getTileRef(pos.first, pos.second);
+            tile.simulateWaterTile();
+
+            if (tile.water > 0.0f && tile.altitude > 0.0f)
+                nextActive.push_back(pos);
+
+            for (auto& n : getNeighbors(pos.first, pos.second)) {
+                Tile& neighbor = getTileRef(n.first, n.second);
+                if (neighbor.water > 0.0f && tile.altitude > 0.0f)
+                    nextActive.push_back(n);
+            }
+        }
+
+        std::sort(nextActive.begin(), nextActive.end());
+        nextActive.erase(std::unique(nextActive.begin(), nextActive.end()), nextActive.end());
+
+        activeWater = std::move(nextActive);
+
+		//std::cout << activeWater.size() << " active water tiles." << std::endl;
 
         if (JobManager::JobList.size() > 0) {
             for (int i = 0; i < JobManager::JobList.size(); i++) {
@@ -855,6 +1003,7 @@ int main() {
             }
         }
 
+		// Stockpile item moving
         for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
             bool placed = false;
 
@@ -878,8 +1027,6 @@ int main() {
                 ++it;
         }
 
-        //std::cout << itemsToMove.size() << std::endl;
-
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -896,4 +1043,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	scrHeight = height;
     xFrustum = scrWidth / xTextSpacing;
     yFrustum = scrHeight / yTextSpacing;
+
+    ui.resizeUI(xFrustum, yFrustum);
 }

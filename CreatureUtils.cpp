@@ -8,7 +8,7 @@ std::vector<std::pair<int, int>> getNeighbors(int x, int y) {
     return { {x - 1, y}, {x, y - 1}, {x + 1, y}, {x, y + 1} };
 }
 
-std::pair<int, int> findClosestTileItem(Item item, int xPos, int yPos) {
+std::pair<int, int> findClosestTileItem(const Item& item, int xPos, int yPos) {
     std::queue<std::pair<int, int>> frontier;
     std::unordered_set<std::pair<int, int>, pair_hash> visited;
 

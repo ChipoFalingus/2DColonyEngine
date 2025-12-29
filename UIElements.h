@@ -20,6 +20,7 @@ inline std::vector<std::vector<wchar_t>> txtTo2DArray(const std::string& filePat
 	std::vector<std::vector<wchar_t>> array;
 	std::wstring line;
 	while (std::getline(file, line)) {
+		// 0xFEFF is the BOM character for UTF-8
 		if (!line.empty() && line[0] == 0xFEFF) {
 			line.erase(0, 1);
 		}
@@ -30,7 +31,7 @@ inline std::vector<std::vector<wchar_t>> txtTo2DArray(const std::string& filePat
 }
 
 class Button {
-public:
+private:
 	int lengthX, lengthY;
 	int xOffset, yOffset;
 	std::vector<std::wstring> staticButton;
@@ -42,7 +43,11 @@ public:
 
 	bool wasClickedLastFrame = false;
 
+public:
 	std::function<void()> onClick;
+
+
+	
 
 	Button(int xOffset, int yOffset, 
 		const std::vector<std::wstring> staticButton, 
@@ -97,34 +102,57 @@ public:
 		bool justClicked = clicked && !wasClickedLastFrame;
 
 		if (isHovered && justClicked && onClick) {
+			isClicked = true;
 			onClick();
 		}
 
 		wasClickedLastFrame = clicked;
+	}
+
+	void setClickFunction(std::function<void()> func) {
+		onClick = func;
 	}
 };
 
 
 class UI {
 public:
+
+	// 2D array representing the UI
 	std::vector<std::vector<wchar_t>> UI;
+
+	// Original UI layout holder
+	// why does this exist??
 	std::vector<std::vector<wchar_t>> holder;
 	std::vector<Button> UIButtons;
 
 	void init(std::string path) {
 		holder = txtTo2DArray(path);
+		UI = holder;
 	}
 
 	void drawUI() {
+		// Erase UI
 		for (int x = 0; x < UI.size(); x++)
 			for (int y = 0; y < UI[0].size(); y++)
 				UI[x][y] = L'#';
 
-		UI = holder;
+
+		// Currently resizes the UI array to whatever the dimensions of the txt are
+		// UI = holder;
 
 		for (auto& i : UIButtons) {
 			UI = i.drawButton(UI);
 		}
+	}
+
+	void resizeUI(int newWidth, int newHeight) {
+		UI.resize(newHeight);
+		for (auto& row : UI) {
+			row.resize(newWidth, L'#');
+		}
+
+		std::cout << "Resized UI to " << newWidth << "x" << newHeight << std::endl;
 	}
 };
 

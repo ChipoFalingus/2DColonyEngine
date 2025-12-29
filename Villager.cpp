@@ -82,7 +82,6 @@ std::vector<std::string> names = {
 	"Jimmy",
 
     //Female
-    
 	"Mary",
 	"Patricia",
 	"Jennifer",
@@ -189,65 +188,21 @@ std::vector<std::string> lastnames = {
 
 };
 
-void Villager::depositItem(const Item& item, int amount) {
-
-
-
-    currentPath = findPath(findClosestTileFurniture(chestFurniture));
-
-    inventory.removeFromInventory(item, amount);
-    chestFurniture.inventory.addToInventory(item, amount);
-
-
-	std::cout << chestFurniture.inventory.slot[item] << " " << item.name << " in chest." << std::endl;
-
-}
-
-
-//void Villager::harvestTile(Item harvestingItem) {
-//    if (isAtTile(target.first, target.second)) {
-//        changeTileItem(target.first, target.second, std::make_unique<Item>(EMPTY_ITEM));
-//        changeTileWalkable(target.first, target.second, true);
-//
-//        //inventory.slot.at(wheatSeed) += 2;
-//    }
-//}
-
-std::pair<int, int> Villager::findClosestTileFurniture(const Furniture& item) {
-    std::queue<std::pair<int, int>> frontier;
-    std::unordered_set<std::pair<int, int>, pair_hash> visited;
-
-    frontier.push({ xPos, yPos });
-    visited.insert({ xPos, yPos });
-
-    while (!frontier.empty()) {
-        auto current = frontier.front();
-        frontier.pop();
-
-        Tile& tile = getTileRef(current.first, current.second);
-        if (tile.furnitureOnTile && tile.furnitureOnTile == &item) {
-            for (auto& neighbor : getNeighbors(current.first, current.second)) {
-                if (getTileRef(neighbor.first, neighbor.second).walkable) {
-                    target = { current.first, current.second };
-                    return neighbor;
-                }
-            }
-        }
-
-        for (auto& neighbor : getNeighbors(current.first, current.second)) {
-            if (visited.count(neighbor) == 0) {
-                visited.insert(neighbor);
-                frontier.push(neighbor);
-            }
-        }
-    }
-
-    return { xPos, yPos };
-}
 
 void Villager::doWork() {
 
-    if (health < lastHealth) {
+	// Calculate new harvest speed based on tool
+	if (toolInHand) {
+		harvestTime = toolInHand->efficiency * 1 / materialToEfficiency(toolInHand->material);
+	}
+	else {
+		harvestTime = 1.0f;
+	}
+	
+	
+
+
+    /*if (health < lastHealth) {
         auto threat = findClosestCreatureType<Creature>(xPos, yPos, [this](Creature* c) { return c != this; });
 		auto* retreatJob = new Retreat(this, JobType::None, threat);
 		retreatJob->priority = 1000;
@@ -259,7 +214,7 @@ void Villager::doWork() {
 
 		jobQueue.push(new Attack(this, JobType::None, function));
         lastHealth = health;
-    }
+    }*/
 
     if (jobQueue.empty()) {
 		busy = false;
@@ -281,8 +236,6 @@ void Villager::doWork() {
     }
 
     else if (currentJob) {
-		
-		
         currentJob->update();
         currentPath = findPath({ currentJob->x, currentJob->y });
         if (currentJob->completed) {
@@ -291,17 +244,5 @@ void Villager::doWork() {
         }
     }
 }
-
-
-//void Villager::getBestWeapon() {
-//	int bestDamage = 0;
-//
-//    for (auto i : inventory.slot) {
-//        if (i.first.name == "pistol") {
-//			itemInHand = &i.first;
-//        }
-//    }
-//}
-
 
 

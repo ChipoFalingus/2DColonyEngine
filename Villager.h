@@ -4,7 +4,6 @@
 #include "Tile.h"
 #include "Creature.h"
 #include "Inventory.h"
-#include "Furniture.h"
 #include "mathUtils.h"
 #include "CreatureUtils.h"
 
@@ -64,7 +63,6 @@ public:
 	void depositItem(const Item& item, int amount);
 	void doWork() override;
 	//void getBestWeapon();
-	std::pair<int, int> findClosestTileFurniture(const Furniture& item);
 
 	
 

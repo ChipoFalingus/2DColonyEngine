@@ -1,0 +1,12 @@
+﻿┌──────────────────────────────┐  
+│┌─┐ Name: Dr. Coomer         ╳│
+││☺│ Occupation: Miner         │
+│└─┘                           │
+│ Current Action: Mining Stone │
+│                              │
+│ Holding: 4x Rock             │
+│ Tool: Stone Pickaxe          │
+│                              │
+│ Health: 100/100 		       │
+│ Armor: 0/0 				   │
+└──────────────────────────────┘

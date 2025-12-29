@@ -29,6 +29,7 @@ Button makeButton(
     return Button(x, y, normal, hover, hover);
 }
 
+// X and Y location, followed by the label and the width of the button
 
 Button Start = makeButton(47, 17, L"Start", 31);
 Button Options = makeButton(47, 20, L"Options (Coming Soon)", 31);

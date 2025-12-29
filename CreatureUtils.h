@@ -7,7 +7,9 @@ class Item;
 
 std::vector<std::pair<int, int>> getNeighbors(int x, int y);
 
-std::pair<int, int> findClosestTileItem(Item item, int xPos, int yPos);
+
+// Merge these two later
+std::pair<int, int> findClosestTileItem(const Item& item, int xPos, int yPos);
 
 bool isAtItem(Item item, int x, int y);
 

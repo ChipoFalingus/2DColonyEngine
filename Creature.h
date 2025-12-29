@@ -4,7 +4,7 @@
 #include <typeindex>
 
 #include "Item.h"
-
+#include "Tool.h"
 
 class Creature {
 	protected:
@@ -42,7 +42,9 @@ class Creature {
 		int xPixels;
 		int yPixels;
 
+		// Creatures can hold one item type and a weapon/tool
 		Item* itemInHand;
+		Tool* toolInHand;
 
 		virtual void doWork() = 0;
 		virtual ~Creature() = default;

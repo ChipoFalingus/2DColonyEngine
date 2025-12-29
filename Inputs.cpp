@@ -2,6 +2,7 @@
 #include "Job.h"
 #include "Item.h"
 #include "Tile.h"
+#include "HarvestRules.h"
 
 double lastTime = glfwGetTime();
 int nbFrames = 0;
@@ -29,7 +30,9 @@ void processInput(GLFWwindow* window) {
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !clicked) {
 
-		std::cout << getTileRef(mouseTileX, mouseTileY).walkable << std::endl;
+		std::cout << getTileRef(mouseTileX, mouseTileY).altitude << std::endl;
+
+
 
         if (buildMode || harvestMode || plantMode || stockpileMode) {
             if (!placing) {
@@ -44,6 +47,12 @@ void processInput(GLFWwindow* window) {
                 int top = std::min(corner.second, mouseTileY);
                 int bottom = std::max(corner.second, mouseTileY);
 
+				Item* tree = ItemRegistry::getInstance().get("Oak Tree");
+
+                Item* stockpileItem = ItemRegistry::getInstance().get("Stockpile");
+				//Item wheat = *ItemRegistry::getInstance().get("Wheat Seed");
+
+
                 for (int x = left; x <= right; x++) {
                     for (int y = top; y <= bottom; y++) {
 
@@ -51,46 +60,40 @@ void processInput(GLFWwindow* window) {
 
                         if (buildMode) {
                             if (x == left || x == right || y == top || y == bottom) {
-                                JobManager::JobList.push_back(new Build(nullptr, JobType::Builder, &wall, x, y));
+
+
+                                JobManager::JobList.push_back(new Build(nullptr, JobType::Builder, tree, x, y));
                             }
                             
                         }
                         else if (harvestMode) {
+
                             if (tile.items.size() != 0) {
-								JobType jobType;
-                                Item* item = nullptr;
 
-                                if (tile.containsItem(tree)) {
-									jobType = JobType::Lumberjack;
-									item = &tree;
-                                }
-                                else if (tile.containsItem(tree2)) {
-                                    jobType = JobType::Lumberjack;
-                                    item = &tree2;
-                                }
-                                else if (tile.containsItem(rock)) {
-                                    jobType = JobType::Miner;
-                                    item = &rock;
-                                }
-                                else if (tile.containsItem(flower)) {
-                                    jobType = JobType::Farmer;
-                                    item = &flower;
-                                }
+                                // Retrieves harvest information based on item name
+                                Rule* rule = HarvestRuleRegistry::getInstance().get(tile.items[0]->name);
+                                if (rule) {
 
-                                if (item) {
-                                    Job* job = new HarvestTile(nullptr, jobType, item, x, y);
-                                    job->priority = 10;
-                                    JobManager::JobList.push_back(job);
+                                    if (rule->toolRequired == "None") {
+                                        JobManager::JobList.push_back(new HarvestTile(nullptr, JobType::None, tile.items[0].get(), nullptr, x, y));
+                                    }
+                                    else {
+                                        Tool* tool = ToolRegistry::getInstance().get(rule->toolRequired);
+                                        if (tool) {
+                                            JobManager::JobList.push_back(new HarvestTile(nullptr, rule->jobType, tile.items[0].get(), tool, x, y));
+                                        }
+                                    }
                                 }
-								
                             }
+
                         }
                         else if (plantMode) {
 							JobManager::JobList.push_back(new Plant(nullptr, JobType::Farmer, &wheat, x, y));
                         }
                         else if (stockpileMode) {
+                            
                             tile.items.clear();
-                            tile.addItem(std::make_unique<Item>(stockPile));
+                            tile.addItem(std::make_unique<Item>(*stockpileItem));
                             Stockpile stockpile({x, y});
                             stockpileTiles.push_back(stockpile);
                         }
@@ -102,6 +105,8 @@ void processInput(GLFWwindow* window) {
             }
         }
         else {
+			//getTileRef(mouseTileX, mouseTileY).water += 1000.0f;
+			//addBasin(mouseTileX, mouseTileY);
             placing = false;
         }
 
@@ -139,6 +144,20 @@ void processInput(GLFWwindow* window) {
         yFrustum = scrHeight / yTextSpacing;
     }
 
+    bool pressed = false;
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !pressed) {
+        enableWater = !enableWater;
+		pressed = true;
+    }
+    else {
+		pressed = false;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
+		xPlayer = 0;
+		yPlayer = 0;
+    }
+
     for (auto& i : ui.UIButtons) {
         i.update(mouseX / xTextSpacing, mouseY / yTextSpacing, clicked);
     }
@@ -155,9 +174,27 @@ void processInput(GLFWwindow* window) {
         
     }
 
-    
+	int num = 0;
+    int uiX = mouseTileX - (xPlayer - xFrustum / 2);
+    int uiY = mouseTileY - (yPlayer - yFrustum / 2);
 
-    int num = 1;
+    if (placing) {
+        std::string xStr = std::to_string(std::abs(corner.first - mouseTileX) + 1);
+		std::string yStr = std::to_string(std::abs(corner.second - mouseTileY) + 1);
+		std::string dim = xStr + "x" + yStr;
+		//std::cout << uiX << ", " << uiY << std::endl;
+        for (int i = 0; i < dim.size(); i++) {
+            int x = uiX + i - xStr.size();
+
+            if (uiY < 0 || uiY >= yFrustum) continue;
+            if (x < 0 || x >= xFrustum) continue;
+
+            ui.UI[uiY - 1][x] = dim[i];
+        }
+		
+    }
+
+    num = 1;
 	
     for (char c : fps) {
         ui.UI[1][num] = c;
@@ -217,7 +254,9 @@ void processInput(GLFWwindow* window) {
 			std::string occupStr = "Job: " + jobTypeToString(i->jobType);
             int j = 0;
             for (char c : nameStr) {
-                ui.UI[row][j + 64] = c;
+                if (j + 64 < ui.UI[0].size()) {
+                    ui.UI[row][j + 64] = c;
+                }
                 j++;
                 if (j > 63) {
 					break;

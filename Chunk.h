@@ -18,3 +18,5 @@ struct Chunk {
 extern std::unordered_map<std::pair<int, int>, Chunk, pair_hash> Chunks;
 
 Chunk& loadOrGenerateChunk(int x, int y);
+void addChunkToMiniMap(Chunk& chunk);
+void updateMiniMap();

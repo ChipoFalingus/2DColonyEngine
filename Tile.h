@@ -3,7 +3,6 @@
 #include "Villager.h"
 #include "Dot.h"
 #include "Item.h"
-#include "Furniture.h"
 #include "mathUtils.h"
 
 
@@ -12,11 +11,13 @@ enum tileType {
     WATER = 2,
     SAND = 3,
     MOUNTAIN = 4,
+	MOUNTAIN_PEAK = 5,
 };
 
 enum animType {
     NONE = 0,
 	BREATHE = 1,
+	RAINBOW = 2,
 };
 
 struct tileDisplay {
@@ -43,10 +44,12 @@ public:
 	animType animationType;
     std::vector<sf::Color> colorList;
     float altitude;
+    float water = 0.0f;
+	float flow = 0.0f;
     bool walkable;
     //item
     std::vector<std::unique_ptr<Item>> items;
-    Furniture* furnitureOnTile;
+
     tileType type;
 
     int x, y;
@@ -62,6 +65,9 @@ public:
 
     void changeTileChar(sf::String string);
     void changeTileType(tileType type);
+
+
+    void simulateWaterTile();
 
     void getTile(int x, int y);
 	bool containsItem(const Item& item);
@@ -87,16 +93,17 @@ Tile& getTileRef(int x, int y);
 void setSeaLevel(float level);
 void createMapIslands();
 void makeLake(int x, int y);
-void makeRiver(int x, int y);
+std::pair<int, int> makeRiver(int x, int y);
 
 float findDistanceToDot(Dot dot, int x, int y);
 Dot& findClosestDot(int x, int y);
-float calculateAltitude(Dot centerDot, int x, int y);
+float calculateAltitude(int x, int y);
 float getAltitude(int x, int y);
 void createVoronoiMap();
 
-
+void addBasin(int x, int y);
 
 extern std::vector<Island> islands;
 
 
+std::vector<std::pair<int, int>> getWater();

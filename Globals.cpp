@@ -11,10 +11,8 @@ bool viewHeightMap = false;
 int xTextSpacing = 15; //15
 int yTextSpacing = 22; //22
 
-
-// standard 1080p
-int scrWidth = 1920;
-int scrHeight = 1080;
+int scrWidth;
+int scrHeight;
 
 float fontSize = 0.55f; //24
 
@@ -23,8 +21,8 @@ UI buildUI;
 
 double mouseX, mouseY;
 
-int xFrustum = scrWidth / xTextSpacing;
-int yFrustum = scrHeight / yTextSpacing;
+int xFrustum;
+int yFrustum;
 
 std::vector<std::pair<int, int>> buildTiles;
 
@@ -33,6 +31,8 @@ bool buildMode = false;
 bool plantMode = false;
 bool harvestMode = false;
 bool stockpileMode = false;
+
+bool enableWater = false;
 
 std::pair<int, int> corner = { 0,0 };
 

@@ -49,6 +49,9 @@
     <Filter Include="Header Files\Creatures\Monsters">
       <UniqueIdentifier>{8bb8e708-36cc-4d1f-b9b8-175c75679677}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Items">
+      <UniqueIdentifier>{d0030fa8-90c3-4e50-b33b-ac1491d9a8cc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -74,9 +77,6 @@
     </ClCompile>
     <ClCompile Include="Animal.cpp">
       <Filter>Source Files\Creatures\Animals</Filter>
-    </ClCompile>
-    <ClCompile Include="Furniture.cpp">
-      <Filter>Source Files\Items</Filter>
     </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>Source Files\Items</Filter>
@@ -123,6 +123,12 @@
     <ClCompile Include="Tool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Crafting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HarvestRules.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dot.h">
@@ -159,9 +165,6 @@
       <Filter>Header Files\Utility</Filter>
     </ClInclude>
     <ClInclude Include="Inventory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Furniture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Crop.h">
@@ -212,6 +215,12 @@
     <ClInclude Include="Tool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Crafting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HarvestRules.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Menu.txt">
@@ -235,6 +244,9 @@
     <Text Include="Art.txt">
       <Filter>Resource Files\Objects</Filter>
     </Text>
+    <Text Include="VillagerMenu.txt">
+      <Filter>Resource Files\UI</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.vert">
@@ -247,6 +259,15 @@
     <None Include="glsl shader.vert" />
     <None Include="Recipes.json">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Item.json">
+      <Filter>Resource Files\Items</Filter>
+    </None>
+    <None Include="Tool.json">
+      <Filter>Resource Files\Items</Filter>
+    </None>
+    <None Include="HarvestRules.json">
+      <Filter>Resource Files\Items</Filter>
     </None>
   </ItemGroup>
 </Project>

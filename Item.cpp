@@ -1,28 +1,57 @@
 ﻿#include "Item.h"
-//#include "Furniture.h"
+#include <iostream>
+#include <fstream>
+#include "json.hpp"
 
-//WILL MOVE TO A JSON AT SOME POINT
+using json = nlohmann::json;
 
 //NAME, DISPLAY CHARACTER, DISPLAY COLOR
 
-//PLANTS / FOLIAGE
-Item tree("Oak Tree", L'♣', sf::Color::Green);
-Item tree2("Pine Tree", L'♠', sf::Color(0, 100, 0));
-Item flower("Flower", L'*', sf::Color(0, 100, 0));
 
-Item soil("Soil", L'=', sf::Color(84, 30, 0));
+void loadCategory(const json& category) {
+	
+    for (auto& i : category) {
+        std::string name = i.at("name").get<std::string>();
+
+        auto& j = i.at("character");
+        wchar_t displayChar;
+
+        if (j.is_number_integer()) {
+            displayChar = i.at("character").get<int>();
+            std::cout << name << ": " << displayChar << std::endl;
+        }
+        else {
+            displayChar = i.at("character").get<std::string>()[0];
+        }
 
 
+        //wchar_t displayChar = static_cast<wchar_t>(get]);
+        //wchar_t displayChar = static_cast<wchar_t>(charStr[0]);
 
-//NATURAL RESOURCES
-Item wood("Wood", L'O', sf::Color(139, 69, 19));
-Item rock("Rock", L'R', sf::Color(128, 128, 128));
+        auto c = i.at("color");
+        sf::Color color(
+            static_cast<sf::Uint8>(c.at(0).get<int>()),
+            static_cast<sf::Uint8>(c.at(1).get<int>()),
+            static_cast<sf::Uint8>(c.at(2).get<int>())
+        );
 
-Item iron("Iron", L'O', sf::Color(217, 201, 147));
-Item emerald("Emerald", L'o', sf::Color(80, 200, 120));
-Item gold("Gold", L'o', sf::Color(255, 255, 0));
-Item ruby("Ruby", L'o', sf::Color(255, 0, 0));
-Item sapphire("Sapphire", L'o', sf::Color(0, 0, 255));
+        Item item(name, displayChar, color);
+        ItemRegistry::getInstance().addItem(item);
+
+        std::cout << "Loaded item: " << name << std::endl;
+    }
+}
+
+void loadItems() {
+    std::ifstream file("Item.json");
+    json  data;
+    file >> data;
+
+	loadCategory(data.at("foliage"));
+	loadCategory(data.at("natural_resources"));
+	loadCategory(data.at("infrastructure"));
+	loadCategory(data.at("letters"));
+}
 
 Item wheatSeed("Wheat Seed", L'.', sf::Color(56, 118, 29));
 
@@ -42,11 +71,15 @@ Item woodenFence("Wooden Fence", L'#', sf::Color(160, 82, 45));
 Item DISPLAY("Display", L'#', sf::Color::White);
 Item EMPTY_ITEM("IF YOU SEE THIS PLEASE TELL ME", L' ', sf::Color::Transparent);
 
+Item blood("Blood", L';', sf::Color::Red);
 
 
-std::unordered_map<Item, Item> harvestItems = {
-	{tree, wood},
-	{tree2, wood},
-	{rock, wood},
-	{flower, wood}
-};
+
+
+
+//std::unordered_map<Item, std::vector<std::pair<Item, float>>> harvestItems = {
+//    { tree,   {{ wood, 1.0f }, { pinecone, 0.25f }} },
+//    { tree2,  {{ wood, 1.0f }} },
+//    { rock,   {{ rock, 1.0f }, { iron, 0.5f }, { gold, 0.05f }, {diamond, 0.005f}} },
+//    { flower, {{ flower, 1.0f }, { pinecone, 0.10f }} }
+//};

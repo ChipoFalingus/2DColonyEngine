@@ -3,6 +3,19 @@
 #include <glm/glm.hpp>
 
 
+// Needs to be optimized and more robust
+
+// Types of lights:
+    // Breathing (sine wave)
+    // Flickering/Strobe (can used pre-defined patterns)
+	// Color changing (takes in a list of colors to cycle through)
+    // Directional (vec2 to point at)
+	// Static (nothing special)
+    // And more
+
+// Update the fragment shader to use shadows
+
+
 struct Light {
     glm::vec2 position;
     glm::vec3 color;
@@ -17,6 +30,16 @@ struct Light {
 };
 
 
+// Come back to this later
+
+struct StaticLight : public Light {
+};
+
+struct BreathingLight : public Light {
+};
+
+struct ColorChangingLight : public Light {
+};
 
 class LightManager {
 

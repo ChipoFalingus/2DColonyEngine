@@ -37,6 +37,8 @@ extern bool plantMode;
 extern bool harvestMode;
 extern bool stockpileMode;
 
+extern bool enableWater;
+
 extern std::pair<int, int> corner;
 
 extern int mouseTileX;

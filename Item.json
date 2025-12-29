@@ -1,0 +1,265 @@
+﻿{
+    "foliage": [
+        {
+            "name": "Oak Tree",
+            "character": 9827,
+            "color": [ 0, 255, 0 ]
+        },
+        {
+            "name": "Pine Tree",
+            "character": 9824,
+            "color": [ 0, 100, 0 ]
+        },
+        {
+            "name": "Birch Tree",
+            "character": 9827,
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "Flower",
+            "character": "*",
+            "color": [ 0, 100, 0 ]
+        },
+        {
+            "name": "Pine Cone",
+            "character": "&",
+            "color": [ 100, 65, 23 ]
+        },
+        {
+            "name": "Soil",
+            "character": "=",
+            "color": [ 84, 30, 0 ]
+        }
+    ],
+    "natural_resources": [
+        {
+            "name": "Wood",
+            "character": "O",
+            "color": [ 100, 65, 23 ]
+        },
+        {
+            "name": "Rock",
+            "character": "R",
+            "color": [ 128, 128, 128 ]
+        },
+        {
+            "name": "Iron",
+            "character": "I",
+            "color": [ 217, 201, 147 ]
+        },
+        {
+            "name": "Gold",
+            "character": "G",
+            "color": [ 255, 255, 0 ]
+        },
+        {
+            "name": "Emerald",
+            "character": "E",
+            "color": [ 80, 200, 120 ]
+        },
+        {
+            "name": "Diamond",
+            "character": "D",
+            "color": [ 91, 185, 226 ]
+        },
+        {
+            "name": "Coal",
+            "character": "C",
+            "color": [ 54, 69, 79 ]
+        },
+        {
+            "name": "Sapphire",
+            "character": "S",
+            "color": [ 0, 0, 255 ]
+        },
+        {
+            "name": "Ruby",
+            "character": "R",
+            "color": [ 255, 0, 0 ]
+        },
+        {
+            "name": "Copper",
+            "character": "C",
+            "color": [ 184, 115, 51 ]
+        }
+    ],
+    "infrastructure": [
+        {
+            "name": "Stockpile",
+            "character": "=",
+            "color": [ 100, 100, 100 ]
+        },
+        {
+            "name": "Wall",
+            "character": "%",
+            "color": [ 100, 65, 23 ]
+        },
+        {
+            "name": "Bed",
+            "character": "B",
+            "color": [ 100, 65, 23 ]
+        },
+        {
+            "name": "Anvil",
+            "character": "+",
+            "color": [ 46, 46, 46 ]
+        },
+        {
+            "name": "Carpentry Bench",
+            "character": 960,
+            "color": [ 117, 66, 12 ]
+        },
+        {
+            "name": "Gun Bench",
+            "character": 960,
+            "color": [ 135, 135, 135 ]
+        },
+        {
+            "name": "Chair",
+            "character": "h",
+            "color": [ 148, 77, 0 ]
+        },
+        {
+            "name": "Table",
+            "character": "T",
+            "color": [ 148, 77, 0 ]
+        }
+    ],
+    "letters": [
+        {
+            "name": "A",
+            "character": "A",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "B",
+            "character": "B",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "C",
+            "character": "C",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "C",
+            "character": "C",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "D",
+            "character": "D",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "E",
+            "character": "E",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "F",
+            "character": "F",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "G",
+            "character": "G",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "H",
+            "character": "H",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "I",
+            "character": "I",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "J",
+            "character": "J",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "K",
+            "character": "K",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "L",
+            "character": "L",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "M",
+            "character": "M",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "N",
+            "character": "N",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "O",
+            "character": "O",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "P",
+            "character": "P",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "Q",
+            "character": "Q",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "R",
+            "character": "R",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "S",
+            "character": "S",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "T",
+            "character": "T",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "U",
+            "character": "U",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "V",
+            "character": "V",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "W",
+            "character": "W",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "X",
+            "character": "X",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "Y",
+            "character": "Y",
+            "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "Z",
+            "character": "Z",
+            "color": [ 255, 255, 255 ]
+        }
+    ]
+}

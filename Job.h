@@ -6,16 +6,18 @@
 #include "Tool.h"
 #include "Creature.h"
 #include "JobType.h"
+#include "Crafting.h"
 
 
 class Villager;
 
 struct Job {
-	Villager* villager;
-	Tool* preferredTool = nullptr;
+	Villager* villager; // Who is assigned to the job
+	Tool* preferredTool;
 	JobType preferredJob;
+
 	int x, y; // Where the job requires you to be
-	int priority;
+	int priority; // Higher priority jobs get assigned first
 	bool completed = false;
 
 	Job(Villager* v, JobType jobtype)
@@ -57,9 +59,10 @@ public:
 	Item& item;
 	int locX, locY;
 	bool isHarvesting = false;
+	Tool* requiredTool;
 
-	HarvestTile(Villager* v, JobType job, Item* i, int x, int y)
-		: Job(v, job), item(*i), locX(x), locY(y)
+	HarvestTile(Villager* v, JobType job, Item* i, Tool* requiredTool, int x, int y)
+		: Job(v, job), item(*i), requiredTool(requiredTool), locX(x), locY(y)
 	{}
 
 	void update();
@@ -148,6 +151,19 @@ public:
 
 	void update();
 };
+
+class Craft : public Job {
+public:
+	Recipe* recipe;
+	std::vector<Item> ingredients;
+	Craft(Villager* v, JobType job, Recipe* recipe)
+		: Job(v, job), recipe(recipe)
+	{
+		ingredients = recipe->ingredients;
+	}
+	void update();
+};
+
 
 class Move : public Job {
 public:

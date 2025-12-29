@@ -139,13 +139,14 @@
     <ClCompile Include="Brain.cpp" />
     <ClCompile Include="Building.cpp" />
     <ClCompile Include="Chunk.cpp" />
+    <ClCompile Include="Crafting.cpp" />
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="CreatureUtils.cpp" />
     <ClCompile Include="Crop.cpp" />
-    <ClCompile Include="Furniture.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="Gun.cpp" />
+    <ClCompile Include="HarvestRules.cpp" />
     <ClCompile Include="Inputs.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="JobManager.cpp" />
@@ -165,12 +166,13 @@
     <ClInclude Include="Brain.h" />
     <ClInclude Include="Building.h" />
     <ClInclude Include="Chunk.h" />
+    <ClInclude Include="Crafting.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="Crop.h" />
     <ClInclude Include="Dot.h" />
-    <ClInclude Include="Furniture.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Gun.h" />
+    <ClInclude Include="HarvestRules.h" />
     <ClInclude Include="Inputs.h" />
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="Item.h" />
@@ -196,6 +198,7 @@
     <Text Include="Cart.txt" />
     <Text Include="FlingGames.txt" />
     <Text Include="House.txt" />
+    <Text Include="VillagerMenu.txt" />
     <Text Include="WorldMenu.txt" />
     <Text Include="Info.txt" />
     <Text Include="Menu.txt" />
@@ -203,9 +206,12 @@
   <ItemGroup>
     <None Include="glsl shader.frag" />
     <None Include="glsl shader.vert" />
+    <None Include="HarvestRules.json" />
+    <None Include="Item.json" />
     <None Include="Recipes.json" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
+    <None Include="Tool.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,18 +13,23 @@
 #include "Tool.h"
 #include "Light.h"
 #include "Globals.h"
+#include <set>
 
 // A lot of this stuff is world generation, so it should be moved to a separate file later
 // A real big mess this all is :(
 
 std::vector<Dot> voronoiDots;
-float waterLevel = -100.0f;
+float waterLevel = 0.0f;
 std::vector<Island> islands;
+
+std::vector<std::pair<int, int>> basins;
+std::vector<std::pair<int, int>> newWater;
 
 float hashNoise(int x, int y, int seed) {
     unsigned int h = x * 374761393u + y * 668265263u + seed * 374761393u;
     h = (h ^ (h >> 13)) * 1274126177u;
-    return (h & 0xFFFFFF) / float(0xFFFFFF); // 0.0f–1.0f
+    return (h & 0xFFFFFF) / float(0xFFFFFF);
+    // I wish I could tell you how this works, the forums are a godsend
 }
 
 
@@ -89,11 +94,10 @@ void createVoronoiMap() {
 
 void createMapIslands() {
     for (int i = 0; i < 1; i++) {
-        //Makes several large islands
         Island island;
         island.x = getRandomInt(0, 0);
         island.y = getRandomInt(0, 0);
-        island.dampen = getRandomInt(500, 500);
+        island.dampen = getRandomInt(500, 1000);
         islands.push_back(island);
     }
 }
@@ -120,7 +124,7 @@ float inverseCircleFalloff(float x, float y, int radius) {
     return (x * x + y * y) / radius; // Larger radius = larger island
 }
 
-float calculateAltitude(Dot centerDot, int x, int y) {
+float calculateAltitude(int x, int y) {
     float size = 0.01f;
     //float baseAlt = perlin(x * size, y * size) * 100.0f;
     float baseAlt = 0.0f;
@@ -132,12 +136,14 @@ float calculateAltitude(Dot centerDot, int x, int y) {
 
 
     baseAlt -= inverseCircleFalloff(dx, dy, closest.dampen);
-    return baseAlt + perlin(x * size, y * size) * 100.0f;
+    //return baseAlt + 100.0f + perlin(x * size, y * size) * 100.0f;
+	return baseAlt + 100.0f + perlin(x * size, y * size) * 100.0f;
+
 }
 
 float getAltitude(int x, int y) {
     Dot closestDot = findClosestDot(x, y);
-    return calculateAltitude(closestDot, x, y);
+    return calculateAltitude(x, y);
 }
 
 
@@ -146,45 +152,101 @@ void setSeaLevel(float level) {
 }
 
 void makeLake(int x, int y) {
-    float waterLevel = getTileRef(x, y).altitude;
+    std::cout << "Make Lake at " << x << ", " << y << std::endl;
 
-    std::queue<std::pair<int, int>> toFill;
-    std::unordered_set<long long> visited; // or hash of (x,y)
-    auto hash = [](int x, int y) { return ((long long)x << 32) ^ (long long)y; };
+    struct Node {
+        int x, y;
+        float altitude;
+        bool operator>(const Node& other) const { return altitude > other.altitude; }
+    };
 
-    toFill.push({ x, y });
-    visited.insert(hash(x, y));
+    std::pair<int, int> rimLocation;
+    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> toCheck;
+    toCheck.push({ x, y, getTileRef(x, y).altitude });
 
-    while (!toFill.empty()) {
-        auto pair = toFill.front();
-        toFill.pop();
+    //float rimHeight = getTileRef(startX, startY).altitude;
+    float rimHeight = INFINITY;
+    std::set<std::pair<int, int>> finalLake;
 
-        Tile& current = getTileRef(pair.first, pair.second);
-        current.changeTileType(WATER);
-        current.walkable = false;
-        current.items.clear();
+    int i = 0;
+    //Explore tiles until it finds a tile lower 
+    while (!toCheck.empty()) {
+        Node current = toCheck.top();
+        toCheck.pop();
 
-        for (auto& n : getNeighbors(pair.first, pair.second)) {
-            int nx = n.first, ny = n.second;
-            long long key = hash(nx, ny);
-            if (visited.count(key)) continue;
+
+        if (finalLake.count({ current.x, current.y })) continue;
+        finalLake.insert({ current.x, current.y });
+
+        for (auto& n : getNeighbors(current.x, current.y)) {
+            int nx = n.first;
+            int ny = n.second;
+
+            if (finalLake.count({ nx, ny })) {
+                continue;
+            }
 
             Tile& neighbor = getTileRef(nx, ny);
-            // only fill neighbors that are <= the current water level
-            if (neighbor.altitude <= waterLevel) {
-                toFill.push({ nx, ny });
-                visited.insert(key);
+
+            // Always add neighbor to queue for further exploration
+
+
+            // Only update rim if neighbor is higher than current
+            if (neighbor.altitude > current.altitude && neighbor.altitude < rimHeight) {
+                toCheck.push({ nx, ny, neighbor.altitude });
+
+            }
+            else {
+                rimLocation = { nx, ny };
+                rimHeight = std::min(rimHeight, neighbor.altitude);
+                //std::cout << "New Rim Height: " << rimHeight << " at (" << nx << ", " << ny << ")" << std::endl;
+
             }
         }
+
+        i++;
+        //std::cout << "Checked Tiles: " << i << std::endl;
+    }
+
+
+
+    for (auto& i : finalLake) {
+        Tile& tile = getTileRef(i.first, i.second);
+        tile.items.clear();
+        tile.walkable = false;
+        tile.changeTileType(WATER);
+        //tile.addItem(std::make_unique<Item>("Lake", L'$', sf::Color::Red));
+    }
+
+    float lowAdj = INFINITY;
+    std::pair<int, int> lowAdjLocation;
+    for (auto& i : getNeighbors(rimLocation.first, rimLocation.second)) {
+        if (getTileRef(i.first, i.second).altitude < lowAdj && getTileRef(i.first, i.second).type == GRASS) {
+            lowAdj = getTileRef(i.first, i.second).altitude;
+            lowAdjLocation = { i.first, i.second };
+        }
+    }
+
+    //makeRiver(rim.first, rim.second);
+
+}
+
+void addBasin(int x, int y) {
+    auto target = std::make_pair(x, y);
+    auto it = std::find(basins.begin(), basins.end(), target);
+
+    if (it == basins.end()) {
+        std::cout << "Basin low at " << x << ", " << y << std::endl;
+        basins.push_back(target);
+        //waterTiles.push_back(target);
     }
 }
 
 
 
-
-//Inefficient rivers but they do the job
-void makeRiver(int x, int y) {
-    std::cout << "Make River" << std::endl;
+// Inefficient rivers but they do the job
+std::pair<int, int> makeRiver(int x, int y) {
+    //std::cout << "Make River at " << x << ", " << y << std::endl;
     float currentAlt = getTileRef(x, y).altitude;
 
     while (currentAlt > -100.0f) {
@@ -192,16 +254,19 @@ void makeRiver(int x, int y) {
 
         std::vector<std::pair<int, int>> potentialNeighbors;
 
+		float minAlt = currentAlt;
         for (auto& i : getNeighbors(x, y)) {
             Tile& neighbor = getTileRef(i.first, i.second);
 
-            if (neighbor.altitude < currentAlt) {
+            if (neighbor.altitude < minAlt) {
                 potentialNeighbors.push_back(i);
+				minAlt = neighbor.altitude;
             }
         }
 
         if (potentialNeighbors.empty()) {
-            makeLake(x, y);
+            //makeLake(x, y);
+			return { x, y };
             break;
         }
 
@@ -209,7 +274,7 @@ void makeRiver(int x, int y) {
         Tile& chosenNeighbor = getTileRef(chosenCoords.first, chosenCoords.second);
 
         currentAlt = chosenNeighbor.altitude;
-        for (auto& i : getNeighbors(x, y)) {
+        /*for (auto& i : getNeighbors(x, y)) {
 
             getTileRef(i.first, i.second).items.clear();
 
@@ -220,7 +285,7 @@ void makeRiver(int x, int y) {
 		chosenNeighbor.items.clear();
         chosenNeighbor.walkable = false;
 
-        chosenNeighbor.changeTileType(WATER);
+        chosenNeighbor.changeTileType(WATER);*/
         x = chosenCoords.first;
         y = chosenCoords.second;
 
@@ -237,7 +302,7 @@ Tile assignTileTypes(int x, int y) {
     // Base tile types, theres no way to change them yet
 
     Tile tile;
-    tile.altitude = calculateAltitude(findClosestDot(x, y), x, y);
+    tile.altitude = calculateAltitude(x, y);
 
     if (findClosestDot(x, y).biome == Biome::GRASS) {
         tile.type = GRASS;
@@ -249,18 +314,25 @@ Tile assignTileTypes(int x, int y) {
     }
 
 
-    if (tile.altitude < waterLevel) {
+    if (tile.altitude > waterLevel + 135.0f) {
+        tile.type = MOUNTAIN_PEAK;
+        tile.typeString = "Mountain Peak";
+    }
+    else if (tile.altitude > waterLevel + 105.0f) {
+        tile.type = MOUNTAIN;
+        tile.typeString = "Mountain";
+
+		
+
+    }
+    else if (tile.altitude < waterLevel) {
         tile.type = WATER;
         tile.typeString = "Water";
+        tile.water = std::abs(waterLevel - tile.altitude);
     }
     else if (tile.altitude < waterLevel + 5.0f) {
         tile.type = SAND;
         tile.typeString = "Sand";
-    }
-    else if (tile.altitude > waterLevel + 125.0f) {
-
-        tile.type = MOUNTAIN;
-        tile.typeString = "Mountain";
     }
     else {
         tile.type = GRASS;
@@ -275,86 +347,84 @@ void Tile::getTile(int x, int y) {
 
 
     // Item adders
+
+    // Probably a better way than a giant if-else chain
+
 	float emeraldNoise = perlin(x * 0.05f + 200.0f, y * 0.05f + 200.0f);
     float goldNoise = perlin(x * 0.05f + 400.0f, y * 0.05f + 400.0f);
     float rubyNoise = perlin(x * 0.05f + 600.0f, y * 0.05f + 600.0f);
     float sapphireNoise = perlin(x * 0.05f + 800.0f, y * 0.05f + 800.0f);
+
+    Item tree = *ItemRegistry::getInstance().get("Oak Tree");
+    Item tree2 = *ItemRegistry::getInstance().get("Pine Tree");
+	Item tree3 = *ItemRegistry::getInstance().get("Birch Tree");
+    Item rock = *ItemRegistry::getInstance().get("Rock");
+    Item wood = *ItemRegistry::getInstance().get("Wood");
     
+	Item carp = *ItemRegistry::getInstance().get("Carpentry Bench");
+
     if (type == GRASS) {
 
         float r = hashNoise(x, y, seed);
 
 
-        if (r < 0.04f) {
-            if (r < 0.02f) {
+        if (r < 0.04f && altitude < waterLevel + 70.0f) {
+            if (r < 0.013f) {
                 addItem(std::make_unique<Item>(tree));
-                
+            }
+            else if (r < 0.026f) {
+                addItem(std::make_unique<Item>(tree2));
             }
             else {
-                addItem(std::make_unique<Item>(tree2));
+                addItem(std::make_unique<Item>(tree3));
+                
             }
          }
 
-        else if (r < 0.09f) {
+        else if (r < 0.09f && altitude < waterLevel + 70.0f) {
             addItem(std::make_unique<Item>("Flower", L'*', sf::Color(getRandomInt(0, 255), getRandomInt(0, 255), getRandomInt(0, 255))));
 
         }
-        else if (r < 0.14f) {
+        else if (r < 0.24f && altitude > waterLevel + 80.0f) {
             addItem(std::make_unique<Item>(rock));
         }
+    }
+
+
+
+	float noise = hashNoise(x + 500, y + 500, seed);
+
+    if (noise < 0.3f) {
+		//water += 1.0f;
+		//newWater.push_back({ x, y });
+    }
+
+    if (x == 2 && y == 2) {
+        items.clear();
+        addItem(std::make_unique<Item>(carp));
     }
 
     /*items.clear();
     addItem(std::make_unique<Item>("DISPLAY", L'■', sf::Color(getRandomInt(0, 255), getRandomInt(0, 255), getRandomInt(0, 255))));
     animationType = BREATHE;*/
 
-    /*if (x == 10 && y == 10) {
+    //std::vector<Item> itempool = {wood, tree, tree2, rock, iron, emerald, gold, ruby, sapphire, topaz, diamond, flower, wheatSeed, chest, wall, stonePath, woodenFence};
+    /*std::vector<Item> itempool = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, xx, yy, z };
+
+
+    if (x == 100 && y == 100) {
         items.clear();
 
-        auto item = std::make_unique<Item>(ASSAULT_RIFLE);
-        Item* ptr = item.get();        
-        addItem(std::move(item));      
-        itemsToMove.push_back({ ptr, {x, y} });
 
-        item = std::make_unique<Item>(iron);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
+        for (int i = 0; i < 4800; i++) {
+			Item chosenitem = itempool[getRandomInt(0, itempool.size() - 1)];
+            auto item = std::make_unique<Item>(chosenitem);
+            Item* ptr = item.get();
+            addItem(std::move(item));
+            itemsToMove.push_back({ ptr, {x, y} });
+        }
+       
 
-        item = std::make_unique<Item>(iron);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
-
-        item = std::make_unique<Item>(iron);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
-
-        item = std::make_unique<Item>(woodenFence);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
-
-        item = std::make_unique<Item>(woodenFence);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
-
-        item = std::make_unique<Item>(stonePath);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
-
-        item = std::make_unique<Item>(PEPPER_GUN);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
-
-        item = std::make_unique<Item>(MINIGUN);
-        ptr = item.get();
-        addItem(std::move(item));
-        itemsToMove.push_back({ ptr, {x, y} });
     }*/
 
 
@@ -370,6 +440,9 @@ void Tile::getTile(int x, int y) {
     color = colorList[charIndex];
 	origColorHolder = color;
 
+	this->x = x;
+	this->y = y;
+
     if (items.size() > 0) {
         walkable = getTileWalkable(items[0].get(), type);
     }
@@ -382,10 +455,156 @@ void Tile::getTile(int x, int y) {
 sf::Clock animClock;
 sf::Clock colorClock;
 
+
+enum SedimentState {
+    DEPOSIT,
+    TRANSPORT,
+    ERODE
+};
+
+SedimentState hjulstromDiagram(float flowVelocity, float grainSize) {
+    if (flowVelocity < 0.1f) {
+        return DEPOSIT;
+		std::cout << "Deposit" << std::endl;
+    }
+    else if (flowVelocity < 1.0f) {
+        if (grainSize < 0.05f) {
+            return TRANSPORT;
+            std::cout << "Transport" << std::endl;
+        }
+        else {
+            return DEPOSIT;
+            std::cout << "Deposit" << std::endl;
+        }
+    }
+    else {
+        if (grainSize < 0.1f) {
+            return ERODE;
+            std::cout << "Erode" << std::endl;
+        }
+        else {
+            return TRANSPORT;
+            std::cout << "Transport" << std::endl;
+        }
+    }
+
+}
+
+
+/*
+
+UPDATING THE EROSION SIMULATION:
+
+Figure out where the water will flow
+Update positions of water
+Calculate deltaHeight
+Calculate sediment capacity (higher when water is moving faster and has more volume)
+If capacity > current sediment, erode
+If water slows, deposit
+
+
+*/
+
+void Tile::simulateWaterTile() {
+       
+    for (auto& i : basins) {
+        if (i.first == x && i.second == y) {
+            if (water < 500.0f) {
+                water += 200.5f;
+            }
+        }
+    }
+
+	//water += 1.0f;
+
+    /*if (altitude < waterLevel) {
+        water = 0.0f;
+        return;
+    }*/
+
+
+    float grainSize = 0.002f; // In meters
+
+    float surface = altitude + water;
+
+    for (auto& n : getNeighbors(x, y)) {
+        Tile& other = getTileRef(n.first, n.second);
+
+        float otherSurface = other.altitude + other.water;
+
+        if (surface > otherSurface) {
+
+            float flow = (surface - otherSurface) * 0.5f;
+
+            flow = std::min(flow, water);
+			this->flow = flow;
+
+            water -= flow;
+            other.water += flow;
+
+            surface = altitude + water;
+
+            // Hjulstrom's Graph implementation
+
+			float flowVelocity = flow * 10.0f;
+
+            float erosionStrength = 0.0005f;
+			float depositionStrength = 0.0003f;
+
+			SedimentState state = hjulstromDiagram(flowVelocity, grainSize);
+
+            if (state == ERODE) {
+                altitude -= flow * erosionStrength;
+            }
+            else if (state == DEPOSIT) {
+                other.altitude += flow * depositionStrength;
+			}
+
+            if (flow >= 1.0f) {
+                other.items.clear();
+            }
+			
+            //if (water < 0.001f) {
+            //    // Tiny water, we'll just pretend the soil soaked it up
+            //    water = 0.0f;
+            //}
+            
+        }
+    }
+}
+
+std::vector<std::pair<int, int>> getWater() {
+	return newWater;
+}
+
+struct RGB {
+    float r, g, b;
+};
+
+RGB HSVtoRGB(float h, float s, float v) {
+    float c = v * s;
+    float x = c * (1 - fabs(fmod(h / 60.0f, 2) - 1));
+    float m = v - c;
+
+    float r, g, b;
+
+    if (h < 60) { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+
+    return { r + m, g + m, b + m };
+}
+
 void Tile::update() {
 
+    // This method doesn't work if the tiles aren't rendered already, a real pain
 
     // I dont know how it staggers the animations but Ill take it
+    // ^ Future me figured it out and its atrocious to think about
+    
     // Needs some work, probably should be independent from item animations
 
 
@@ -400,7 +619,12 @@ void Tile::update() {
         character = charList[charIndex];
         color = colorList[charIndex];
     }
+
+    if (enableWater) {
+        simulateWaterTile();
+    }
     
+
 
     // Early exit, all other anims are based on items
     if (items.size() == 0) {
@@ -425,6 +649,22 @@ void Tile::update() {
 		items[0]->displayColor = color;
     }
 
+    if (animationType == RAINBOW) {
+        float time = colorClock.getElapsedTime().asSeconds();
+        float hue = fmod((time * 60.0f) + animOffset * 60.0f, 360.0f); // Convert offset to degrees
+        RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
+        color.r = static_cast<sf::Uint8>(rgb.r * 255);
+        color.g = static_cast<sf::Uint8>(rgb.g * 255);
+		color.b = static_cast<sf::Uint8>(rgb.b * 255);
+
+        //animOffset = 0.0f;
+
+		items[0]->displayColor = color;
+    }
+
+    
+    
+
 
     for (auto& i : items) {
         i->grow();
@@ -434,11 +674,11 @@ void Tile::update() {
 void Tile::changeTileChar(sf::String string) {
 }
 
-void Tile::changeTileType(tileType type) {
-    type = type;
+void Tile::changeTileType(tileType newType) {
+    type = newType;
 	typeString = "Water";
-    charList = getTileDisplay(type).character;
-    colorList = getTileDisplay(type).color;
+    charList = getTileDisplay(newType).character;
+    colorList = getTileDisplay(newType).color;
     character = charList[0];
     color = colorList[0];
 }
@@ -497,6 +737,9 @@ tileDisplay getTileDisplay(tileType type) {
     case MOUNTAIN:
         c = L'Δ';
         return { {c}, {sf::Color(128,128,128)}};
+	case MOUNTAIN_PEAK:
+		c = L'▲';
+		return { {c}, {sf::Color(200,200,200)} };
     default:
         c = L'?';
         return { {c}, {sf::Color::Red}};
@@ -559,7 +802,7 @@ void changeTileWalkable(int x, int y, bool walk) {
 //    tile.itemOnTile = std::move(item);
 //}
 
-
+// The backbone of everything ever
 Tile& getTileRef(int x, int y) {
     int localX = (x % chunkDim + chunkDim) % chunkDim;
     int localY = (y % chunkDim + chunkDim) % chunkDim;

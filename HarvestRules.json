@@ -1,0 +1,25 @@
+{
+    "rules": [
+        {
+            "target": ["Oak Tree", "Pine Tree", "Birch Tree"],
+            "produces": "Wood",
+            "amount": 1,
+            "tool_required": "Axe",
+            "job_required": "Lumberjack"
+        },
+        {
+            "target": [ "Rock" ],
+            "produces": "Rock",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Flower" ],
+            "produces": "Flower",
+            "amount": 1,
+            "tool_required": "None",
+            "job_required": "None"
+        }
+    ]
+}
