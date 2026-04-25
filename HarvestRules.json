@@ -1,7 +1,7 @@
 {
     "rules": [
         {
-            "target": ["Oak Tree", "Pine Tree", "Birch Tree"],
+            "target": [ "Oak Tree", "Pine Tree", "Birch Tree", "Dead Tree", "Apple Tree" ],
             "produces": "Wood",
             "amount": 1,
             "tool_required": "Axe",
@@ -15,11 +15,53 @@
             "job_required": "Miner"
         },
         {
-            "target": [ "Flower" ],
-            "produces": "Flower",
+            "target": [ "Raw Iron" ],
+            "produces": "Raw Iron",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Copper" ],
+            "produces": "Copper",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Gold" ],
+            "produces": "Gold",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Emerald" ],
+            "produces": "Emerald",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Diamond" ],
+            "produces": "Diamond",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Coal" ],
+            "produces": "Coal",
+            "amount": 1,
+            "tool_required": "Pickaxe",
+            "job_required": "Miner"
+        },
+        {
+            "target": [ "Wheat" ],
+            "produces": "Wheat",
             "amount": 1,
             "tool_required": "None",
-            "job_required": "None"
+            "job_required": "Farmer"
         }
     ]
 }

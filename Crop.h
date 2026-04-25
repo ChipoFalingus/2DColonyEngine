@@ -3,25 +3,25 @@
 #include "Pair.h"
 #include "mathUtils.h"
 
-class Crop : public Item {
+class Crop : public Object {
 public:
 
 	int growStage;
 	float growTime;
+
+	// Needs global clock
 	sf::Clock growClock;
+
 	float randomOffset;
 	std::string cropName;
 
 	std::vector<std::pair<wchar_t, sf::Color>> stages;
 
-	Crop(std::string cropName, int growStage, float growTime, std::vector<std::pair<wchar_t, sf::Color>> stages) :
-		cropName(name), growStage(growStage), growTime(growTime), stages(stages) {
-		
-		randomOffset = getRandomFloat(0.0f, 1.0f);
-		displayChar = stages[0].first;
-		displayColor = stages[0].second;
+	Crop() : Object(), growStage(0), growTime(1.0f), randomOffset(1.0f), cropName("NULL") {}
 
-		name = cropName;
+	Visual getVisual() const override {
+		const auto& stage = stages[growStage];
+		return Visual{ stage.first, stage.second };
 	}
 
 	void grow() {

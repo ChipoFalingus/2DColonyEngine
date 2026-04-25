@@ -124,6 +124,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,22 +144,29 @@
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="CreatureUtils.cpp" />
     <ClCompile Include="Crop.cpp" />
+    <ClCompile Include="FurnaceRecipes.json" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="Gun.cpp" />
     <ClCompile Include="HarvestRules.cpp" />
     <ClCompile Include="Inputs.cpp" />
     <ClCompile Include="Item.cpp" />
+    <ClCompile Include="ItemUtils.cpp" />
     <ClCompile Include="JobManager.cpp" />
     <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="Pig.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Squad.cpp" />
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="Tool.cpp" />
+    <ClCompile Include="UI.cpp" />
     <ClCompile Include="UIElements.cpp" />
     <ClCompile Include="Villager.cpp" />
     <ClCompile Include="mathUtils.cpp" />
+    <ClCompile Include="WaterSimulation.cpp" />
+    <ClCompile Include="World.cpp" />
     <ClCompile Include="Zombie.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,31 +174,51 @@
     <ClInclude Include="Brain.h" />
     <ClInclude Include="Building.h" />
     <ClInclude Include="Chunk.h" />
+    <ClInclude Include="Clock.h" />
+    <ClInclude Include="Colony.h" />
     <ClInclude Include="Crafting.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="Crop.h" />
     <ClInclude Include="Dot.h" />
+    <ClInclude Include="FoliageCrop.h" />
+    <ClInclude Include="Food.h" />
+    <ClInclude Include="Furnace.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Gun.h" />
     <ClInclude Include="HarvestRules.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="Inputs.h" />
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="ItemLocation.h" />
+    <ClInclude Include="ItemUtils.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="JobCompare.h" />
     <ClInclude Include="JobType.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="mathUtils.h" />
     <ClInclude Include="Monster.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="Pair.h" />
     <ClInclude Include="CreatureUtils.h" />
     <ClInclude Include="Pig.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Spawner.h" />
+    <ClInclude Include="Squad.h" />
+    <ClInclude Include="Stockpile.h" />
+    <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Tile.h" />
+    <ClInclude Include="TileAnimation.h" />
+    <ClInclude Include="TileDisplay.h" />
     <ClInclude Include="Tool.h" />
+    <ClInclude Include="UI.h" />
     <ClInclude Include="UIElements.h" />
+    <ClInclude Include="UIManager.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Villager.h" />
+    <ClInclude Include="WaterSimulation.h" />
+    <ClInclude Include="World.h" />
     <ClInclude Include="Zombie.h" />
   </ItemGroup>
   <ItemGroup>
@@ -204,10 +232,12 @@
     <Text Include="Menu.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Food.json" />
     <None Include="glsl shader.frag" />
     <None Include="glsl shader.vert" />
     <None Include="HarvestRules.json" />
-    <None Include="Item.json" />
+    <None Include="Object.json" />
+    <None Include="Visual.json" />
     <None Include="Recipes.json" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />

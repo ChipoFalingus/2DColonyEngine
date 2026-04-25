@@ -2,6 +2,7 @@
 #include "UIElements.h"
 #include "Item.h"
 #include "Pair.h"
+#include "Squad.h"
 
 // I'll need to get rid of these at some point, globals are super messy and will spiral out of control
 
@@ -12,6 +13,7 @@ extern bool clicked;
 
 extern bool viewMiniMap;
 extern bool viewHeightMap;
+extern bool viewUI;
 
 extern int xTextSpacing;
 extern int yTextSpacing;
@@ -20,9 +22,6 @@ extern int scrWidth;
 extern int scrHeight;
 
 extern float fontSize;
-
-extern UI ui;
-extern UI buildUI;
 
 extern double mouseX, mouseY;
 
@@ -44,14 +43,19 @@ extern std::pair<int, int> corner;
 extern int mouseTileX;
 extern int mouseTileY;
 
-struct Stockpile {
-	std::pair<int, int> location;
-	bool claimed = false;
-
-	Stockpile(std::pair<int, int> loc)
-		: location(loc) {
-	}
+enum class Mode {
+	NONE,
+	BUILD,
+	PLANT,
+	HARVEST,
+	STOCKPILE
 };
 
-extern std::vector<Stockpile> stockpileTiles;
-extern std::vector<std::pair<Item*, std::pair<int, int>>> itemsToMove;
+extern Mode currentMode;
+
+extern std::vector<std::pair<int, int>> tiles;
+extern Squad squad1;
+
+extern std::vector<std::vector<std::pair<int, int>>> field;
+extern int fieldX;
+extern int fieldY;

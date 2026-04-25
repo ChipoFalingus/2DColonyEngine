@@ -1,12 +1,17 @@
 ﻿#define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 
+//#ifdef _DEBUG
+//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//#endif
+
 #include <iostream>
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
 #include <thread>
 #include <future>
+#include <chrono>
 
 #include "mathUtils.h"
 #include "Pair.h"
@@ -19,12 +24,19 @@
 #include "UIElements.h"
 #include "Crafting.h"
 #include "HarvestRules.h"
+#include "World.h"
+#include "Food.h"
+#include "UIManager.h"
+#include "Game.h"
+#include "UI.h"
+#include "Creature.h"
 
 #include "Pig.h"
 #include "Zombie.h"
 
 #include "Shader.h"
 #include "Light.h"
+#include "Clock.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -34,52 +46,34 @@
 #include <SFML/Audio.hpp>
 
 #include <ft2build.h>
+#include "Spawner.h"
 #include FT_FREETYPE_H
-
-
 
 
 void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void setMode(Mode mode);
+Button& createButton(
+    Frame& frame,
+    int x, int y,
+    const std::wstring& label,
+    Alignment align
+);
 
 std::random_device rd;
-int seed = rd();
+int seed;
 
 sf::Clock loadTimer;
-
-const int MAP_WIDTH = 10; //420
-const int MAP_HEIGHT = 10; //275
-
-
-float water = 0.0f;
-
-int hue = 0;
-
 
 static std::vector<float> batchVertices; // flattened: x,y,u,v,r,g,b per vertex
 static const size_t BATCH_VERTEX_SIZE = 7; // floats per vertex
 static const size_t QUAD_VERTS = 6; // two triangles per quad
 
-std::vector<unsigned char> wallData;
-
-std::vector<std::vector<wchar_t>> menuArray;
-std::vector<std::vector<wchar_t>> worldMenuArray;
-float mapSize = 1.0f;
-
-
-
 sf::Font font;
 sf::Text text;
 std::string textString;
 
-
-GLuint VAO, VBO;
-GLuint EBO;
-GLuint batchVAO, batchVBO;
-
-
-std::vector<Creature*> Creature::allCreatures;
-
+GLuint VAO, VBO, EBO;
 
 struct Character {
 	GLuint TextureID;
@@ -97,16 +91,86 @@ struct GlyphVertex {
 };
 
 
-std::vector<Light> LightManager::lights;
-
-std::map<wchar_t, Character> Characters;
+std::unordered_map<wchar_t, Character> Characters;
 
 GLuint fontTexture;
 
 std::vector<float> vertices;
 
-
 std::vector<std::pair<int, int>> activeWater;
+
+struct CustomGlyph {
+    FT_ULong codepoint;
+    int width, height;
+    int bearingX, bearingY;
+    int advance;
+    const unsigned char* bitmap;
+};
+
+unsigned char pickaxeBitmap[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0, 255, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 255, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 255, 0, 0, 255, 0,
+  0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 255, 0,
+  0, 0, 0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 255, 0, 255, 0,
+  0, 0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 255, 0, 255, 0,
+  0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 0, 255, 0, 255, 0,
+  0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 0, 0, 0, 255, 255, 0,
+  0, 0, 255, 255, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 255, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 255, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+unsigned char checkboxBitmap[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+unsigned char checkedboxBitmap[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 0, 255, 0,
+  0, 255, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 0, 0, 255, 0,
+  0, 255, 255, 0, 0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 255, 0,
+  0, 255, 255, 255, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0, 255, 0,
+  0, 255, 255, 255, 255, 0, 255, 255, 255, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0,
+  0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+
+
+std::unordered_map<FT_ULong, CustomGlyph> customGlyphs = {
+    {0x26CF, {0x26CF, 16, 16, 0, 16, 16, pickaxeBitmap}},
+    {0xA32, {0xA32, 16, 16, 0, 16, 16, checkboxBitmap}},
+    {0xA33, {0xA33, 16, 16, 0, 16, 16, checkedboxBitmap}},
+};
 
 void generateFontAtlas(const std::string& fontPath, int fontSize) {
     FT_Library ft;
@@ -124,20 +188,18 @@ void generateFontAtlas(const std::string& fontPath, int fontSize) {
 
     int x = 0, y = 0, rowHeight = 0;
 
-    for (wchar_t c = 0; c < 65535; c++) { // printable ASCII
+    for (FT_ULong c = 32; c < 0xFFFF; c++) {
+
         if (FT_Load_Char(face, c, FT_LOAD_RENDER)) continue;
         FT_Bitmap& bmp = face->glyph->bitmap;
 
-        // check if we need to move to next row
         if (x + bmp.width >= atlasWidth) { x = 0; y += rowHeight; rowHeight = 0; }
         if (y + bmp.rows >= atlasHeight) { std::cerr << "Atlas too small!\n"; break; }
 
-        // copy glyph bitmap into atlas
         for (int row = 0; row < bmp.rows; row++)
             for (int col = 0; col < bmp.width; col++)
-                atlasData[(y + row) * atlasWidth + (x + col)] = bmp.buffer[row * bmp.width + col];
+                atlasData[(y + row) * atlasWidth + (x + col)] = bmp.buffer[row * bmp.pitch + col];
 
-        // store character info
         Character character;
         character.Size = glm::ivec2(bmp.width, bmp.rows);
         character.Bearing = glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top);
@@ -148,6 +210,27 @@ void generateFontAtlas(const std::string& fontPath, int fontSize) {
 
         x += bmp.width + 1;
         if (bmp.rows > rowHeight) rowHeight = bmp.rows;
+    }
+
+    for (const auto& h : customGlyphs) {
+		auto& g = h.second;
+        if (x + g.width >= atlasWidth) { x = 0; y += rowHeight; rowHeight = 0; }
+        if (y + g.height >= atlasHeight) { std::cerr << "Atlas too small for custom glyphs!\n"; break; }
+
+        for (int row = 0; row < g.height; row++)
+            for (int col = 0; col < g.width; col++)
+                atlasData[(y + row) * atlasWidth + (x + col)] = g.bitmap[row * g.width + col];
+
+        Character character;
+        character.Size = glm::ivec2(g.width, g.height);
+        character.Bearing = glm::ivec2(g.bearingX, g.bearingY);
+        character.Advance = g.advance;
+        character.UV0 = glm::vec2((float)x / atlasWidth, (float)y / atlasHeight);
+        character.UV1 = glm::vec2((float)(x + g.width) / atlasWidth, (float)(y + g.height) / atlasHeight);
+        Characters[g.codepoint] = character;
+
+        x += g.width + 1;
+        if (g.height > rowHeight) rowHeight = g.height;
     }
 
     glGenTextures(1, &fontTexture);
@@ -202,53 +285,15 @@ static void ClearBatch() {
 static void FlushBatch(Shader& shader) {
     if (batchVertices.empty()) return;
 
-    // set shader and per-frame uniforms (projection + sampler + isUI defaults to false)
     float zoom = 1.0f;
     glm::mat4 projection = glm::ortho(0.0f, (float)scrWidth * zoom, 0.0f, (float)scrHeight * zoom);
     shader.use();
     shader.setMat4("projection", projection);
     shader.setInt("text", 0);      // ensure sampler unit 0
-    shader.setBool("isUI", false); // RenderText still sets per-glyph isUI during batching but ensure default
-
-    // set lights
-    shader.setInt("numLights", LightManager::lights.size());
-    for (int i = 0; i < LightManager::lights.size(); i++) {
-        std::string base = "lights[" + std::to_string(i) + "]";
-        shader.setVec2(base + ".position", LightManager::lights[i].position);
-        shader.setVec3(base + ".color", LightManager::lights[i].color);
-        shader.setFloat(base + ".radius", LightManager::lights[i].radius);
-        shader.setFloat(base + ".additionalIntensity", LightManager::lights[i].additionalIntensity);
-    }
-
 
     int width = xFrustum;
     int height = yFrustum;
-
-    std::vector<unsigned char> wallData(width * height);
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            wallData[y * width + x] = getTileRef(x, y).walkable ? 1 : 0;
-        }
-    }
-
-    GLuint wallTex;
-    glGenTextures(1, &wallTex);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0,
-    GL_RED, GL_UNSIGNED_BYTE, wallData.data());
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    shader.setInt("wallMap", 0);
-    
-	shader.setInt("mapWidth", width);
-	shader.setInt("mapHeight", height);
-
+   
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, fontTexture);
     glBindVertexArray(VAO);
@@ -266,92 +311,9 @@ static void FlushBatch(Shader& shader) {
     batchVertices.clear();
 }
 
-//std::vector<std::vector<wchar_t>> txtTo2DArray(const std::string& filePath) {
-//    std::wifstream file(filePath);
-//    file.imbue(std::locale("en_US.UTF-8"));
-//
-//    if (!file.is_open()) {
-//        std::cerr << "Failed to open file: " << filePath << std::endl;
-//        return {};
-//    }
-//
-//    std::vector<std::vector<wchar_t>> array;
-//    std::wstring line;
-//    while (std::getline(file, line)) {
-//        if (!line.empty() && line[0] == 0xFEFF) {
-//            line.erase(0, 1);
-//        }
-//        std::vector<wchar_t> row(line.begin(), line.end());
-//        array.push_back(row);
-//    }
-//    return array;
-//}
-
-void renderMap() {
-
-    int mapDim = calculateMapSize();
-
-    for (int y = -mapDim; y < mapDim; y++) {
-        for (int x = -mapDim; x < mapDim; x++) {
-            int chunkX = static_cast<int>(std::floor((float)x / chunkDim));
-            int chunkY = static_cast<int>(std::floor((float)y / chunkDim));
-
-            Chunk& chunk = loadOrGenerateChunk(chunkX, chunkY);
-        }
-    }
-
-    for (int y = -mapDim; y < mapDim; y++) {
-        for (int x = -mapDim; x < mapDim; x++) {
-            Tile& tile = getTileRef(x, y);
-            tile.getTile(x, y);
-        }
-    }
-    
-
-  //  for (int y = -mapDim; y < mapDim; y++) {
-  //      for (int x = -mapDim; x < mapDim; x++) {
-  //          Tile& tile = getTileRef(x, y);
-  //          if (110.0f < tile.altitude && getRandomInt(0, 0) == 0) {
-  //             // makeRiver(x, y);
-  //              //tile.water = 1.0f;
-		//		
-  //              auto basin = makeRiver(x, y);
-  //              getTileRef(basin.first, basin.second).water = 10000.0f;
-  //              
-
-  //              addBasin(basin.first, basin.second);
-
-
-  //          }
-  //      }
-  //  }
-
-  //  for (int k = 0; k < 0; k++) {
-  //      for (int i = -mapDim; i < mapDim; i++) {
-  //          for (int j = -mapDim; j < mapDim; j++) {
-  //              Tile& tile = getTileRef(i, j);
-  //              tile.simulateWaterTile();
-  //          }
-  //      }
-		//std::cout << k << " water simulation step complete." << std::endl;
-  //  }
-
-    
-
-    
-	updateMiniMap();
-}
 
 void RenderText(Shader& shader, const std::wstring& text, float x, float y, float scale, glm::vec3 color, bool ui) {
-    // We still prepare projection and shader-state per call, but do not upload/draw here.
-    float zoom = 1.0f;
-    glm::mat4 projection = glm::ortho(0.0f, (float)scrWidth * zoom, 0.0f, (float)scrHeight * zoom);
-    shader.use();
-    shader.setMat4("projection", projection);
-    shader.setInt("text", 0);
-    shader.setBool("isUI", ui);
 
-    // NOTE: we DO NOT set light uniforms here (FlushBatch will), but setting them here is harmless.
     // Build quads into batchVertices
     for (wchar_t c : text) {
         if (Characters.find(c) == Characters.end()) continue;
@@ -378,11 +340,14 @@ void RenderText(Shader& shader, const std::wstring& text, float x, float y, floa
             { xpos + w, ypos + h,   u1, v0, r, g, b }
         };
 
+
+
         batchVertices.insert(batchVertices.end(), &quad[0][0], &quad[0][0] + 6 * 7);
 
         x += ch.Advance * scale;
     }
 }
+
 sf::Color hsvToRgb(float h, float s, float v) {
     float c = v * s;
     float x = c * (1 - std::fabs(fmod(h / 60.0f, 2) - 1));
@@ -416,8 +381,6 @@ sf::Color altitudeToColor(float altitude, float minAlt, float maxAlt) {
     return hsvToRgb(hue, 1.0f, 1.0f);
 }
 
-
-
 void drawMiniMap(Shader& shader) {
     int numX = xPlayer - xFrustum / 2;
     int numY = yPlayer - yFrustum / 2;
@@ -433,27 +396,52 @@ void drawMiniMap(Shader& shader) {
             float screenX = (x - numX) * xTextSpacing;
             float screenY = scrHeight - ((y - numY + 1) * yTextSpacing);
 
-            Chunk& chunk = loadOrGenerateChunk(chunkX, chunkY);
+            Chunk& chunk = mainWorld.loadOrGenerateChunk(chunkX, chunkY);
 
             std::wstring charStr;
             glm::vec3 color;
 
+            std::wstring string;
+
+            if (viewUI) {
+                int uiX = x - (xPlayer - xFrustum / 2);
+                int uiY = y - (yPlayer - yFrustum / 2);
+
+                auto& frame = Game::getInstance().getUIManager().getMasterUI();
+
+                if (uiY >= 0 && uiY < frame.size() && uiX >= 0 && uiX < frame[uiY].size()) {
+                    wchar_t ch = frame[uiY][uiX];
+                    if (ch != L'@') {
+                        string = std::wstring(1, ch);
+                        if (ch == L' ') {
+                            color = glm::vec3(0.0f, 0.0f, 0.0f);
+                        }
+                        else {
+                            color = glm::vec3(1.0f, 1.0f, 1.0f);
+                        }
+
+                        RenderText(shader, string, screenX, screenY, fontSize, color, true);
+                        continue;
+                    }
+                }
+            }
+            
             if (!viewHeightMap) {
                 // Convert vector<wchar_t> to wstring(use first character if available)
-                charStr = chunk.dominantDisplay.character.empty() ? L" " : std::wstring(1, chunk.dominantDisplay.character[0]);
+                charStr = chunk.dominantDisplay.chars.empty() ? L" " : std::wstring(1, chunk.dominantDisplay.chars[0]);
                 // Convert vector<sf::Color> to glm::vec3 (use first color if available)
-                color = chunk.dominantDisplay.color.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                color = chunk.dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
-                        chunk.dominantDisplay.color[0].r / 255.0f,
-                        chunk.dominantDisplay.color[0].g / 255.0f,
-                        chunk.dominantDisplay.color[0].b / 255.0f
+                        chunk.dominantDisplay.colors[0].r / 255.0f,
+                        chunk.dominantDisplay.colors[0].g / 255.0f,
+                        chunk.dominantDisplay.colors[0].b / 255.0f
                     );
             }
             else {
                 // Convert vector<wchar_t> to wstring(use first character if available)
                 charStr = L'■';
                 // Convert vector<sf::Color> to glm::vec3 (use first color if available)
-                color = chunk.dominantDisplay.color.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                color = chunk.dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
                         altitudeToColor(chunk.avgHeight, -100.0f, 100.0f).r / 255.0f,
                         altitudeToColor(chunk.avgHeight, -100.0f, 100.0f).g / 255.0f,
@@ -461,7 +449,6 @@ void drawMiniMap(Shader& shader) {
                     );
             }
             
-
             RenderText(shader, charStr, screenX, screenY, fontSize, color, false);
         }
     }
@@ -471,133 +458,134 @@ void drawMap(Shader& shader)
 {
     int numX = xPlayer - xFrustum / 2;
     int numY = yPlayer - yFrustum / 2;
-	
 
-    // Iterate over camera frustum
-    for (int y = yPlayer - yFrustum / 2; y < yPlayer + yFrustum / 2; y++) {
-        std::wstring line;
+
+    std::unordered_map<std::pair<int, int>, Creature*, pair_hash> creaturesInScope;
+
+
+    for (auto& creature : mainWorld.getAllCreatures()) {
+        if (!creature) continue;
+        int cx = creature->xPos;
+        int cy = creature->yPos;
+        if (cx >= xPlayer - xFrustum / 2 && cx <= xPlayer + xFrustum / 2 &&
+            cy >= yPlayer - yFrustum / 2 && cy <= yPlayer + yFrustum / 2) {
+            creaturesInScope[{cx, cy}] = creature.get();
+        }
+    }
+
+    for (int y = yPlayer - yFrustum / 2; y < (yPlayer + yFrustum / 2) + 1; y++) {
+
         float screenY = scrHeight - ((y - numY + 1) * yTextSpacing);
-        for (int x = xPlayer - xFrustum / 2; x < xPlayer + xFrustum / 2; x++) {
+        for (int x = xPlayer - xFrustum / 2; x < (xPlayer + xFrustum / 2) + 1; x++) {
 
-            int chunkX = static_cast<int>(std::floor((float)x / chunkDim));
-            int chunkY = static_cast<int>(std::floor((float)y / chunkDim));
-			
-            Chunk& chunk = loadOrGenerateChunk(chunkX, chunkY);
-
-            /*std::future<Chunk&> future = std::async(std::launch::async, loadOrGenerateChunk, chunkX, chunkY);
-            Chunk& chunk = future.get();*/
-
-            int localX = (x % chunkDim + chunkDim) % chunkDim;
-            int localY = (y % chunkDim + chunkDim) % chunkDim;
-
-            Tile& tile = chunk.tiles[localX][localY];
-
-            // Calculate screen position in pixels
             float screenX = (x - numX) * xTextSpacing;
-            
+            Tile* a = nullptr;
 
-            tile.update();
+            if (mainWorld.isRendered()) {
+                int chunkX = x / chunkDim;
+                int chunkY = y / chunkDim;
+                Chunk* chunk = mainWorld.getChunk(chunkX, chunkY);
+
+                if (chunk) {
+                    a = &getTileRef(x, y);
+                    a->update();
+                }
+            }
+
             std::wstring string;
             glm::vec3 color(1.0f, 1.0f, 1.0f); // default white
 
-            int uiX = x - (xPlayer - xFrustum / 2);
-            int uiY = y - (yPlayer - yFrustum / 2);
+            if (viewUI) {
+                int uiX = x - (xPlayer - xFrustum / 2);
+                int uiY = y - (yPlayer - yFrustum / 2);
 
-            
-            if (uiY >= 0 && uiY < menuArray.size() && uiX >= 0 && uiX < menuArray[uiY].size()) {
-                wchar_t ch = menuArray[uiY][uiX];
-                if (ch != L'#') {
-                    string = std::wstring(1, ch);
-                    if (ch == L' ')
-                        color = glm::vec3(0.0f, 0.0f, 0.0f);
-                    else
-                        color = glm::vec3(1.0f, 1.0f, 1.0f);
-                    RenderText(shader, string, screenX, screenY, fontSize, color, true);
-                    //line += string;
-                    continue;
+                auto& frame = Game::getInstance().getUIManager().getMasterUI();
+
+                if (uiY >= 0 && uiY < frame.size() && uiX >= 0 && uiX < frame[uiY].size()) {
+                    wchar_t ch = frame[uiY][uiX];
+                    if (ch != L'@') {
+                        string = std::wstring(1, ch);
+                        if (ch == L' ') {
+                            color = glm::vec3(0.0f, 0.0f, 0.0f);
+                        }
+                        else {
+                            color = glm::vec3(1.0f, 1.0f, 1.0f);
+                        }
+
+                        RenderText(shader, string, screenX, screenY, fontSize, color, true);
+                        continue;
+                    }
                 }
             }
 
-			bool foundCreature = false;
-            for (Creature* v : Creature::allCreatures) {
-                
-                if (v->xPos == x && v->yPos == y) {
-					string = v->displayChar;
-                    color = glm::vec3(v->displayColor.r / 255.0f, v->displayColor.g / 255.0f, v->displayColor.b / 255.0f);
-                    v->xPixels = screenX;
-                    v->yPixels = screenY;
-                    foundCreature = true;
-                    break;
-                }
-                
-                if (v->xPos < xPlayer - xFrustum / 2 || v->yPos > yPlayer + yFrustum / 2
-                    || v->xPos > xPlayer + xFrustum / 2 || v->yPos < yPlayer - yFrustum / 2) {
-                    v->xPixels = -99999999;
-                    v->yPixels = -99999999;
-                }
+            if (!mainWorld.isRendered()) {
+                continue;
             }
+
+            Tile& tile = getTileRef(x, y);
 
             // Tile contents
-            if (!foundCreature) {
-                if (tile.items.size() != 0) {
-                    if (tile.items[0]->name == "") {
-                        string = tile.character;
-                        color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
-                    }
-                    else {
-                        string = tile.items[0]->displayChar;
-                        color = glm::vec3(tile.items[0]->displayColor.r / 255.0f,
-                            tile.items[0]->displayColor.g / 255.0f,
-                            tile.items[0]->displayColor.b / 255.0f);
-                    }
+            if (tile.items.size() != 0) {
+                auto display = tile.items[0]->getVisual();
+                if (tile.items[0]->type == Type::Tool) {
+                    auto* tool = dynamic_cast<Tool*>(tile.items[0].get());
+                    color = materialToColor(tool->material);
                 }
                 else {
-                    string = tile.character;
-                    color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
+                    color = glm::vec3(display.displayColor.r / 255.0f, display.displayColor.g / 255.0f, display.displayColor.b / 255.0f);
                 }
+                string = display.displayChar;
+            }
+            else {
+                string = tile.character;
+                color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
+            }
+        
 
-                if (placing) {
+            if (placing) {
+                if (mainWorld.placementMode == PlacementMode::SQUARE) {
                     int left = std::min(corner.first, mouseTileX);
                     int right = std::max(corner.first, mouseTileX);
                     int top = std::min(corner.second, mouseTileY);
                     int bottom = std::max(corner.second, mouseTileY);
 
-                    if ((y == top && x >= left && x <= right) ||
-                        (y == bottom && x >= left && x <= right) ||
-                        (x == left && y >= top && y <= bottom) ||
-                        (x == right && y >= top && y <= bottom)) {
+                    if (x >= left && x <= right && y >= top && y <= bottom) {
+                        if (mainWorld.atStockpile(x, y) || !getTileRef(x, y).walkable) {
+                            string = L"X";
+                            color = glm::vec3(1.0f, 0.0f, 0.0f);
+                        }
+                        else {
+                            if (y == top || y == bottom || x == left || x == right) {
+                                string = L"+";
+                                color = glm::vec3(1.0f, 0.0f, 0.0f);
+                            }
+                        }
+                    }
+                }
+                if (mainWorld.placementMode == PlacementMode::LINE) {
+                    auto tiles = bresenham(corner.first, corner.second, mouseTileX, mouseTileY);
+                    if (std::find(tiles.begin(), tiles.end(), std::make_pair(x, y)) != tiles.end()) {
                         string = L"+";
+                        color = glm::vec3(1.0f, 0.0f, 0.0f);
+                    }
+                }
+                if (mainWorld.placementMode == PlacementMode::SINGLE) {
+                    if (x == mouseTileX && y == mouseTileY) {
+                        string = L"X";
                         color = glm::vec3(1.0f, 0.0f, 0.0f);
                     }
                 }
             }
 
-            if (tile.water > 0.0f) {
+			auto it = creaturesInScope.find(std::make_pair(x, y));
+            if (it != creaturesInScope.end()) {
+                string = it->second->displayChar;
+                color = it->second->displayColor;
 
-                // Water character
-                string = L'≈';
-
-                // Clamp water level (0.0 → 1.0)
-                float w = glm::clamp(tile.water, 0.0f, 1.0f);
-
-                // Water color fades with small amounts:
-                float r = (1.0f - w) * 1.0f;   // fades toward blue
-                float g = (1.0f - w) * 1.0f;
-                float b = 1.0f;
-
-                color = glm::vec3(r, g, b);
-            }
-
-            /*if (tile.water > 0.01f) {
-                string = L'▼';
-                color = glm::vec3(0.0f, 0.0f, 1.0f);
-            }
-
-            if (tile.water > 0.4f) {
-                string = L'≈';
-                color = glm::vec3(0.0f, 0.0f, 1.0f);
-            }*/
-
+				color.r /= 255.0f;
+				color.g /= 255.0f;
+				color.b /= 255.0f;
+			}
 
             if (viewHeightMap) {
                 string = L'■';
@@ -609,56 +597,25 @@ void drawMap(Shader& shader)
                     );
             }
 
+			//color *= Game::getInstance().getLightManager().calculateLightLevel(x, y);
 
-
-            
-
-            
-
+            int size = calculateMapSize();
+            int lx = x + size;
+            int ly = y + size;
+            color *= mainWorld.getLightMapIndex(lx, ly);
 
             if (!string.empty()) {
                 RenderText(shader, string, screenX, screenY, fontSize, color, false);
             }
+            else {
+				RenderText(shader, L" ", screenX, screenY, fontSize, glm::vec3(1.0f), false);
+            }
         }
         //RenderText(shader, line, 0.0f, screenY, fontSize, glm::vec3(1.0f), false);
-    }
-}
-
-
-void storeCharacterTexture(FT_Face face, int c) {
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RED,
-        face->glyph->bitmap.width,
-        face->glyph->bitmap.rows,
-        0,
-        GL_RED,
-        GL_UNSIGNED_BYTE,
-        face->glyph->bitmap.buffer
-    );
-    // set texture options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // store character
-    Character character = {
-        texture,
-        glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-        glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-        static_cast<GLuint>(face->glyph->advance.x)
     };
-    Characters.insert(std::pair<wchar_t, Character>(c, character));
 }
 
 int main() {
-
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -668,19 +625,17 @@ int main() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
-    //scrWidth = mode->width;
-    //scrHeight = mode->height;
-
 	scrWidth = 1920;
 	scrHeight = 1080;
+
+    //scrWidth = mode->width;
+    //scrHeight = mode->height;
 
 	xFrustum = scrWidth / xTextSpacing;
     yFrustum = scrHeight / yTextSpacing;
 
-    
-
-    GLFWwindow* window = glfwCreateWindow(scrWidth, scrHeight, "Me ASCII Game", NULL, NULL);
-	//glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    GLFWwindow* window = glfwCreateWindow(scrWidth, scrHeight, "ASCII Game", NULL, NULL);
+    //glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -699,28 +654,21 @@ int main() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 
-    generateFontAtlas("cour.ttf", 48);
-
-
-
+    generateFontAtlas("cour.ttf", 48 * 0.55);
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // We will allocate dynamically in FlushText, but reserve an initial size
     glBufferData(GL_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
 
-    // pos (location = 0): vec2
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, BATCH_VERTEX_SIZE * sizeof(float), (void*)(0));
 
-    // uv (location = 1): vec2
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, BATCH_VERTEX_SIZE * sizeof(float), (void*)(2 * sizeof(float)));
 
-    // color (location = 2): vec3
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, BATCH_VERTEX_SIZE * sizeof(float), (void*)(4 * sizeof(float)));
 
@@ -729,202 +677,56 @@ int main() {
 
     Shader shader("shader.vert", "shader.frag");
 
-    LightManager::addLight(glm::vec2(scrWidth / 2, scrHeight / 2), glm::vec3(1.0f), 30000.0f, 1.0f, -1.0f);
-
-    /*for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            glm::vec3 color = glm::vec3(getRandomFloat(0.0f, 1.0f), getRandomFloat(0.0f, 1.0f), getRandomFloat(0.0f, 1.0f));
-            LightManager::addLight(glm::vec2(400 + i * 200, 300 + j * 150), color, 100.0f, 10.0f, -1.0f);
-        }
-    }*/
-
     std::random_device rd;
     seed = rd();
     rng.seed(seed);
-    std::cout << "Seed: " << seed << std::endl;
     srand(seed);
 
-
     // Item setup
-    loadItems();
-    loadTools();
-
+    loadObjects();
 	loadHarvestRules();
+    loadRecipes();
 
-    // World setup
-    initializePermutation();
-    createVoronoiMap();
-    createMapIslands();
-    renderMap();
-    setSeaLevel(water);
-    calculateMapSize();
+    Game::getInstance().initUI();
+
+    auto& uiManager = Game::getInstance().getUIManager();
+
+	uiManager.resize(xFrustum, yFrustum);
+
+    uiManager.push("main");
     
-
-    //   for (int i = 0; i < 0; i++) {
-    //       Creature::allCreatures.push_back(new Pig(getRandomInt(-5,5), getRandomInt(-5, 5)));
-    //   }
-
-
-       for (int i = 0; i < 0; i++) {
-		   int x = getRandomInt(-100, 100);
-		   int y = getRandomInt(-100, 100);
-           if (getTileRef(x, y).walkable) {
-               Creature::allCreatures.push_back(new Zombie(x, y));
-           }
-       }
-
-       int range = 1;
-
-
-       Tool* axe = ToolRegistry::getInstance().get("Axe");
-       axe->material = ToolMaterial::WOOD;
-    for (int i = 0; i < 10; i++) {
-        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
-		v->jobType = JobType::Lumberjack;
-        v->toolInHand = axe;
-		Villager::allVillagers.push_back(v);
-		Creature::allCreatures.push_back(v);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->jobType = JobType::Miner;
-        v->itemInHand = &PEPPER_GUN;
-        Villager::allVillagers.push_back(v);
-        Creature::allCreatures.push_back(v);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->jobType = JobType::Farmer;
-        v->itemInHand = &PEPPER_GUN;
-        Villager::allVillagers.push_back(v);
-        Creature::allCreatures.push_back(v);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->jobType = JobType::Builder;
-        v->itemInHand = &PEPPER_GUN;
-        Villager::allVillagers.push_back(v);
-        Creature::allCreatures.push_back(v);
-    }
-
-    for (int i = 0; i < 1; i++) {
-        Villager* v = new Villager(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->jobType = JobType::Carpenter;
-        //v->itemInHand = &PEPPER_GUN;
-        Villager::allVillagers.push_back(v);
-        Creature::allCreatures.push_back(v);
-    }
-
-    JobManager::addJob(new Craft(nullptr, JobType::Carpenter, &getWoodenPlankRecipe()));
-
-    auto function = [](Creature* c) {
-        return dynamic_cast<Zombie*>(c) != nullptr;
-    };
-
-
-    Start.onClick = []() {
-        std::cout << "Clicked Start!" << std::endl;
-    };
-
-    Options.onClick = []() {
-        std::cout << "Clicked Options!" << std::endl;
-        };
-
-    Exit.onClick = [window]() {
-        glfwSetWindowShouldClose(window, true);
-    };
-
-    BuildButton.onClick = []() {
-        if (buildMode) {
-            buildMode = false;
-            harvestMode = false;
-            plantMode = false;
-			placing = false;
-			std::cout << "Build mode off" << std::endl;
-        }
-        else {
-            buildMode = true;
-            std::cout << "Build mode on" << std::endl;
-        }
-    };
-
-    ClearButton.onClick = []() {
-        if (harvestMode) {
-            buildMode = false;
-            harvestMode = false;
-            plantMode = false;
-            placing = false;
-            std::cout << "Harvest mode off" << std::endl;
-        }
-        else {
-            harvestMode = true;
-            std::cout << "Harvest mode on" << std::endl;
-        }
-    };
-
-    PlantButton.onClick = []() {
-        if (plantMode) {
-            buildMode = false;
-            harvestMode = false;
-            plantMode = false;
-            placing = false;
-            std::cout << "Plant mode off" << std::endl;
-        }
-        else {
-            plantMode = true;
-            std::cout << "Plant mode on" << std::endl;
-        }
-	};
-
-    BuildStockpile.onClick = []() {
-        if (stockpileMode) {
-            stockpileMode = false;
-            placing = false;
-            std::cout << "Stockpile mode off" << std::endl;
-        }
-        else {
-            stockpileMode = true;
-            std::cout << "Stockpile mode on" << std::endl;
-        }
-    };
-
-
-
-    
-    ui.init("Info.txt");
-    ui.resizeUI(xFrustum, yFrustum);
-    /*ui.UIButtons.push_back(Start);
-    ui.UIButtons.push_back(Options);
-    ui.UIButtons.push_back(Exit);*/
-    ui.UIButtons.push_back(BuildButton);
-    ui.UIButtons.push_back(ClearButton);
-	ui.UIButtons.push_back(PlantButton);
-	ui.UIButtons.push_back(BuildStockpile);
-    menuArray = ui.UI;
-
-    
-
-    sf::Clock lightClock;
-	sf::Clock waterClock;
+    Game::getInstance().getLightManager().addLight(glm::vec2(0,0), glm::vec3(1.0f), 100000.0f, 10000000000.0f, -1.0f);
+	
+    double lastTime = glfwGetTime();
+    int nbFrames = 0;
+    std::string fps;
 
     sf::Music music;
 
-    if (!music.openFromFile("music.mp3")) {
+    if (!music.openFromFile("menumusic.mp3")) {
         std::cout << "Music failed to load!" << std::endl;
     }
 
-    bool firstRender = true;
     //music.play();
+
+	bool calculatedLights = false;
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    std::vector<std::pair<int, int>> nextActive = getWater();
+	glfwSwapInterval(1);
+
+    mainWorld.initLightMap();
+
+   /* Clock gameClock;
+    double lastTime = glfwGetTime();*/
 
     while (!glfwWindowShouldClose(window)) {
 
+       /* double currentTime = glfwGetTime();
+        float dt = currentTime - lastTime;
+        lastTime = currentTime;
+
+        gameClock.update(dt);*/
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -936,95 +738,113 @@ int main() {
             drawMiniMap(shader);
         }
         else {
-            if (firstRender) {
-                std::cout << "Rendered in " << loadTimer.getElapsedTime().asMilliseconds() << " milliseconds." << std::endl;
-                firstRender = false;
-            }
             drawMap(shader);
         }
-
-        menuArray = ui.UI;
-        ui.drawUI();
 
 		FlushBatch(shader);
 
         // Inputs
         processInput(window);
 
-        // Update creatures
-        float deltaTime = lightClock.restart().asSeconds();
-        LightManager::update(deltaTime);
+        static double lastTime = glfwGetTime();
+        double currentTime = glfwGetTime();
 
-        for (auto it = Creature::allCreatures.begin(); it != Creature::allCreatures.end(); ) {
-            Creature* v = *it;
-            if (v->health < 1) {
-                it = Creature::allCreatures.erase(it);
-                //getTileRef(v->xPos, v->yPos).addItem(std::make_unique<Item>(blood));
-            }
-            else {
-                v->doWork();
-                it++;
-            }
+        float deltaTime = static_cast<float>(currentTime - lastTime);
+        lastTime = currentTime;
+
+        Game::getInstance().getLightManager().update(deltaTime);
+        // Update creatures
+
+        // Move this to the World class later
+        auto& creatures = mainWorld.getAllCreatures();
+
+        creatures.erase(
+            std::remove_if(creatures.begin(), creatures.end(),
+                [](const std::unique_ptr<Creature>& c) {
+                    return c->dead;
+                }),
+            creatures.end()
+        );
+
+        for (auto& c : creatures) {
+            if (!c) continue;
+            c->doWork();
         }
-        
 
         glfwGetCursorPos(window, &mouseX, &mouseY);
 
         mouseTileX = (int)(mouseX / xTextSpacing) + xPlayer - (scrWidth / (2 * xTextSpacing));
         mouseTileY = (int)(mouseY / yTextSpacing) + yPlayer - (scrHeight / (2 * yTextSpacing));
-        Tile& tile = getTileRef(mouseTileX, mouseTileY);
-        
-        
 
-        for (auto& pos : activeWater) {
-            Tile& tile = getTileRef(pos.first, pos.second);
-            tile.simulateWaterTile();
-
-            if (tile.water > 0.0f && tile.altitude > 0.0f)
-                nextActive.push_back(pos);
-
-            for (auto& n : getNeighbors(pos.first, pos.second)) {
-                Tile& neighbor = getTileRef(n.first, n.second);
-                if (neighbor.water > 0.0f && tile.altitude > 0.0f)
-                    nextActive.push_back(n);
-            }
+        if (viewUI) {
+            uiManager.update(mouseX / xTextSpacing, mouseY / yTextSpacing, clicked);
+            uiManager.draw();
         }
 
-        std::sort(nextActive.begin(), nextActive.end());
-        nextActive.erase(std::unique(nextActive.begin(), nextActive.end()), nextActive.end());
+        if (mainWorld.isCurrentlyRendering()) {
+            LoadingUI& ui = Game::getInstance().getLoadingUI();
+            int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
+            ui.chunks->changeText(std::to_wstring(mainWorld.getChunksRendered()) + L"/" + std::to_wstring(numChunks));
 
-        activeWater = std::move(nextActive);
+            int barLength = xFrustum - 2;
 
-		//std::cout << activeWater.size() << " active water tiles." << std::endl;
+            float percent = std::clamp((float)mainWorld.getChunksRendered() / numChunks, 0.0f, 1.0f);
+            int filled = (int)(percent * barLength);
+            
+            std::wstring bar;
+            bar += std::wstring(filled, L'#');
+            bar += std::wstring(barLength - filled, L'-');
 
-        if (JobManager::JobList.size() > 0) {
-            for (int i = 0; i < JobManager::JobList.size(); i++) {
-                JobManager::findBestColonistForJob(*JobManager::JobList[i]);
-            }
+            ui.animation->changeText(bar);
         }
 
-		// Stockpile item moving
-        for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
-            bool placed = false;
+        if (mainWorld.isRendered()) {
 
-            for (auto& i : stockpileTiles) {
-                Tile& tile = getTileRef(i.location.first, i.location.second);
+            squad1.update();
 
-                if (tile.items.size() == 1 && !i.claimed) {
-                    Item* item = it->first;
-					Job* job = new MoveItem(nullptr, JobType::None, item, it->second.first, it->second.second, i.location.first, i.location.second);
-					job->priority = 5;
-					JobManager::addJob(job);
-                    i.claimed = true;
-
-                    it = itemsToMove.erase(it);
-                    placed = true;
-                    break;
+            for (auto& tile : tiles) {
+                auto i = getTileRef(tile.first, tile.second).items[0];
+                if (i->type == Type::Spawner) {
+                    auto j = static_cast<Spawner*>(i.get());
+                    j->update();
                 }
             }
 
-            if (!placed)
-                ++it;
+            // Move this to the World class later
+            //std::vector<Villager*> shuffled = mainWorld.getAllVillagers();
+            //std::shuffle(shuffled.begin(), shuffled.end(), rng);
+
+            for (auto j : JobManager::JobList) {
+                if (!j) continue;
+                if (j->villager && j->villager->getJobQueueSize() > 0) continue;
+                JobManager::findBestColonistForJob(*j);
+            }
+
+            // Stockpile item moving
+
+            // Move this to the World class later
+            auto& itemsToMove = mainWorld.getItemsToMove();
+
+            for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
+                auto& item = it->first;
+
+                auto spotOpt = mainWorld.findStockpileSpotForItem(item->name, it->second.first, it->second.second);
+
+                if (spotOpt) {
+                    auto [stockpile, pos] = *spotOpt;
+                    stockpile->addItem(item, pos.first, pos.second);
+
+                    Job* job = new MoveItem(nullptr, nullptr, JobType::None, item, it->second.first, it->second.second, pos.first, pos.second);
+
+                    //job->priority = 5;
+                    JobManager::addJob(job);
+                    it = itemsToMove.erase(it);
+                }
+                else {
+                    ++it;
+                }
+            }
+        
         }
 
         glfwSwapBuffers(window);
@@ -1038,11 +858,11 @@ int main() {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
-	std::cout << "Window resized to " << width << "x" << height << std::endl;
 	scrWidth = width;
 	scrHeight = height;
     xFrustum = scrWidth / xTextSpacing;
     yFrustum = scrHeight / yTextSpacing;
+    std::cout << "Tile dimesions resized to " << xFrustum << "x" << yFrustum << std::endl;
 
-    ui.resizeUI(xFrustum, yFrustum);
+    //uiManager.resize(xFrustum, yFrustum);
 }

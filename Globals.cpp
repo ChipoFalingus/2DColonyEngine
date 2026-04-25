@@ -1,5 +1,7 @@
 #include "Globals.h"
 
+
+
 int xPlayer = 0;
 int yPlayer = 0;
 
@@ -7,6 +9,7 @@ bool clicked = false;
 
 bool viewMiniMap = false;
 bool viewHeightMap = false;
+bool viewUI = true;
 
 int xTextSpacing = 15; //15
 int yTextSpacing = 22; //22
@@ -14,10 +17,7 @@ int yTextSpacing = 22; //22
 int scrWidth;
 int scrHeight;
 
-float fontSize = 0.55f; //24
-
-UI ui;
-UI buildUI;
+float fontSize = 1.0f; //.55
 
 double mouseX, mouseY;
 
@@ -39,6 +39,11 @@ std::pair<int, int> corner = { 0,0 };
 int mouseTileX;
 int mouseTileY;
 
+Mode currentMode = Mode::NONE;
 
-std::vector<Stockpile> stockpileTiles;
-std::vector<std::pair<Item*, std::pair<int, int>>> itemsToMove;
+std::vector<std::pair<int, int>> tiles;
+Squad squad1;
+
+std::vector<std::vector<std::pair<int, int>>> field;
+int fieldX;
+int fieldY;

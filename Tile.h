@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Villager.h"
-#include "Dot.h"
-#include "Item.h"
+#include "TileDisplay.h"
+#include "Object.h"
 #include "mathUtils.h"
 
 
@@ -16,75 +15,76 @@ enum tileType {
 
 enum animType {
     NONE = 0,
-	BREATHE = 1,
-	RAINBOW = 2,
+    STATIC = 1,
+    BREATHE = 2,
+    RAINBOW = 3,
+    RED_X = 4,
+    WHITE_BREATHE = 5,
 };
 
-struct tileDisplay {
-    std::vector<wchar_t> character;
-    std::vector<sf::Color> color;
-    tileDisplay(std::vector<wchar_t> c, std::vector<sf::Color> col) : character(c), color(col) {}
+struct Animation {
+    animType type;
+
+    bool isX = false;
+};
+
+enum Biome {
+    DESERT,
+    DESERT_SCRUB,
+    THORN_WOODLAND,
+    STEPPE,
+    DRY_FOREST,
+    MOIST_FOREST,
+    WET_FOREST,
+    RAIN_FOREST,
+    DRY_TUNDRA,
+    MOIST_TUNDRA,
+    WET_TUNDRA,
+    RAIN_TUNDRA,
+    SNOW
 };
 
 struct Island {
     int x, y;
-    int dampen;
+    int radius;
 };
 
 class Tile {
+private:
 public:
-    //int moistureLevel;
     wchar_t character;
-    std::vector<wchar_t> charList;
-    int charIndex;
-
-	sf::Color origColorHolder;
     sf::Color color;
 
-	animType animationType;
-    std::vector<sf::Color> colorList;
-    float altitude;
-    float water = 0.0f;
-	float flow = 0.0f;
+    uint8_t water;
+    int16_t altitude;
     bool walkable;
+
+	bool markedForHarvest = false;
+
     //item
-    std::vector<std::unique_ptr<Item>> items;
+    std::vector<std::shared_ptr<Object>> items;
 
     tileType type;
 
-    int x, y;
-
-
-    float animOffset = getRandomFloat(0.0f, 6.28318f);
-
-	sf::String typeString;
-
-    bool claimed = false;
+    Animation anim;
 
     void update();
 
     void changeTileChar(sf::String string);
     void changeTileType(tileType type);
 
-
-    void simulateWaterTile();
-
     void getTile(int x, int y);
-	bool containsItem(const Item& item);
-	void addItem(std::unique_ptr<Item> item);
-	void removeItem(const Item& item);
+    bool containsItem(const std::string& item);
+    void addObject(std::string itemName);
+	void addObject(std::shared_ptr<Object> item);
+    void removeItem(std::shared_ptr<Object> item, int x, int y);
     
 };
 
+std::string typeToString(tileType type);
+
 tileDisplay getTileDisplay(tileType type);
-bool getTileWalkable(Item* itemOnTile, tileType type);
-
-void changeTileType(int x, int y, tileType type);
-
-void changeTileChar(int x, int y, sf::String string);
-void changeTileColor(int x, int y, sf::Color color);
-void changeTileWalkable(int x, int y, bool walk);
-void changeTileItem(int x, int y, std::unique_ptr<Item> item);
+bool getTileWalkable(Object* itemOnTile, tileType type);
 
 Tile assignTileTypes(int x, int y);
 
@@ -95,15 +95,11 @@ void createMapIslands();
 void makeLake(int x, int y);
 std::pair<int, int> makeRiver(int x, int y);
 
-float findDistanceToDot(Dot dot, int x, int y);
-Dot& findClosestDot(int x, int y);
 float calculateAltitude(int x, int y);
 float getAltitude(int x, int y);
-void createVoronoiMap();
 
-void addBasin(int x, int y);
+inline std::vector<std::pair<int, int>> getNeighbors(int x, int y) {
+    return { {x - 1, y}, {x, y - 1}, {x + 1, y}, {x, y + 1} };
+}
 
 extern std::vector<Island> islands;
-
-
-std::vector<std::pair<int, int>> getWater();

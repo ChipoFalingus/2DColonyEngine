@@ -2,7 +2,7 @@
 #include "Vec2.h"
 #include <SFML/Graphics.hpp>
 
-enum class Biome { GRASS, DESERT };
+//enum class Biome { GRASS, DESERT };
 
 struct Dot {
     int ID;
@@ -11,5 +11,5 @@ struct Dot {
     Vec2 direction;
     sf::Color color;
 
-    Biome biome;
+    //Biome biome;
 };

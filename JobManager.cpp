@@ -5,55 +5,112 @@
 #include "Villager.h"
 #include "Globals.h"
 #include "HarvestRules.h"
+#include "Game.h"
+
+#include <limits>
+#include "World.h"
 
 std::vector<Job*> JobManager::JobList;
 bool isAtTile(int xPos, int yPos, int xLoc, int yLoc);
 std::pair<int, int> findClosestAdjTile(int xPos, int yPos, int xTile, int yTile);
+std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>>
+findIngredientsForJob(const std::unordered_map<std::string, int>& ingredients);
+
+static bool toolsMatch(const std::string& required, Tool* have) {
+	if (required.empty()) return true;
+	if (!have) return false;       
+	return required == have->name;
+}
 
 void JobManager::findBestColonistForJob(Job& job) {
-	// Needs to handle multiple villagers having the same job
+
 	Villager* bestVillager = nullptr;
-	float lowestDistance = INFINITY;
 
+	int bestScore = std::numeric_limits<int>::max();
 
+	for (auto* v : mainWorld.getAllVillagers()) {
 
-	for (auto* i : Villager::allVillagers) {
-		if (i->jobType == job.preferredJob && !i->busy) {
-			job.villager = i;
-			i->jobQueue.push(&job);
-			i->busy = true;
+		int score = 0;
 
-			auto it = std::find(JobList.begin(), JobList.end(), &job);
-			if (it != JobList.end()) {
-				JobList.erase(it);
+		if (job.preferredTool) {
+			if (!toolsMatch(job.preferredToolName, v->toolInHand.get())) {
+				continue;
 			}
-			return;
+		}
+
+		if (job.preferredJob != JobType::None) {
+			if (v->getJob() != job.preferredJob) {
+				continue;
+			}
+
+		}
+		
+		int dx = std::abs(v->xPos - job.x);
+		int dy = std::abs(v->yPos - job.y);
+		score += (dx + dy);
+		score += v->getJobQueueSize() * 100;
+
+		if (score < bestScore) {
+			bestScore = score;
+			bestVillager = v;
 		}
 	}
 
-	if (!bestVillager && job.preferredJob == JobType::None) {
+	if (bestVillager) {
+		job.villager = bestVillager;
+		bestVillager->addToJobQueue(&job);
 
-		for (auto* i : Villager::allVillagers) {
-			if (!i->busy) {
-				job.villager = i;
-				i->jobQueue.push(&job);
-				i->busy = true;
-
-				auto it = std::find(JobList.begin(), JobList.end(), &job);
-				if (it != JobList.end()) {
-					JobList.erase(it);
-				}
-				return;
-			}
-		}
+		JobManager::removeJob(&job);
 	}
 }
 
+//void JobManager::findJobForColonist(Villager& v) {
+//
+//	Job* bestJob = nullptr;
+//	int bestScore = std::numeric_limits<int>::max();
+//
+//	for (auto& job : JobManager::JobList) {
+//
+//		if (job->taken) continue;
+//
+//		int score = 0;
+//
+//		if (job->preferredTool && (!v.toolInHand ||
+//			v.toolInHand->name != job->preferredTool->name))
+//		{
+//			continue;
+//		}
+//		
+//		if (job->preferredJob != JobType::None && v.getJob() != job->preferredJob) {
+//			continue;
+//		}
+//		
+//		int dx = std::abs(v.xPos - job->x);
+//		int dy = std::abs(v.yPos - job->y);
+//
+//		score = dx + dy;
+//
+//		//score += v.getJobQueueSize() * 10000;
+//
+//		if (score < bestScore) {
+//			bestScore = score;
+//			bestJob = job;
+//		}
+//	}
+//	if (!bestJob) {
+//		return;
+//	}
+//	std::cout << "Assigned job to " << v.firstname << " " << v.lastname << " with score " << bestScore << std::endl;
+//	bestJob->villager = &v;
+//	v.addToJobQueue(bestJob);
+//	JobManager::removeJob(bestJob);
+//}
+
 
 void Harvest::update() {
-	std::pair<int, int> itemLocation;
+	std::optional<std::pair<int, int>> itemLocation;
 	if (!itemFound) {
-		itemLocation = findClosestTileItem(item, villager->xPos, villager->yPos);
+		itemLocation = findClosestTileItem(*item.get(), villager->xPos, villager->yPos);
 
 		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, x, y);
 
@@ -65,7 +122,7 @@ void Harvest::update() {
 
 
 	if (villager->xPos == x && villager->yPos == y) {
-		getTileRef(itemLocation.first, itemLocation.second).removeItem(item);
+		getTileRef(itemLocation->first, itemLocation->second).removeItem(item, itemLocation->first, itemLocation->second);
 		villager->clock.restart();
 		itemFound = false;
 		completed = true;
@@ -73,21 +130,18 @@ void Harvest::update() {
 }
 
 void HarvestTile::update() {
-
-	Rule* rule = HarvestRuleRegistry::getInstance().get(item.name);
+	Rule* rule = HarvestRuleRegistry::getInstance().get(item);
+	Tile& tile = getTileRef(locX, locY);
 
 	// Check for required tool
-
-	if (requiredTool) {
-		if (villager->toolInHand != requiredTool) {
-			std::cout << "Villager does not have required tool: " << requiredTool->name << std::endl;
-			completed = true;
-			return;
-		}
+	if (!toolsMatch(preferredToolName, villager->toolInHand.get())) {
+		std::cout << "Tool requirement not met for harvesting " << item << std::endl;
+		completed = true;
+		return;
 	}
 
 	if (!rule) {
-		std::cout << "No harvest rule found for item: " << item.name << std::endl;
+		std::cout << "No harvest rule found for item: " << item << std::endl;
 		completed = true;
 		return;
 	}
@@ -103,6 +157,7 @@ void HarvestTile::update() {
 	bool adjacent = isAtTile(villager->xPos, villager->yPos, locX, locY);
 
 	if (adjacent) {
+
 		if (!isHarvesting) {
 			isHarvesting = true;
 			villager->clock.restart();
@@ -110,18 +165,17 @@ void HarvestTile::update() {
 
 		if (villager->clock.getElapsedTime().asSeconds() > villager->harvestTime) {
 
-			Tile& tile = getTileRef(locX, locY);
-			Item* droppedItem = ItemRegistry::getInstance().get(rule->produces);
-
-			tile.removeItem(item);
+			auto droppedItem = ObjectRegistry::getInstance().get(rule->produces);
+			auto targetItem = ObjectRegistry::getInstance().get(rule->target);
+			tile.removeItem(targetItem, locX, locY);
 
 			for (int i = 0; i < rule->amount; i++) {
-				itemsToMove.push_back({ droppedItem, {locX, locY} });
-				tile.addItem(std::make_unique<Item>(*droppedItem));
+				tile.addObject(droppedItem->name);
+				mainWorld.addItemToMove(droppedItem, locX, locY);
 			}
 			
-
 			villager->clock.restart();
+			villager->tiredness += 5;
 			completed = true;
 		}
 	}
@@ -131,31 +185,59 @@ void HarvestTile::update() {
 	
 }
 
+// Should check if all items are in stockpile instead of grabbing one by one
+// Nice job team!
 void Build::update() {
-	x = locX;
-	y = locY;
 
-	Tile& tile = getTileRef(locX, locY);
-	
 
-	if (!tile.walkable) {
-		completed = true;
-		return;
+	if (!init) {
+		reserve = findIngredientsForJob(ingredients);
+		init = true;
+		if (reserve.empty()) {
+			completed = true;
+			return;
+		}
 	}
-	
-	std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, x, y);
 
-	x = closestAdj.first;
-	y = closestAdj.second;
+	if (!grabbedAllItems) {
+		auto& itemObj = reserve.front();
 
-	
+		int xPos = itemObj.first.first;
+		int yPos = itemObj.first.second;
 
-	if (villager->xPos == x && villager->yPos == y) {
-		tile.items.clear();
+		auto adjLoc = findClosestAdjTile(villager->xPos, villager->yPos, xPos, yPos);
+		x = adjLoc.first;
+		y = adjLoc.second;
 
-		tile.addItem(std::make_unique<Item>(itemToBuild));
-		//tile.walkable = false;
-		completed = true;
+		if (isAtTile(villager->xPos, villager->yPos, xPos, yPos)) {
+			if (auto s = mainWorld.atStockpile(xPos, yPos)) {
+				villager->pickUpItem(itemObj.second, xPos, yPos, s);
+			}
+
+			reserve.erase(reserve.begin());
+
+			if (reserve.empty()) {
+				grabbedAllItems = true;
+			}
+		}
+	}
+	else {
+		std::pair<int, int> loc = { locX, locY };
+
+		auto adjLoc = findClosestAdjTile(villager->xPos, villager->yPos, loc.first, loc.second);
+
+		x = adjLoc.first;
+		y = adjLoc.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, loc.first, loc.second)) {
+
+			for (int i = 0; i < recipe->quantity; i++) {
+				getTileRef(loc.first, loc.second).addObject(recipe->result);
+				getTileRef(loc.first, loc.second).walkable = false;
+			}
+
+			completed = true;
+		}
 	}
 }
 
@@ -167,23 +249,34 @@ void PlaceItem::update() {
 	x = closestAdj.first;
 	y = closestAdj.second;
 	if (villager->xPos == x && villager->yPos == y) {
-		tile.addItem(std::make_unique<Item>(itemToPlace));
+		tile.addObject(std::make_unique<Object>(itemToPlace));
 		completed = true;
 	}
 }
 
 void Idle::update() {
 
-	/*float time = getRandomFloat(1.0f, 4.0f);
-	int range = 5;
-	if (villager->clock.getElapsedTime().asSeconds() > time) {
-	    villager->clock.restart();
-	    int newX = getRandomInt(villager->xPos - range, villager->xPos + range);
-	    int newY = getRandomInt(villager->yPos - range, villager->yPos + range);
+	if (!initialized) {
+		waitTime = getRandomFloat(1.0f, 2.0f);
+		initialized = true;
+	}
+
+	if (villager->idleClock.getElapsedTime().asSeconds() > waitTime) {
+		villager->idleClock.restart();
+
+		int range = 5;
+
+		int newX = getRandomInt(villager->xPos - range, villager->xPos + range);
+		int newY = getRandomInt(villager->yPos - range, villager->yPos + range);
 
 		x = newX;
 		y = newY;
-	}*/
+	}
+
+	if (isAtTile(villager->xPos, villager->yPos, x, y)) {
+		completed = true;
+		return;
+	}
 }
 
 void Plant::update() {
@@ -192,8 +285,6 @@ void Plant::update() {
 
 	// Update this to only allow planting on fertile land
 
-	x = locX;
-	y = locY;
 	Tile& tile = getTileRef(locX, locY);
 
 	if (!tile.walkable) {
@@ -201,93 +292,113 @@ void Plant::update() {
 		return;
 	}
 
-	std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, x, y);
+	std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, locX, locY);
 
 	x = closestAdj.first;
 	y = closestAdj.second;
 
-	Item soil = *ItemRegistry::getInstance().get("Soil");
-
-	if (tile.containsItem(soil)) {
+	if (tile.containsItem("Soil")) {
 		needsSoil = false;
 	}
 
 	if (villager->xPos == x && villager->yPos == y) {
 		if (needsSoil) {
-			tile.addItem(std::make_unique<Item>(soil));
+			tile.addObject("Soil");
 		}
-		tile.addItem(std::make_unique<Crop>(crop));
-		tile.animationType = NONE;
+		tile.addObject(name);
 		completed = true;
 	}
 }
 
 void Attack::update() {
-	std::cout << "Attacking\n";
-	// This doesnt need to find the closest target at all, a different system should assign targets. Just attack the assigned target.
-	target = nullptr;
-	float minDist = INFINITY;
 
-	for (auto& c : Creature::allCreatures) {
-		if (c == villager) continue;
-		if (targetFilter && !targetFilter(c)) continue;
-		float dist = pow(c->xPos - villager->xPos, 2) + pow(c->yPos - villager->yPos, 2);
-		if (dist < minDist) {
-			minDist = dist;
+	if (!target || target->dead) {
+		auto c = findClosestCreatureType<Zombie>(villager->xPos, villager->yPos, villager->alertness * 1.5f);
+		if (c) {
 			target = c;
+		} else {
+			x = villager->xPos;
+			y = villager->yPos;
+			completed = true;
+			return;
 		}
 	}
 
-	if (!target) {
-		std::cout << "No target found\n";
-		completed = true;
-		return;
-	}
+	float range;
+	float attackCooldown;
+	int dmg;
 
-	if (target->dead) {
-		std::cout << "Target already dead\n";
-		completed = true;
-		return;
-	}
-
-	float dist = sqrt(pow(target->xPos - villager->xPos, 2) + pow(target->yPos - villager->yPos, 2));
-
-
-	float range = 1.0f;
-	float attackCooldown = 1.0f;
-	int dmg = 1;
 
 	if (villager->itemInHand) {
-		range = villager->itemInHand->getRange();
-		attackCooldown = villager->itemInHand->getAttackCooldown();
-		dmg = villager->itemInHand->getDamage();
+		if (villager->itemInHand->type == Type::Gun) {
+			Gun* i = static_cast<Gun*>(villager->itemInHand.get());
+			range = i->getRange();
+			attackCooldown = i->getAttackCooldown();
+			dmg = i->getDamage();
+		}
+		else {
+			range = 1.0f;
+			attackCooldown = 1.0f;
+			dmg = 1;
+		}
+	} else {
+		range = 1.0f;
+		attackCooldown = 1.0f;
+		dmg = 1;
 	}
 
-	if (dist > range) {	
+	float dx = target->xPos - villager->xPos;
+	float dy = target->yPos - villager->yPos;
+	float distSq = dx * dx + dy * dy;
+	float rangeSq = range * range;
+
+	if (distSq > rangeSq) {
+		// Move toward target (replace later with pathfinding)
 		x = target->xPos;
 		y = target->yPos;
 	}
-
 	else {
-
+		// Stay in place
 		x = villager->xPos;
 		y = villager->yPos;
 
 		if (villager->clock.getElapsedTime().asSeconds() > attackCooldown) {
+			target->takeDamage(dmg, villager);
 
-			LightManager::addLight(glm::vec2(villager->xPixels, villager->yPixels), glm::vec3(1.0f, 1.0f, 0.0f), 300.0f, 1.5f, 0.02f);
+			float dx = target->xPos - villager->xPos;
+			float dy = target->yPos - villager->yPos;
 
-			target->health -= dmg;
+			float length = std::sqrt(dx * dx + dy * dy);
+
+			glm::vec2 dir;
+			if (length == 0) {
+				dir = glm::vec2(1.0f, 0.0f);
+			}
+			else {
+				 dir = glm::vec2(dx / length, dy / length);
+			}
+
+			Game::getInstance().getLightManager().addDLight(glm::vec2(villager->xPos, villager->yPos), glm::vec3(1.0f, 1.0f, 0.0f), 10.0f, 5.0f, 0.03f, dir);
 			villager->clock.restart();
 		}
 	}
-
-	
 }
 
 void Retreat::update() {
-	std::cout << "Retreating\n";
-	// Safe score should take safe spaces, weapon in hand, personality, and distance into account
+	// Needs huge rewrite
+
+	// Sees if there is cover nearby (if they dont have a weapon, this part isnt important)
+
+	// Sees if there are safe spaces (basically looking for cover for colonists with no weapon)
+
+	// Sees if there are nearby allies with good weapons and health (tune to make colonists not so clingy, also this is a last last last resort)
+	
+	// Extra stuff:
+		// Could have them search for a weapon to join the fight
+
+	// Hardest part is to make this believable and FAST
+
+	
 	int safeScore = -1;
 
 	if (!threat || threat->dead) {
@@ -300,73 +411,207 @@ void Retreat::update() {
 
 	float distance = sqrt(dx * dx + dy * dy);
 
-	for (auto& i : getNeighbors(villager->xPos, villager->yPos)) {
-		float ndx = i.first - threat->xPos;
-		float ndy = i.second - threat->yPos;
-		float newDist = sqrt(ndx * ndx + ndy * ndy);
-		if (newDist > distance) {
-			int score = (int)(newDist - distance);
-			if (score > safeScore && getTileRef(i.first, i.second).walkable) {
-				safeScore = score;
-				x = i.first;
-				y = i.second;
+	int dim = 64;
 
+	auto threatMap = buildThreatMap(villager->xPos, villager->yPos, dim);
+
+	int startX = villager->xPos - dim / 2;
+	int startY = villager->yPos - dim / 2;
+
+	float bestScore = 99999.0f;
+	std::pair<int, int> bestMove = { 0, 0 };
+
+	std::vector<std::pair<int, int>> dirs = {
+		{1,0}, {0,1}, {-1,0}, {0,-1}
+	};
+
+	std::shuffle(dirs.begin(), dirs.end(), rng);
+
+	bool foundMove = false;
+
+	for (auto& i : dirs) {
+		int nx = villager->xPos + i.first;
+		int ny = villager->yPos + i.second;
+
+		int fx = nx - startX;
+		int fy = ny - startY;
+
+		if (fx < 0 || fy < 0 || fx >= dim || fy >= dim)
+			continue;
+
+		if (!getTileRef(nx, ny).walkable)
+			continue;
+
+		float score = threatMap[fx][fy];
+
+		if (villager->lastMove != i) {
+			score += 0.5f;
+		}
+
+		score += getRandomFloat(-0.2f, 0.2f);
+
+		if (score < bestScore) {
+			bestScore = score;
+			bestMove = i;
+			foundMove = true;
+		}
+
+		int cx = villager->xPos - startX;
+		int cy = villager->yPos - startY;
+
+		if (cx >= 0 && cy >= 0 && cx < dim && cy < dim) {
+			float stayScore = threatMap[cx][cy];
+
+			if (stayScore < bestScore) {
+				bestMove = { 0,0 };
 			}
 		}
 	}
 
-	std::cout << "Distance to threat: " << distance << "\n";
+	if (foundMove && villager->moveClock.getElapsedTime().asSeconds() > villager->speed) {
+		villager->xPos += bestMove.first;
+		villager->yPos += bestMove.second;
 
-	if (distance > 15) {
-		completed = true;
+		villager->lastMove = bestMove;
+		villager->moveClock.restart();
 	}
 
+	if (distance > 50) {
+		std::cout << "Retreated" << std::endl;
+		completed = true;
+	}
 }
 
 void Sleep::update() {
+
 	x = villager->bed.first;
 	y = villager->bed.second;
+
+	if (!villager->bed.first && !villager->bed.second) {
+		x = villager->xPos;
+		y = villager->yPos;
+	}
 
 	if (villager->xPos == x && villager->yPos == y && !sleeping) {
 		sleeping = true;
 		villager->clock.restart();
 		
 	} else if (sleeping && villager->sleepTime < villager->clock.getElapsedTime().asSeconds()) {
+		sleeping = false;
 		completed = true;
 	}
 }
 
+std::vector<std::string> getIngredientList(const std::string& itemToCraft);
+
+
+// Should check if all ingredients are in stockpile instead of grabbing one by one
+// Also needs to be able to handle multiple steps of crafting (crafting subcomponents first)
+
 void Craft::update() {
 
-	if (!ingredients.empty()) {
+	if (!recipe) {
+		std::cout << "If you see this something has gone horribly wrong :(\nSOURCE: CRAFTING JOB" << itemName << std::endl;
+		completed = true;
+		return;
+	}
 
-		std::pair<int, int> itemLoc = findClosestTileItem(ingredients[0], villager->xPos, villager->yPos);
-		std::pair<int, int> itemAdj = findClosestAdjTile(villager->xPos, villager->yPos, itemLoc.first, itemLoc.second);
-
-		x = itemAdj.first;
-		y = itemAdj.second;
-
-		if (isAtTile(villager->xPos, villager->yPos, itemLoc.first, itemLoc.second)) {
-			getTileRef(itemLoc.first, itemLoc.second).removeItem(ingredients[0]);
-			ingredients.erase(ingredients.begin());
+	if (recipe->requiredStation != "None") {
+		auto stationItem = ObjectRegistry::getInstance().get(recipe->requiredStation);
+		if (!findClosestTileItem(*stationItem, villager->xPos, villager->yPos)) {
+			std::cout << "Required station not found: " << stationItem->name << std::endl;
+			completed = true;
+			return;
 		}
 	}
-	else {
 
-		std::pair<int, int> stationLoc = findClosestTileItem(*recipe->requiredStation, villager->xPos, villager->yPos);
-		std::pair<int, int> stationAdj = findClosestAdjTile(villager->xPos, villager->yPos, stationLoc.first, stationLoc.second);
+	if (!init) {
+		reserve = findIngredientsForJob(ingredients);
+		init = true;
+		if (reserve.empty()) {
+			completed = true;
+			return;
+		}
+	}
 
-		x = stationAdj.first;
-		y = stationAdj.second;
 
-		if (isAtTile(villager->xPos, villager->yPos, stationLoc.first, stationLoc.second)) {
-			std::unique_ptr<Item> resultItem = std::make_unique<Item>(recipe->result);
-			auto ptr = resultItem.get();
-			getTileRef(stationLoc.first, stationLoc.second).addItem(std::move(resultItem));
-			itemsToMove.push_back({ ptr, {stationLoc.first, stationLoc.second} });
+
+	if (!grabbedAllItems) {
+		// Find the first ingredient in stockpile
+		auto itemObj = reserve[0];
+
+		auto adjLoc = findClosestAdjTile(villager->xPos, villager->yPos, itemObj.first.first, itemObj.first.second);
+		x = adjLoc.first;
+		y = adjLoc.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, itemObj.first.first, itemObj.first.second)) {
+			if (auto s = mainWorld.atStockpile(itemObj.first.first, itemObj.first.second)) {
+				villager->pickUpItem(itemObj.second, itemObj.first.first, itemObj.first.second, s);
+			}
+
+			reserve.erase(reserve.begin());
+
+			if (reserve.empty()) {
+				grabbedAllItems = true;
+			}
+		}
+	} else {
+		auto item = ObjectRegistry::getInstance().get(recipe->requiredStation);
+		auto loc = findClosestTileItem(*item, villager->xPos, villager->yPos);
+
+		auto adjLoc = findClosestAdjTile(villager->xPos, villager->yPos, loc->first, loc->second);
+
+		x = adjLoc.first;
+		y = adjLoc.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, loc->first, loc->second)) {
+
+			if (item->name == "Carpentry Bench") {
+			}
+			for (int i = 0; i < recipe->quantity; i++) {
+				auto item = ObjectRegistry::getInstance().get(recipe->result);
+				if (!item) {
+					std::cout << "Registry returned nullptr for " << recipe->result << std::endl;
+					completed = true;
+					return;
+				}
+
+				auto tool = dynamic_cast<Tool*>(item.get());
+				if (tool) {
+					tool->material = recipe->material;
+				}
+
+				getTileRef(loc->first, loc->second).addObject(item);
+				mainWorld.addItemToMove(item, loc->first, loc->second);
+			}
+			
 			completed = true;
 		}
 	}
+}
+
+std::vector<std::string> getIngredientList(const std::string& itemToCraft) {
+	std::vector<std::string> result;
+
+	Recipe* recipe = RecipeRegistry::getInstance().get(itemToCraft);
+	if (!recipe) {
+		result.push_back(itemToCraft);
+		return result;
+	}
+	for (auto& [name, count] : recipe->ingredients) {
+		for (int i = 0; i < count; i++) {
+			auto foundItem = mainWorld.findItemInAllStockpile(name);
+			if (!foundItem) {
+				std::vector<std::string> subResult = getIngredientList(name);
+				result.insert(std::end(result), std::begin(subResult), std::end(subResult));
+			}
+			else {
+				result.push_back(name);
+			}
+		}
+	}
+
+	return result;
 }
 
 
@@ -377,37 +622,102 @@ void Move::update() {
 }
 
 void MoveItem::update() {
+	
 
 	if (!itemPickedUp) {
 		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, fromX, fromY);
 		x = closestAdj.first;
 		y = closestAdj.second;
 		if (villager->xPos == x && villager->yPos == y) {
-			getTileRef(fromX, fromY).removeItem(itemToMove);
+			villager->pickUpItem(itemToMove, fromX, fromY);
 			itemPickedUp = true;
 		}
 	} else {
 
-		//auto goal = findClosestTileItem(stockPile, villager->xPos, villager->yPos);
-
-		std::pair<int, int> goal = { toX, toY };
-
-		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, goal.first, goal.second);
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, toX, toY);
 		x = closestAdj.first;
 		y = closestAdj.second;
 		if (villager->xPos == x && villager->yPos == y) {
-			getTileRef(goal.first, goal.second).addItem(std::make_unique<Item>(itemToMove));
-			std::cout << itemToMove.name << std::endl;
+
+			villager->dropItem(itemToMove, toX, toY);
 			completed = true;
 		}
 	}
 }
+
+void FindFood::update() {
+	if (!foodFound) {
+		foodLocation = findClosestItemType(villager->xPos, villager->yPos, 50, [](const Object& item) {
+			//return item.getNutrition() > 0.0f;
+			return true;
+		});
+		foodFound = true;
+	}
+	std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, foodLocation->x, foodLocation->y);
+	x = closestAdj.first;
+	y = closestAdj.second;
+	if (isAtTile(villager->xPos, villager->yPos, foodLocation->x, foodLocation->y)) {
+		Tile& tile = getTileRef(foodLocation->x, foodLocation->y);
+		if (!tile.containsItem(foodLocation->item->name)) {
+			completed = true;
+			return;
+		}
+		tile.removeItem(ObjectRegistry::getInstance().get(foodLocation->item->name), foodLocation->x, foodLocation->y);
+		mainWorld.removeItemToMove(foodLocation->item, foodLocation->x, foodLocation->y);
+
+		villager->clock.restart();
+		//villager->hunger += foodLocation.item->getNutrition();
+		villager->isHungry = false;
+		completed = true;
+	}
+}
+
+
+std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>>
+findIngredientsForJob(const std::unordered_map<std::string, int>& ingredients) {
+
+	std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>> result;
+	std::vector<std::shared_ptr<Object>> reserved;
+	bool success = true;
+
+	for (const auto& [name, quantity] : ingredients) {
+
+		for (int i = 0; i < quantity; i++) {
+			auto itemLocation = mainWorld.findUnclaimedItemInAllStockpile(name);
+			if (!itemLocation) {
+				std::cout << "Ingredient " << name << " not found in any stockpile\n";
+				success = false;
+				break;
+			}
+			itemLocation->second->claimed = true;
+			reserved.push_back(itemLocation->second);
+			result.push_back(*itemLocation);
+		}
+		if (!success) {
+			break;
+		}
+	}
+
+	if (!success) {
+		for (std::shared_ptr<Object> obj : reserved) {
+			obj->claimed = false;
+		}
+		return {};
+	}
+
+	return result;
+}
+
 
 bool isAtTile(int xPos, int yPos, int xLoc, int yLoc) {
     int dx = xPos - xLoc;
     int dy = yPos - yLoc;
 
 	return std::abs(dx) + std::abs(dy) == 1;
+}
+
+bool isOnTile(int xPos, int yPos, int xLoc, int yLoc) {
+	return xPos == xLoc && yPos == yLoc;
 }
 
 std::pair<int, int> findClosestAdjTile(int xPos, int yPos, int xTile, int yTile) {
@@ -426,18 +736,3 @@ std::pair<int, int> findClosestAdjTile(int xPos, int yPos, int xTile, int yTile)
 
 	return closestAdj;
 }
-
-
-/*
-
-TO ADD:
-
-Smithing/Crafting (needs crafting system first)
-Moving items
-Retreating
-Guarding/Defending
-Attacking (working on)
-Building (working on)
-Cooking (its just crafting ig?)
-
-*/

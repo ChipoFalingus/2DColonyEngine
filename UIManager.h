@@ -1,0 +1,119 @@
+#pragma once
+#include <algorithm>
+
+#include "UIElements.h"
+
+#define BLANK_CHAR L'@'
+
+struct UITile {
+    wchar_t character;
+    sf::Color color;
+};
+
+class UIManager {
+private:
+    std::vector<std::string> frameStack;
+    std::vector<std::vector<wchar_t>> masterUI;
+
+    std::unordered_map<std::string, std::unique_ptr<Frame>> allFrames;
+
+    
+public:
+    std::vector<std::vector<wchar_t>>& getMasterUI() {
+        return masterUI;
+    }
+
+    Frame* getFrame(const std::string& name) {
+        auto it = allFrames.find(name);
+        if (it != allFrames.end())
+            return it->second.get();
+        return nullptr;
+    }
+
+    bool hasFrame(const std::string& name) {
+        return std::find(frameStack.begin(), frameStack.end(), name) != frameStack.end();
+    }
+   
+
+    void draw() {
+        for (auto& row : masterUI) {
+            std::fill(row.begin(), row.end(), BLANK_CHAR);
+        }
+
+        for (auto& frame : frameStack) {
+            auto i = getFrame(frame);
+            if (!i) continue;
+            i->draw(masterUI);
+        }
+    }
+
+    void update(int mouseX, int mouseY, bool mouseDown) {
+        // Only top frame gets input with this code
+        /*if (!frameStack.empty()) {
+            frameStack.back()->update(mouseX, mouseY, mouseDown);
+        }*/
+
+        // All active frames recieve input, should maybe add a smart system that disables input for frames below should it be necessary
+        for (auto& frame : frameStack) {
+            auto i = getFrame(frame);
+            if (!i) continue;
+            i->update(mouseX, mouseY, mouseDown);
+        }
+    }
+
+    void push(const std::string name) {
+        for (auto& i : frameStack) {
+            if (i == name) {
+                return;
+            }
+        }
+        frameStack.push_back(name);
+    }
+
+    void pop() {
+        if (!frameStack.empty()) {
+            frameStack.pop_back();
+        }
+
+    }
+
+    void remove(const std::string& name) {
+        frameStack.erase(
+            std::remove(frameStack.begin(), frameStack.end(), name),
+            frameStack.end()
+        );
+	}
+    // Swaps two different frames, this only works if both aren't active
+    void swapFrame(const std::string& name, const std::string& name2) {
+        if (hasFrame(name)) {
+			std::replace(frameStack.begin(), frameStack.end(), name, name2);
+        }
+        else {
+            std::replace(frameStack.begin(), frameStack.end(), name2, name);
+        }
+	}
+
+    void addOrRemoveFrame(const std::string& name) {
+        if (!hasFrame(name)) {
+            push(name);
+        }
+        else {
+            deleteFrame(name);
+        }
+	}
+
+    void deleteFrame(const std::string& name) {
+        frameStack.erase(
+            std::remove(frameStack.begin(), frameStack.end(), name),
+            frameStack.end()
+        );
+    }
+
+    void addFrame(std::unique_ptr<Frame> frame, const std::string& name) {
+        allFrames[name] = std::move(frame);
+    }
+
+    void resize(int newX, int newY) {
+        masterUI.resize(newY, std::vector<wchar_t>(newX, L' '));
+    }
+};

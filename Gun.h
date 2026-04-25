@@ -1,7 +1,7 @@
 #pragma once
 #include "Item.h"
 
-class Gun : public Item {
+class Gun : public Object {
 public:
 
 	int maxAmmo;
@@ -13,23 +13,16 @@ public:
 	float attackCooldown; //in seconds
 	sf::Clock shootClock;
 
-	Gun(std::string name, wchar_t ch, sf::Color color, int maxAmmo, int damage, float range, float attackCooldown) :
-		maxAmmo(maxAmmo), damage(damage), range(range), attackCooldown(attackCooldown) {
-
-		this->name = name;
-		displayChar = ch;
-		displayColor = color;
-
-	}
+	Gun() : Object(), maxAmmo(0), damage(0), range(0.0f), attackCooldown(0.0f) {}
 
 
-	int getDamage() const override { 
+	int getDamage() const { 
 		return damage; 
 	}
-	float getRange() const override { 
+	float getRange() const { 
 		return range; 
 	}
-	float getAttackCooldown() const override {
+	float getAttackCooldown() const {
 		return attackCooldown; 
 	}
 	
@@ -61,10 +54,3 @@ public:
 		currentAmmo = maxAmmo;
 	}
 };
-
-
-extern Gun PISTOL;
-extern Gun PEPPER_GUN;
-extern Gun ASSAULT_RIFLE;
-extern Gun MINIGUN;
-extern Gun MEGA_SNIPER;

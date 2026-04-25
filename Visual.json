@@ -1,4 +1,4 @@
-﻿{
+{
     "foliage": [
         {
             "name": "Oak Tree",
@@ -8,12 +8,17 @@
         {
             "name": "Pine Tree",
             "character": 9824,
-            "color": [ 0, 100, 0 ]
+            "color": [ 42, 55, 12 ]
         },
         {
             "name": "Birch Tree",
             "character": 9827,
             "color": [ 255, 255, 255 ]
+        },
+        {
+            "name": "Dead Tree",
+            "character": "Y",
+            "color": [ 150, 75, 0 ]
         },
         {
             "name": "Flower",
@@ -29,6 +34,16 @@
             "name": "Soil",
             "character": "=",
             "color": [ 84, 30, 0 ]
+        },
+        {
+            "name": "Wheat",
+            "character": "W",
+            "color": [ 255, 229, 153 ]
+        },
+        {
+            "name": "Stick",
+            "character": "/",
+            "color": [ 150, 75, 0 ]
         }
     ],
     "natural_resources": [
@@ -43,7 +58,12 @@
             "color": [ 128, 128, 128 ]
         },
         {
-            "name": "Iron",
+            "name": "Pebble",
+            "character": "o",
+            "color": [ 128, 128, 128 ]
+        },
+        {
+            "name": "Raw Iron",
             "character": "I",
             "color": [ 217, 201, 147 ]
         },
@@ -63,6 +83,11 @@
             "color": [ 91, 185, 226 ]
         },
         {
+            "name": "Copper",
+            "character": "C",
+            "color": [ 184, 115, 51 ]
+        },
+        {
             "name": "Coal",
             "character": "C",
             "color": [ 54, 69, 79 ]
@@ -78,9 +103,26 @@
             "color": [ 255, 0, 0 ]
         },
         {
-            "name": "Copper",
-            "character": "C",
-            "color": [ 184, 115, 51 ]
+            "name": "RAINBOW",
+            "character": "o",
+            "color": [ 255, 255, 255 ]
+        }
+    ],
+    "raw_materials": [
+        {
+            "name": "Wooden Plank",
+            "character": "=",
+            "color": [ 100, 65, 23 ]
+        },
+        {
+            "name": "Stone Brick",
+            "character": "=",
+            "color": [ 128, 128, 128 ]
+        },
+        {
+            "name": "Iron Bar",
+            "character": "I",
+            "color": [ 203, 205, 205 ]
         }
     ],
     "infrastructure": [
@@ -90,9 +132,14 @@
             "color": [ 100, 100, 100 ]
         },
         {
-            "name": "Wall",
+            "name": "Wooden Wall",
             "character": "%",
             "color": [ 100, 65, 23 ]
+        },
+        {
+            "name": "Stone Wall",
+            "character": "%",
+            "color": [ 128, 128, 128 ]
         },
         {
             "name": "Bed",
@@ -103,6 +150,11 @@
             "name": "Anvil",
             "character": "+",
             "color": [ 46, 46, 46 ]
+        },
+        {
+            "name": "Furnace",
+            "character": "O",
+            "color": [ 128, 128, 128 ]
         },
         {
             "name": "Carpentry Bench",
@@ -123,6 +175,11 @@
             "name": "Table",
             "character": "T",
             "color": [ 148, 77, 0 ]
+        },
+        {
+            "name": "Torch",
+            "character": "|",
+            "color": [ 117, 66, 12 ]
         }
     ],
     "letters": [

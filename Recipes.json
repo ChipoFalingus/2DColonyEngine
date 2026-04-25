@@ -1,20 +1,179 @@
 {
     "recipes": [
         {
-            "result": "Axe",
+            "result": "Wooden Wall",
             "quantity": 1,
             "ingredients": {
-                "Wood": 2,
-                "Stone": 1
-            }
+                "Wooden Plank": 2
+            },
+            "required_bench": "None"
         },
         {
-            "result": "Sword",
+
+            "result": "Carpentry Bench",
             "quantity": 1,
             "ingredients": {
-                "Iron": 2,
+                "Wood": 8
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Stone Cutter",
+            "quantity": 1,
+            "ingredients": {
                 "Wood": 1
-            }
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Gun Bench",
+            "quantity": 1,
+            "ingredients": {
+                "Scrap Metal": 16
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Furnace",
+            "quantity": 1,
+            "ingredients": {
+                "Rock": 8,
+                "Wood": 2
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Anvil",
+            "quantity": 1,
+            "ingredients": {
+                "Wood": 8
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Stone Wall",
+            "quantity": 1,
+            "ingredients": {
+                "Stone Brick": 4
+            },
+            "required_bench": "None"
+        },
+
+
+        {
+            "result": "Wooden Plank",
+            "quantity": 2,
+            "ingredients": {
+                "Wood": 1
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Wooden Floor",
+            "quantity": 2,
+            "ingredients": {
+                "Wood": 1
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Chair",
+            "quantity": 1,
+            "ingredients": {
+                "Wooden Plank": 3
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Table",
+            "quantity": 1,
+            "ingredients": {
+                "Wooden Plank": 4
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Bed",
+            "quantity": 1,
+            "ingredients": {
+                "Wooden Plank": 2
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Stick",
+            "quantity": 2,
+            "ingredients": {
+                "Wooden Plank": 1
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Pickaxe",
+            "material": "Wood",
+            "quantity": 1,
+            "ingredients": {
+                "Wooden Plank": 1,
+                "Stick": 1
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Pickaxe",
+            "material": "Iron",
+            "quantity": 1,
+            "ingredients": {
+                "Iron Bar": 1,
+                "Stick": 1
+            },
+            "required_bench": "Anvil"
+        },
+        {
+            "result": "Stone Brick",
+            "quantity": 1,
+            "ingredients": {
+                "Rock": 2
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Iron Bar",
+            "quantity": 1,
+            "ingredients": {
+                "Iron": 1
+            },
+            "time": 200,
+            "required_bench": "Furnace"
+        },
+
+
+
+        {
+            "result": "Pistol",
+            "quantity": 1,
+            "ingredients": {
+                "Scrap Metal": 8
+            },
+            "time": 200,
+            "required_bench": "Gun Bench"
+        },
+        {
+            "result": "Assault Rifle",
+            "quantity": 1,
+            "ingredients": {
+                "Scrap Metal": 12
+            },
+            "time": 200,
+            "required_bench": "Gun Bench"
+        },
+        {
+            "result": "Sniper",
+            "quantity": 1,
+            "ingredients": {
+                "Scrap Metal": 15
+            },
+            "time": 200,
+            "required_bench": "Gun Bench"
         }
     ]
 }

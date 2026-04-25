@@ -12,8 +12,9 @@ float restTime = 0.5f;
 
 void Pig::doWork() {
 
-    /*if (currentPath.empty()) {
+    if (currentPath.empty()) {
 
+		/*Item* flower = ItemRegistry::getInstance().get("Flower");
         if (hunger >= 100) {
 			auto foodTarget = findClosestTileItem(flower);
 			currentPath = findPath(foodTarget);
@@ -22,16 +23,15 @@ void Pig::doWork() {
                 Tile& tile = getTileRef(foodTarget.first, foodTarget.second);
                 hunger = 0;
                 isHungry = false;
-                changeTileItem(target.first, target.second, std::make_unique<Item>(EMPTY_ITEM));
 
 				
             }
         }
-        else {
+        else {*/
             int targetX = xPos + (rand() % 3 - 1);
             int targetY = yPos + (rand() % 3 - 1);
-            currentPath = findPath({ targetX, targetY });
-        }
+            currentPath = findPath(xPos, yPos, { targetX, targetY });
+        //}
     }
         
 
@@ -42,5 +42,5 @@ void Pig::doWork() {
 		yPos = nextStep.second;
     }
 
-    hunger+=1;*/
+    hunger+=1;
 }

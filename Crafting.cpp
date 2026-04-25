@@ -1,24 +1,48 @@
 #include "Crafting.h"
-#include "Item.h"
 
-//Recipe woodenPlankRecipe(
-//	std::vector<Item>{ wood },
-//	Item("Wooden Plank", L'=', sf::Color(139, 69, 19)),
-//	&CarpentryBench
-//);
+#include <iostream>
+#include <fstream>
+#include "json.hpp"
 
-Recipe& getWoodenPlankRecipe() {
-	Item wood = *ItemRegistry::getInstance().get("Wood");
-	Item rock = *ItemRegistry::getInstance().get("Rock");
-	Item tree = *ItemRegistry::getInstance().get("Oak Tree");
-	Item flower = *ItemRegistry::getInstance().get("Flower");
+using json = nlohmann::json;
 
-	Item* carpentryBench = ItemRegistry::getInstance().get("Carpentry Bench");
+void loadRecipes() {
+	std::ifstream file("Recipes.json");
+	json  data;
+	file >> data;
 
-	static Recipe r(
-		std::vector<Item>{ rock, rock, tree, tree, tree, tree, tree, flower, flower },
-		Item("Wooden Plank", L'=', sf::Color(139, 69, 19)),
-		carpentryBench
-	);
-	return r;
+	for (auto& i : data.at("recipes")) {
+
+
+		std::string result = i.at("result").get<std::string>();
+		int quantity = i.at("quantity").get<int>();
+		std::string bench = i.at("required_bench").get<std::string>();
+
+		std::unordered_map<std::string, int> ingredients;
+
+		for (auto& item : i.at("ingredients").items()) {
+			std::string name = item.key();
+			int amount = item.value().get<int>();
+			ingredients[name] = amount;
+		}
+
+		Recipe recipe(
+			ingredients,
+			result,
+			bench,
+			quantity
+		);
+
+		if (i.contains("time")) {
+			recipe.time = i.at("time").get<int>();
+		}
+
+		if (i.contains("material")) {
+			recipe.material = stringToMaterial(i.at("material").get<std::string>());
+		}
+
+		RecipeRegistry::getInstance().addRecipe(recipe);
+
+		std::cout << "Loaded recipe: " << recipe.result << std::endl;
+	}
 }

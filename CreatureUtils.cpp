@@ -1,14 +1,15 @@
 #include "Pair.h"
 #include "Tile.h"
+#include "CreatureUtils.h"
 
 #include <queue>
 #include <unordered_set>
+#include <functional>
 
-std::vector<std::pair<int, int>> getNeighbors(int x, int y) {
-    return { {x - 1, y}, {x, y - 1}, {x + 1, y}, {x, y + 1} };
-}
+std::optional<std::pair<int, int>> findClosestTileItem(const Object& item, int xPos, int yPos) {
 
-std::pair<int, int> findClosestTileItem(const Item& item, int xPos, int yPos) {
+	int maxRadius = 100;
+
     std::queue<std::pair<int, int>> frontier;
     std::unordered_set<std::pair<int, int>, pair_hash> visited;
 
@@ -19,8 +20,15 @@ std::pair<int, int> findClosestTileItem(const Item& item, int xPos, int yPos) {
         auto current = frontier.front();
         frontier.pop();
 
+        int dx = current.first - xPos;
+        int dy = current.second - yPos;
+
+        if (dx * dx + dy * dy > maxRadius * maxRadius)
+            continue;
+
         Tile& tile = getTileRef(current.first, current.second);
-        if (tile.containsItem(item)) {
+        if (tile.containsItem(item.name)) {
+            //tile.claimed = true;
             return current;
         }
 
@@ -32,19 +40,19 @@ std::pair<int, int> findClosestTileItem(const Item& item, int xPos, int yPos) {
         }
     }
     
-    return { xPos, yPos };
+    return std::nullopt;
 }
 
-bool isAtItem(Item item, int x, int y) {
 
+bool isAtItem(const Object& item, int x, int y) {
 
-    if (getTileRef(x, y).containsItem(item)) {
+    if (getTileRef(x, y).containsItem(item.name)) {
         return true;
     }
 
     for (auto& i : getNeighbors(x, y)) {
-        if (getTileRef(i.first, i.second).containsItem(item)) {
-            return true;
+        if (getTileRef(i.first, i.second).containsItem(item.name)) {
+            return true; // This is the line they guessed
         }
     }
     return false;

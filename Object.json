@@ -1,0 +1,528 @@
+﻿{
+    "objects": [
+        {
+            "name": "Outpost",
+            "type": "spawner",
+            "visual": {
+                "character": "0",
+                "color": [ 255, 0, 0 ]
+            },
+            "cooldown": 2.0,
+            "radius": 5.0
+        },
+        {
+            "name": "Scrap Metal",
+            "type": "object",
+            "visual": {
+                "character": "*",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Path",
+            "type": "object",
+            "visual": {
+                "character": "#",
+                "color": [ 218, 197, 134 ]
+            }
+        },
+        {
+            "name": "Oak Tree",
+            "type": "object",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            }
+        },
+        {
+            "name": "Pine Tree",
+            "type": "object",
+            "visual": {
+                "character": 9824,
+                "color": [ 42, 55, 12 ]
+            }
+        },
+        {
+            "name": "Birch Tree",
+            "type": "object",
+            "visual": {
+                "character": 9827,
+                "color": [ 255, 255, 255 ]
+            }
+        },
+        {
+            "name": "Dead Tree",
+            "type": "object",
+            "visual": {
+                "character": "Y",
+                "color": [ 150, 75, 0 ]
+            }
+        },
+        {
+            "name": "Flower",
+            "type": "object",
+            "visual": {
+                "character": "*",
+                "color": [ 255, 255, 255 ]
+            }
+        },
+        {
+            "name": "Pine Cone",
+            "type": "object",
+            "visual": {
+                "character": "&",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Soil",
+            "type": "object",
+            "visual": {
+                "character": "=",
+                "color": [ 84, 30, 0 ]
+            }
+        },
+        {
+            "name": "Dead Tree",
+            "type": "object",
+            "visual": {
+                "character": "Y",
+                "color": [ 150, 75, 0 ]
+            }
+        },
+        {
+            "name": "Wheat",
+            "type": "object",
+            "visual": {
+                "character": "W",
+                "color": [ 255, 229, 153 ]
+            }
+        },
+        {
+            "name": "Stick",
+            "type": "object",
+            "visual": {
+                "character": "/",
+                "color": [ 150, 75, 0 ]
+            }
+        },
+        {
+            "name": "Wood",
+            "type": "object",
+            "visual": {
+                "character": "O",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Rock",
+            "type": "object",
+            "visual": {
+                "character": "R",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Pebble",
+            "type": "object",
+            "visual": {
+                "character": "o",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Raw Iron",
+            "type": "object",
+            "visual": {
+                "character": "I",
+                "color": [ 217, 201, 147 ]
+            }
+        },
+        {
+            "name": "Gold",
+            "type": "object",
+            "visual": {
+                "character": "G",
+                "color": [ 255, 255, 0 ]
+            }
+        },
+        {
+            "name": "Emerald",
+            "type": "object",
+            "visual": {
+                "character": "E",
+                "color": [ 80, 200, 120 ]
+            }
+        },
+        {
+            "name": "Diamond",
+            "type": "object",
+            "visual": {
+                "character": "D",
+                "color": [ 91, 185, 226 ]
+            }
+        },
+        {
+            "name": "Copper",
+            "type": "object",
+            "visual": {
+                "character": "C",
+                "color": [ 184, 115, 51 ]
+            }
+        },
+        {
+            "name": "Coal",
+            "type": "object",
+            "visual": {
+                "character": "C",
+                "color": [ 54, 69, 79 ]
+            }
+        },
+        {
+            "name": "Sapphire",
+            "type": "object",
+            "visual": {
+                "character": "S",
+                "color": [ 0, 0, 255 ]
+            }
+        },
+        {
+            "name": "Ruby",
+            "type": "object",
+            "visual": {
+                "character": "R",
+                "color": [ 255, 0, 0 ]
+            }
+        },
+        {
+            "name": "RAINBOW",
+            "type": "object",
+            "visual": {
+                "character": "o",
+                "color": [ 255, 255, 255 ]
+            }
+        },
+        {
+            "name": "Wooden Plank",
+            "type": "object",
+            "visual": {
+                "character": "=",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Stone Brick",
+            "type": "object",
+            "visual": {
+                "character": "=",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Iron Bar",
+            "type": "object",
+            "visual": {
+                "character": "I",
+                "color": [ 203, 205, 205 ]
+            }
+        },
+        {
+            "name": "Stockpile",
+            "type": "object",
+            "visual": {
+                "character": "=",
+                "color": [ 100, 100, 100 ]
+            }
+        },
+        {
+            "name": "Wooden Wall",
+            "type": "object",
+            "visual": {
+                "character": "%",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Wooden Floor",
+            "type": "object",
+            "visual": {
+                "character": "#",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Stone Wall",
+            "type": "object",
+            "visual": {
+                "character": "%",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Bed",
+            "type": "object",
+            "visual": {
+                "character": "B",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Furnace",
+            "type": "furnace",
+            "visual": {
+                "character": "O",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Carpentry Bench",
+            "type": "bench",
+            "visual": {
+                "character": 960,
+                "color": [ 117, 66, 12 ]
+            }
+        },
+        {
+            "name": "Stone Cutter",
+            "type": "bench",
+            "visual": {
+                "character": 960,
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Anvil",
+            "type": "bench",
+            "visual": {
+                "character": "+",
+                "color": [ 46, 46, 46 ]
+            }
+        },
+        {
+            "name": "Gun Bench",
+            "type": "bench",
+            "visual": {
+                "character": 960,
+                "color": [ 135, 135, 135 ]
+            }
+        },
+        {
+            "name": "Chair",
+            "type": "object",
+            "visual": {
+                "character": "h",
+                "color": [ 148, 77, 0 ]
+            }
+        },
+        {
+            "name": "Table",
+            "type": "object",
+            "visual": {
+                "character": "T",
+                "color": [ 148, 77, 0 ]
+            }
+        },
+        {
+            "name": "Torch",
+            "type": "object",
+            "visual": {
+                "character": "|",
+                "color": [ 117, 66, 12 ]
+            }
+        },
+        {
+            "name": "Pickaxe",
+            "type": "tool",
+            "visual": {
+                "character": 9935,
+                "color": [ 117, 66, 12 ]
+            }
+        },
+        {
+            "name": "Axe",
+            "type": "tool",
+            "visual": {
+                "character": "P",
+                "color": [ 117, 66, 12 ]
+            }
+        },
+
+        {
+            "name": "Apple Tree",
+            "type": "foliage_crop",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "produce": "Apple"
+        },
+
+        {
+            "name": "Wheat",
+            "type": "crop",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grow_time": 2.0,
+            "stages": [
+                {
+                    "char": ".",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "w",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "W",
+                    "color": [ 147, 196, 125 ]
+                },
+                {
+                    "char": "W",
+                    "color": [ 255, 229, 153 ]
+                }
+            ]
+        },
+        {
+            "name": "Carrot",
+            "type": "crop",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grow_time": 2.0,
+            "stages": [
+                {
+                    "char": ".",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "v",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "V",
+                    "color": [ 170, 255, 0 ]
+                },
+                {
+                    "char": "V",
+                    "color": [ 255, 145, 0 ]
+                }
+            ]
+        },
+        {
+            "name": "Grape Bush",
+            "type": "foliage_crop",
+            "visual": {
+                "character": "?",
+                "color": [ 0, 255, 0 ]
+            },
+            "produce": "Grape"
+        },
+
+        {
+            "name": "Apple",
+            "type": "food",
+            "visual": {
+                "character": "Q",
+                "color": [ 255, 0, 0 ]
+            },
+            "nutrition": 52
+        },
+        {
+            "name": "Grape",
+            "type": "food",
+            "visual": {
+                "character": "o",
+                "color": [ 128, 0, 128 ]
+            },
+            "nutrition": 30
+        },
+        {
+            "name": "Bread",
+            "type": "food",
+            "visual": {
+                "character": "8",
+                "color": [ 210, 180, 140 ]
+            },
+            "nutrition": 265
+        },
+        {
+            "name": "Meat",
+            "type": "food",
+            "visual": {
+                "character": "M",
+                "color": [ 165, 42, 42 ]
+            },
+            "nutrition": 250
+        },
+
+        {
+            "name": "Pistol",
+            "type": "gun",
+            "visual": {
+                "character": "⌐",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 7,
+            "damage": 10,
+            "range": 10.0,
+            "attack_cooldown": 0.7
+
+        },
+        {
+            "name": "Pepper Gun",
+            "type": "gun",
+            "visual": {
+                "character": "-",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 5,
+            "damage": 4,
+            "range": 50.0,
+            "attack_cooldown": 1.0
+
+        },
+        {
+            "name": "Assault Rifle",
+            "type": "gun",
+            "visual": {
+                "character": "╬",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 30,
+            "damage": 7,
+            "range": 20.0,
+            "attack_cooldown": 0.1
+
+        },
+        {
+            "name": "Minigun",
+            "type": "gun",
+            "visual": {
+                "character": "M",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 200,
+            "damage": 10,
+            "range": 40.0,
+            "attack_cooldown": 0.05
+
+        },
+        {
+            "name": "Sniper",
+            "type": "gun",
+            "visual": {
+                "character": "A",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 5,
+            "damage": 70,
+            "range": 100.0,
+            "attack_cooldown": 5.0
+
+        }
+
+    ]
+}

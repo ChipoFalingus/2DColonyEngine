@@ -1,12 +1,42 @@
-#include "Inputs.h"
+﻿#include "Inputs.h"
 #include "Job.h"
 #include "Item.h"
 #include "Tile.h"
 #include "HarvestRules.h"
+#include "World.h"
+#include "Game.h"
+#include "UI.h"
+#include "Furnace.h"
 
 double lastTime = glfwGetTime();
 int nbFrames = 0;
 std::string fps;
+
+Villager* viewing;
+/*
+
+┌──────────────────────────────┐
+│┌─┐ Name : Dr.Coomer         ╳│
+││☺│ Occupation : Miner        │
+│└─┘                           │
+│ Current Action : Mining Stone│
+│                              │
+│ Holding : 4x Rock            │
+│ Tool : Stone Pickaxe         │
+│                              │
+│ Health : 100 / 100 		   │
+│ Armor : 0 / 0 			   │
+└──────────────────────────────┘
+
+*/
+
+
+void handleMode();
+void handleClickedItem(int x, int y);
+void build(int left, int right, int top, int bottom);
+void harvest(int left, int right, int top, int bottom);
+void plant(int left, int right, int top, int bottom);
+void stockpile(int left, int right, int top, int bottom);
 
 
 void processInput(GLFWwindow* window) {
@@ -14,7 +44,6 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         yPlayer--;
     }
@@ -30,84 +59,39 @@ void processInput(GLFWwindow* window) {
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !clicked) {
 
-		std::cout << getTileRef(mouseTileX, mouseTileY).altitude << std::endl;
+        viewing = nullptr;
 
-
-
-        if (buildMode || harvestMode || plantMode || stockpileMode) {
+        if (currentMode != Mode::NONE) {
             if (!placing) {
-                // First click � start placement
                 corner = { mouseTileX, mouseTileY };
                 placing = true;
+                
             }
             else {
 
-                int left = std::min(corner.first, mouseTileX);
-                int right = std::max(corner.first, mouseTileX);
-                int top = std::min(corner.second, mouseTileY);
-                int bottom = std::max(corner.second, mouseTileY);
-
-				Item* tree = ItemRegistry::getInstance().get("Oak Tree");
-
-                Item* stockpileItem = ItemRegistry::getInstance().get("Stockpile");
-				//Item wheat = *ItemRegistry::getInstance().get("Wheat Seed");
-
-
-                for (int x = left; x <= right; x++) {
-                    for (int y = top; y <= bottom; y++) {
-
-						Tile& tile = getTileRef(x, y);
-
-                        if (buildMode) {
-                            if (x == left || x == right || y == top || y == bottom) {
-
-
-                                JobManager::JobList.push_back(new Build(nullptr, JobType::Builder, tree, x, y));
-                            }
-                            
-                        }
-                        else if (harvestMode) {
-
-                            if (tile.items.size() != 0) {
-
-                                // Retrieves harvest information based on item name
-                                Rule* rule = HarvestRuleRegistry::getInstance().get(tile.items[0]->name);
-                                if (rule) {
-
-                                    if (rule->toolRequired == "None") {
-                                        JobManager::JobList.push_back(new HarvestTile(nullptr, JobType::None, tile.items[0].get(), nullptr, x, y));
-                                    }
-                                    else {
-                                        Tool* tool = ToolRegistry::getInstance().get(rule->toolRequired);
-                                        if (tool) {
-                                            JobManager::JobList.push_back(new HarvestTile(nullptr, rule->jobType, tile.items[0].get(), tool, x, y));
-                                        }
-                                    }
-                                }
-                            }
-
-                        }
-                        else if (plantMode) {
-							JobManager::JobList.push_back(new Plant(nullptr, JobType::Farmer, &wheat, x, y));
-                        }
-                        else if (stockpileMode) {
-                            
-                            tile.items.clear();
-                            tile.addItem(std::make_unique<Item>(*stockpileItem));
-                            Stockpile stockpile({x, y});
-                            stockpileTiles.push_back(stockpile);
-                        }
-                    }
-                }
-
-
+				handleMode();
+                
                 placing = false;
             }
         }
         else {
-			//getTileRef(mouseTileX, mouseTileY).water += 1000.0f;
-			//addBasin(mouseTileX, mouseTileY);
-            placing = false;
+
+            if (&World::isRendered) {
+                placing = false;
+
+                for (auto& i : mainWorld.getAllVillagers()) {
+                    if (i->xPos == mouseTileX && i->yPos == mouseTileY) {
+                        viewing = i;
+                        break;
+                    }
+                }
+                handleClickedItem(mouseTileX, mouseTileY);
+            }
+
+			auto s = mainWorld.atStockpile(mouseTileX, mouseTileY);
+            if (s) {
+                s->printContents();
+            }
         }
 
         clicked = true;
@@ -116,10 +100,21 @@ void processInput(GLFWwindow* window) {
         clicked = false;
     }
 
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS) {
+        placing = false;
+        setMode(Mode::NONE);
+    }
 
     if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
-        if (!viewMiniMap) viewMiniMap = true;
-        else if (viewMiniMap) viewMiniMap = false;
+        if (!viewMiniMap) {
+			viewMiniMap = true;
+        }
+        else if (viewMiniMap) {
+			viewMiniMap = false;
+        }
+
+        auto& UIManager = Game::getInstance().getUIManager();
+		UIManager.swapFrame("minimap", "ingame");
     }
 
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
@@ -127,21 +122,21 @@ void processInput(GLFWwindow* window) {
         else if (viewHeightMap) viewHeightMap = false;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        xTextSpacing++;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
         yTextSpacing++;
-        fontSize += 0.02f;
-
-        xFrustum = scrWidth / xTextSpacing;
         yFrustum = scrHeight / yTextSpacing;
     }
-    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-        xTextSpacing--;
-        yTextSpacing--;
-        fontSize -= 0.02f;
-
-        xFrustum = scrWidth / xTextSpacing;
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+        if (yTextSpacing > 1) yTextSpacing--;
         yFrustum = scrHeight / yTextSpacing;
+    }
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+        xTextSpacing++;
+        xFrustum = scrWidth / xTextSpacing;
+    }
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+        if (xTextSpacing > 1) xTextSpacing--;
+        xFrustum = scrWidth / xTextSpacing;
     }
 
     bool pressed = false;
@@ -157,13 +152,18 @@ void processInput(GLFWwindow* window) {
 		xPlayer = 0;
 		yPlayer = 0;
     }
-
-    for (auto& i : ui.UIButtons) {
-        i.update(mouseX / xTextSpacing, mouseY / yTextSpacing, clicked);
+    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+		viewUI = !viewUI;
+    }
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+        mainWorld.updateMiniMap();
+        
     }
 
+    auto& ui = Game::getInstance().getInGameUI();
 
-    
+	//ui.playerPos->changeText(L"Player Position: (" + std::to_wstring(xPlayer) + L"," + std::to_wstring(yPlayer) + L")");
+    ui.playerPos->changeText(L"Mouse Position: (" + std::to_wstring(mouseTileX) + L"," + std::to_wstring(mouseTileY) + L")");
 
     double currentTime = glfwGetTime();
     nbFrames++;
@@ -171,105 +171,280 @@ void processInput(GLFWwindow* window) {
         fps = "FPS: " + std::to_string(nbFrames);
         nbFrames = 0;
         lastTime += 1.0;
-        
     }
 
-	int num = 0;
+	ui.FPS->changeText(std::wstring(fps.begin(), fps.end()));
+	ui.population->changeText(L"Population: " + std::to_wstring(mainWorld.getAllCreatures().size()));
+
     int uiX = mouseTileX - (xPlayer - xFrustum / 2);
     int uiY = mouseTileY - (yPlayer - yFrustum / 2);
 
-    if (placing) {
+    if (placing && mainWorld.placementMode == PlacementMode::SQUARE) {
         std::string xStr = std::to_string(std::abs(corner.first - mouseTileX) + 1);
-		std::string yStr = std::to_string(std::abs(corner.second - mouseTileY) + 1);
-		std::string dim = xStr + "x" + yStr;
-		//std::cout << uiX << ", " << uiY << std::endl;
-        for (int i = 0; i < dim.size(); i++) {
-            int x = uiX + i - xStr.size();
+        std::string yStr = std::to_string(std::abs(corner.second - mouseTileY) + 1);
+        std::string dim = xStr + "x" + yStr;
 
-            if (uiY < 0 || uiY >= yFrustum) continue;
-            if (x < 0 || x >= xFrustum) continue;
-
-            ui.UI[uiY - 1][x] = dim[i];
-        }
-		
+		ui.placingDims->changeText(std::wstring(dim.begin(), dim.end()));
+		ui.placingDims->setPosition(uiX - (dim.size() >> 1), uiY - 1);
+    }
+    else {
+        ui.placingDims->changeText(L"");
     }
 
-    num = 1;
+    if (viewing) {
+        auto& i = Game::getInstance().getVillagerInfoUI();
+        std::string str = viewing->firstname + " " + viewing->lastname;
+        i.text->changeText(std::wstring(str.begin(), str.end()));
+        std::string jobStr = jobTypeToString(viewing->getJob());
+		i.job->changeText(std::wstring(jobStr.begin(), jobStr.end()));
+        std::string health = std::to_string(viewing->health) + " / 100";
+        i.health->changeText(std::wstring(health.begin(), health.end()));
+        i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 2, 6);
+
+        Game::getInstance().getUIManager().push("villager");
+    }
+    else {
+        if (Game::getInstance().getUIManager().hasFrame("villager")) {
+            Game::getInstance().getUIManager().deleteFrame("villager");
+        }
+    }
+
+    if (mainWorld.isRendered()) {
+        Tile& tile = getTileRef(mouseTileX, mouseTileY);
+        std::string itemStr = "";
+
+        for (auto& item : tile.items) {
+            itemStr += item->name;
+
+            if (Crop* crop = dynamic_cast<Crop*>(item.get())) {
+                float growth = static_cast<float>(crop->growStage + 1) / static_cast<float>(crop->stages.size());
+
+                // Clamping
+                if (growth > 1.0f) growth = 1.0f;
+                if (growth < 0.0f) growth = 0.0f;
+
+                int percent = static_cast<int>(growth * 100.0f);
+                itemStr += " (" + std::to_string(percent) + "% Grown)";
+            }
+
+            if (Tool* tool = dynamic_cast<Tool*>(item.get())) {
+                itemStr += " (" + materialToString(tool->material) + ")";
+            }
+
+            itemStr += "|";
+        }
+
+        ui.tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
+        std::string type = typeToString(tile.type);
+        ui.tileType->changeText(std::wstring(type.begin(), type.end()));
+
+        glm::vec3 light = Game::getInstance()
+            .getLightManager()
+            .calculateLightLevel(mouseTileX, mouseTileY);
+
+        float brightness = 0.2126f * light.r +
+            0.7152f * light.g +
+            0.0722f * light.b;
+
+        int percent = static_cast<int>(brightness * 100.0f);
+
+        std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(mouseTileX, mouseTileY).altitude));
+
+        ui.waterLevel->changeText(lightLevel);
+    }
 	
-    for (char c : fps) {
-        ui.UI[1][num] = c;
+}
+
+
+void handleMode() {
+
+    int left = std::min(corner.first, mouseTileX);
+    int right = std::max(corner.first, mouseTileX);
+    int top = std::min(corner.second, mouseTileY);
+    int bottom = std::max(corner.second, mouseTileY);
+
+    if (currentMode == Mode::BUILD) {
+		build(left, right, top, bottom);
+    }
+    else if (currentMode == Mode::HARVEST) {
+		harvest(left, right, top, bottom);
+    }
+    else if (currentMode == Mode::PLANT) {
+		plant(left, right, top, bottom);
+    }
+    else if (currentMode == Mode::STOCKPILE) {
+		stockpile(left, right, top, bottom);
+	}
+}
+
+void handleClickedItem(int x, int y) {
+    auto& uiManager = Game::getInstance().getUIManager();
+
+    if (getTileRef(x, y).containsItem("Carpentry Bench")) {
+        uiManager.addOrRemoveFrame("carpentry");
+    }
+    else if (getTileRef(x, y).containsItem("Anvil")) {
+        uiManager.addOrRemoveFrame("anvil");
+	}
+    else if (getTileRef(x, y).containsItem("Furnace")) {
+		auto furnace = static_cast<Furnace*>(getTileRef(x, y).items[0].get());
+        furnace->addInput(ObjectRegistry::getInstance().get("Raw Iron"));
+    }
+    else if (getTileRef(x, y).containsItem("Gun Bench")) {
+        uiManager.addOrRemoveFrame("gun");
+    }
+}
+
+void build(int left, int right, int top, int bottom) {
+
+    auto item = Game::getInstance().getBuildItem();
+
+    if (!item) return;
+
+	std::cout << "Building: " << item->name << std::endl;
+    std::string itemName = item->name;
+    
+
+    if (mainWorld.placementMode == PlacementMode::SINGLE) {
+        JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, mouseTileX, mouseTileY));
+		return;
+    }
+
+    if (mainWorld.placementMode == PlacementMode::LINE) {
+        for (int x = left; x <= right; x++) {
+            JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, x, mouseTileY));
+        }
+        for (int y = top; y <= bottom; y++) {
+            JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, mouseTileX, y));
+        }
+        return;
+	}
+
+    if (mainWorld.placementMode == PlacementMode::SQUARE) {
+        for (int x = left; x <= right; x++) {
+            for (int y = top; y <= bottom; y++) {
+                if (x == left || x == right || y == top || y == bottom) {
+                    JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, x, y));
+                }
+            }
+        }
+    }
+}
+
+void harvest(int left, int right, int top, int bottom) {
+
+    auto& uiManager = Game::getInstance().getUIManager();
+	auto& ui = Game::getInstance().getHarvestUI();
+
+    std::unordered_map<std::string, int> itemTracker;
+
+    for (int x = left; x <= right; x++) {
+        for (int y = top; y <= bottom; y++) {
+
+            Tile& tile = getTileRef(x, y);
+
+            if (mainWorld.atStockpile(x, y)) {
+                continue;
+            }
+
+            if (tile.items.size() != 0 && !tile.markedForHarvest) {
+
+                // Retrieves harvest information based on item name
+                Rule* rule = HarvestRuleRegistry::getInstance().get(tile.items[0]->name);
+                if (rule) {
+
+                    if (itemTracker.find(tile.items[0]->name) == itemTracker.end()) {
+                        itemTracker[tile.items[0]->name] = 1;
+                    }
+                    else {
+                        itemTracker[tile.items[0]->name]++;
+					}
+
+					
+                    tile.markedForHarvest = true;
+                    if (rule->toolRequired == "None") {
+
+                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, JobType::None, tile.items[0].get()->name, x, y));
+                    }
+                    else {
+						auto toolInRegistry = ObjectRegistry::getInstance().get(rule->toolRequired);
+						Tool* tool = dynamic_cast<Tool*>(toolInRegistry.get());
+                        if (tool) {
+							std::cout << "Adding harvest job for " << tile.items[0]->name << " at (" << x << ", " << y << ") with tool " << tool->name << std::endl;
+                            Job* harvestJob = new HarvestTile(nullptr, tool, rule->jobType, tile.items[0].get()->name, x, y);
+                            harvestJob->priority = 50;
+                            JobManager::JobList.push_back(harvestJob);
+                        }
+                    }
+                }
+                else {
+                    if (tile.items[0]->type == Type::Item) {
+                        mainWorld.addItemToMove(tile.items[0], x, y);
+                    }
+                }
+            }
+        }
+    }
+
+	ui.infoPanel->clear();
+
+	int num = 0;
+    for (auto& pair : itemTracker) {
+		std::string itemStr = pair.first + ": x" + std::to_string(pair.second);
+		std::wstring itemName = std::wstring(itemStr.begin(), itemStr.end());
+        &ui.infoPanel->addElement<Text>(3, 2 + num, itemName, Alignment::TOP_CENTER);
+		&ui.infoPanel->addElement<Checkbox>(1, 2 + num, Alignment::TOP_CENTER);
+		
         num++;
     }
 
-    int row = 0;
+    std::wstring infoText = L"Select what to harvest:";
+    &ui.infoPanel->addElement<Text>(1, 1, infoText, Alignment::TOP_CENTER);
+    ui.infoPanel->setSize(infoText.size() + 2, num + 3);
 
-    for (int i = 0; i < 16; i++) {
-        ui.UI[0][i + 64] = ' ';
-        ui.UI[1][i + 64] = ' ';
-        ui.UI[2][i + 64] = ' ';
-    }
+    //uiManager.addOrRemoveFrame("harvest");
+}
 
-    int i = 0;
-    std::string villagerCountStr = std::to_string(Creature::allCreatures.size());
-    for (char c : villagerCountStr) {
-        ui.UI[0][i + 13] = c;
-        i++;
-    }
-
-	Tile& tile = getTileRef(mouseTileX, mouseTileY);
-    i = 0;
-    for (char c : tile.typeString) {
-        ui.UI[row][i + 64] = c;
-        i++;
-    }
-    i = 0;
-    row++;
-
-    for (auto& item : tile.items) {
-		std::string itemStr = item->name;
-        
-        if (Crop* crop = dynamic_cast<Crop*>(item.get())) {
-            float growth = static_cast<float>(crop->growStage + 1) / static_cast<float>(crop->stages.size());
-
-            // Clamp to avoid weird values
-            if (growth > 1.0f) growth = 1.0f;
-            if (growth < 0.0f) growth = 0.0f;
-
-            int percent = static_cast<int>(growth * 100.0f);
-            itemStr += " (" + std::to_string(percent) + "% Grown)";
-        }
-        for (char c : itemStr) {
-            ui.UI[row][i + 64] = c;
-            i++;
-		}
-        i = 0;
-        row++;
-    }
-
-
-    for (Villager* i : Villager::allVillagers) {
-        if (i->xPos == mouseTileX && i->yPos == mouseTileY) {
-            
-            std::string nameStr = i->firstname + " " + i->lastname + " - " + jobTypeToString(i->jobType);
-			std::string occupStr = "Job: " + jobTypeToString(i->jobType);
-            int j = 0;
-            for (char c : nameStr) {
-                if (j + 64 < ui.UI[0].size()) {
-                    ui.UI[row][j + 64] = c;
-                }
-                j++;
-                if (j > 63) {
-					break;
-                }
-            }
-            row++;
-            /*j = 0;
-            row++;
-            for (char c : occupStr) {
-				ui.UI[row][j + 64] = c;
-				j++;
-            }*/
+void plant(int left, int right, int top, int bottom) {
+    for (int x = left; x <= right; x++) {
+        for (int y = top; y <= bottom; y++) {
+            JobManager::JobList.push_back(new Plant(nullptr, nullptr, JobType::Farmer, "Wheat", x, y));
         }
     }
+}
+
+void stockpile(int left, int right, int top, int bottom) {
+
+    for (int x = left; x <= right; x++) {
+        for (int y = top; y <= bottom; y++) {
+            Tile& tile = getTileRef(x, y);
+            if (!tile.walkable || tile.containsItem("Stockpile")) {
+                std::cout << "Cannot create stockpile: Tile at (" << x << ", " << y << ") is not empty.\n";
+                return;
+			}
+        }
+    }
+
+    auto stockpileItem = ObjectRegistry::getInstance().get("Stockpile");
+
+    int locX = std::min(left, right);
+    int locY = std::min(top, bottom);
+
+    std::cout << "Creating stockpile at (" << locX << ", " << locY << ")\n";
+
+    for (int x = left; x <= right; x++) {
+        for (int y = top; y <= bottom; y++) {
+
+            Tile& tile = getTileRef(x, y);
+
+            tile.items.clear();
+            tile.addObject("Stockpile");
+        }
+    }
+
+	int width = std::abs(right - left) + 1;
+	int height = std::abs(bottom - top) + 1;
     
+    Stockpile stockpile({ locX, locY }, width, height);
+    mainWorld.addStockpile(stockpile);
 }

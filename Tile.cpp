@@ -13,92 +13,58 @@
 #include "Tool.h"
 #include "Light.h"
 #include "Globals.h"
+#include "Game.h"
+#include "FoliageCrop.h"
+#include "Furnace.h"
+#include "Spawner.h"
 #include <set>
 
 // A lot of this stuff is world generation, so it should be moved to a separate file later
 // A real big mess this all is :(
 
-std::vector<Dot> voronoiDots;
+std::string typeToString(tileType type) {
+    switch (type) {
+    case(GRASS): {
+        return "Grass";
+    }case(SAND): {
+        return "Sand";
+    }case(MOUNTAIN): {
+        return "Mountain";
+    }case(MOUNTAIN_PEAK): {
+        return "Mountain Peak";
+    }case(WATER): {
+        return "Water";
+    }
+    }
+}
+
+
+
 float waterLevel = 0.0f;
 std::vector<Island> islands;
 
-std::vector<std::pair<int, int>> basins;
-std::vector<std::pair<int, int>> newWater;
-
-float hashNoise(int x, int y, int seed) {
-    unsigned int h = x * 374761393u + y * 668265263u + seed * 374761393u;
-    h = (h ^ (h >> 13)) * 1274126177u;
-    return (h & 0xFFFFFF) / float(0xFFFFFF);
-    // I wish I could tell you how this works, the forums are a godsend
-}
-
-
-
-float findDistanceToDot(Dot dot, int x, int y) {
-    float jitterAmount = 8.0f;
-
-    float noiseX = perlin(x * 0.1f, y * 0.1f);
-    float noiseY = perlin(x * 0.1f + 100.0f, y * 0.1f + 100.0f);
-
-    float warpedX = x + noiseX * jitterAmount;
-    float warpedY = y + noiseY * jitterAmount;
-
-    float xDist = warpedX - dot.pos.x;
-    float yDist = warpedY - dot.pos.y;
-
-    return xDist * xDist + yDist * yDist;
-}
-
-//NEEDS OPTIMIZING
-Dot& findClosestDot(int x, int y) {
-    float shortestDist = INFINITY;
-    Dot closestDot;
-    for (int i = 0; i < voronoiDots.size(); i++) {
-
-        float dist = findDistanceToDot(voronoiDots[i], x, y);
-        if (shortestDist > dist) {
-            shortestDist = dist;
-            closestDot = voronoiDots[i];
-        }
-    }
-    return closestDot;
-}
-
-
-void createVoronoiMap() {
-    int numPoints = 15;
-    voronoiDots.reserve(numPoints);
-
-
-    float distPos = getRandomFloat(-100, 100);
-    float distColor = getRandomFloat(0, 255);
-    float distDirection = getRandomFloat(-1, 1);
-    float distSpeed = getRandomFloat(0.1f, 1.0f);
-
-    for (int i = 0; i < numPoints; i++) {
-        Dot dot;
-        dot.ID = getRandomInt(0, 21000000);
-        dot.pos = { getRandomFloat(-100, 100), getRandomFloat(-100, 100) };
-        dot.direction = { getRandomFloat(-1, 1), getRandomFloat(-1, 1) };
-        dot.speed = { getRandomFloat(0.1f, 1.0f), getRandomFloat(0.1f, 1.0f) };
-        dot.color = sf::Color(getRandomFloat(0.1f, 1.0f), getRandomFloat(0, 255), getRandomFloat(0, 255));
-        if (getRandomInt(0, 5) == 6) {
-            dot.biome = Biome::DESERT;
-        }
-        else {
-            dot.biome = Biome::GRASS;
-        }
-        voronoiDots.push_back(dot);
-    }
-}
-
 void createMapIslands() {
-    for (int i = 0; i < 1; i++) {
+
+	int numIslands = 300;
+
+    for (int i = 0; i < numIslands; i++) {
         Island island;
-        island.x = getRandomInt(0, 0);
-        island.y = getRandomInt(0, 0);
-        island.dampen = getRandomInt(500, 1000);
-        islands.push_back(island);
+        
+        float tau = 6.28318f;
+		float radius = 1000.0f;
+
+        // Polar
+		float degree = getRandomFloat(0, tau); // 0 to 2π
+        float range = sqrt(getRandomFloat(0.0f, 1.0f)) * radius;
+
+        // Cartesian conversion
+		int x = cos(degree) * range;
+		int y = sin(degree) * range;
+
+		island.x = x;
+		island.y = y;
+        island.radius = getRandomInt(5000, 10000);
+		islands.push_back(island);
     }
 }
 
@@ -120,29 +86,42 @@ Island findClosestIsland(int x, int y) {
     return closest;
 }
 
+float NOISE_SCALE = 0.005f;
+float NOISE_AMPLITUDE = 100.0f; // noise fluctuates between (-amplitude + waterleveladjust) to (amplitude + waterleveladjust), will be modified by falloff
+float WATER_LEVEL_ADJUST = 100.0f; // higher starting point to offset water
+
 float inverseCircleFalloff(float x, float y, int radius) {
-    return (x * x + y * y) / radius; // Larger radius = larger island
+    float dist = sqrt(x * x + y * y);
+    float t = dist;
+    return t;
 }
 
-float calculateAltitude(int x, int y) {
-    float size = 0.01f;
-    //float baseAlt = perlin(x * size, y * size) * 100.0f;
-    float baseAlt = 0.0f;
-    auto closest = findClosestIsland(x, y);
 
+int octaves = 4;
+float persistence = 0.5f;
+float lacunarity = 2.0f;
+
+float calculateAltitude(int x, int y) {
+	float size = NOISE_SCALE;
+    float amplitude = NOISE_AMPLITUDE;
+    float frequency = size;
+    float baseAlt = 0.0f;
+    for (int i = 0; i < octaves; i++) {
+        baseAlt += perlin(x * frequency, y * frequency) * amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+    baseAlt += WATER_LEVEL_ADJUST;
+    auto closest = findClosestIsland(x, y);
     float dx = closest.x - x;
     float dy = closest.y - y;
+	baseAlt -= inverseCircleFalloff(dx, dy, closest.radius);
 
-
-
-    baseAlt -= inverseCircleFalloff(dx, dy, closest.dampen);
-    //return baseAlt + 100.0f + perlin(x * size, y * size) * 100.0f;
-	return baseAlt + 100.0f + perlin(x * size, y * size) * 100.0f;
+	return baseAlt;
 
 }
 
 float getAltitude(int x, int y) {
-    Dot closestDot = findClosestDot(x, y);
     return calculateAltitude(x, y);
 }
 
@@ -151,96 +130,80 @@ void setSeaLevel(float level) {
 	waterLevel = level;
 }
 
-void makeLake(int x, int y) {
-    std::cout << "Make Lake at " << x << ", " << y << std::endl;
-
-    struct Node {
-        int x, y;
-        float altitude;
-        bool operator>(const Node& other) const { return altitude > other.altitude; }
-    };
-
-    std::pair<int, int> rimLocation;
-    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> toCheck;
-    toCheck.push({ x, y, getTileRef(x, y).altitude });
-
-    //float rimHeight = getTileRef(startX, startY).altitude;
-    float rimHeight = INFINITY;
-    std::set<std::pair<int, int>> finalLake;
-
-    int i = 0;
-    //Explore tiles until it finds a tile lower 
-    while (!toCheck.empty()) {
-        Node current = toCheck.top();
-        toCheck.pop();
-
-
-        if (finalLake.count({ current.x, current.y })) continue;
-        finalLake.insert({ current.x, current.y });
-
-        for (auto& n : getNeighbors(current.x, current.y)) {
-            int nx = n.first;
-            int ny = n.second;
-
-            if (finalLake.count({ nx, ny })) {
-                continue;
-            }
-
-            Tile& neighbor = getTileRef(nx, ny);
-
-            // Always add neighbor to queue for further exploration
-
-
-            // Only update rim if neighbor is higher than current
-            if (neighbor.altitude > current.altitude && neighbor.altitude < rimHeight) {
-                toCheck.push({ nx, ny, neighbor.altitude });
-
-            }
-            else {
-                rimLocation = { nx, ny };
-                rimHeight = std::min(rimHeight, neighbor.altitude);
-                //std::cout << "New Rim Height: " << rimHeight << " at (" << nx << ", " << ny << ")" << std::endl;
-
-            }
-        }
-
-        i++;
-        //std::cout << "Checked Tiles: " << i << std::endl;
-    }
-
-
-
-    for (auto& i : finalLake) {
-        Tile& tile = getTileRef(i.first, i.second);
-        tile.items.clear();
-        tile.walkable = false;
-        tile.changeTileType(WATER);
-        //tile.addItem(std::make_unique<Item>("Lake", L'$', sf::Color::Red));
-    }
-
-    float lowAdj = INFINITY;
-    std::pair<int, int> lowAdjLocation;
-    for (auto& i : getNeighbors(rimLocation.first, rimLocation.second)) {
-        if (getTileRef(i.first, i.second).altitude < lowAdj && getTileRef(i.first, i.second).type == GRASS) {
-            lowAdj = getTileRef(i.first, i.second).altitude;
-            lowAdjLocation = { i.first, i.second };
-        }
-    }
-
-    //makeRiver(rim.first, rim.second);
-
-}
-
-void addBasin(int x, int y) {
-    auto target = std::make_pair(x, y);
-    auto it = std::find(basins.begin(), basins.end(), target);
-
-    if (it == basins.end()) {
-        std::cout << "Basin low at " << x << ", " << y << std::endl;
-        basins.push_back(target);
-        //waterTiles.push_back(target);
-    }
-}
+//void makeLake(int x, int y) {
+//    std::cout << "Make Lake at " << x << ", " << y << std::endl;
+//
+//    struct Node {
+//        int x, y;
+//        float altitude;
+//        bool operator>(const Node& other) const { return altitude > other.altitude; }
+//    };
+//
+//    std::pair<int, int> rimLocation;
+//    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> toCheck;
+//    toCheck.push({ x, y, getTileRef(x, y).altitude });
+//
+//    //float rimHeight = getTileRef(startX, startY).altitude;
+//    float rimHeight = INFINITY;
+//    std::set<std::pair<int, int>> finalLake;
+//
+//    int i = 0;
+//    //Explore tiles until it finds a tile lower 
+//    while (!toCheck.empty()) {
+//        Node current = toCheck.top();
+//        toCheck.pop();
+//
+//
+//        if (finalLake.count({ current.x, current.y })) continue;
+//        finalLake.insert({ current.x, current.y });
+//
+//        for (auto& n : getNeighbors(current.x, current.y)) {
+//            int nx = n.first;
+//            int ny = n.second;
+//
+//            if (finalLake.count({ nx, ny })) {
+//                continue;
+//            }
+//
+//            Tile& neighbor = getTileRef(nx, ny);
+//
+//            // Only update rim if neighbor is higher than current
+//            if (neighbor.altitude > current.altitude && neighbor.altitude < rimHeight) {
+//                toCheck.push({ nx, ny, neighbor.altitude });
+//
+//            }
+//            else {
+//                rimLocation = { nx, ny };
+//                rimHeight = std::min(rimHeight, neighbor.altitude);
+//
+//            }
+//        }
+//
+//        i++;
+//    }
+//
+//
+//
+//    for (auto& i : finalLake) {
+//        Tile& tile = getTileRef(i.first, i.second);
+//        tile.items.clear();
+//        tile.walkable = false;
+//        tile.changeTileType(WATER);
+//        //tile.addItem(std::make_unique<Item>("Lake", L'$', sf::Color::Red));
+//    }
+//
+//    float lowAdj = INFINITY;
+//    std::pair<int, int> lowAdjLocation;
+//    for (auto& i : getNeighbors(rimLocation.first, rimLocation.second)) {
+//        if (getTileRef(i.first, i.second).altitude < lowAdj && getTileRef(i.first, i.second).type == GRASS) {
+//            lowAdj = getTileRef(i.first, i.second).altitude;
+//            lowAdjLocation = { i.first, i.second };
+//        }
+//    }
+//
+//    //makeRiver(rim.first, rim.second);
+//
+//}
 
 
 
@@ -295,153 +258,176 @@ std::pair<int, int> makeRiver(int x, int y) {
     }
 }
 
-
-
-
 Tile assignTileTypes(int x, int y) {
     // Base tile types, theres no way to change them yet
 
     Tile tile;
     tile.altitude = calculateAltitude(x, y);
 
-    if (findClosestDot(x, y).biome == Biome::GRASS) {
-        tile.type = GRASS;
-        tile.typeString = "Grass";
-    }
-    else {
-        tile.type = SAND;
-        tile.typeString = "Sand";
-    }
-
 
     if (tile.altitude > waterLevel + 135.0f) {
         tile.type = MOUNTAIN_PEAK;
-        tile.typeString = "Mountain Peak";
     }
     else if (tile.altitude > waterLevel + 105.0f) {
         tile.type = MOUNTAIN;
-        tile.typeString = "Mountain";
-
-		
-
     }
     else if (tile.altitude < waterLevel) {
         tile.type = WATER;
-        tile.typeString = "Water";
         tile.water = std::abs(waterLevel - tile.altitude);
     }
     else if (tile.altitude < waterLevel + 5.0f) {
         tile.type = SAND;
-        tile.typeString = "Sand";
     }
     else {
         tile.type = GRASS;
-        tile.typeString = "Grass";
     }
+
 
     return tile;
 }
 
-
 void Tile::getTile(int x, int y) {
-
-
     // Item adders
 
     // Probably a better way than a giant if-else chain
+	float scale = 0.01f;
 
-	float emeraldNoise = perlin(x * 0.05f + 200.0f, y * 0.05f + 200.0f);
-    float goldNoise = perlin(x * 0.05f + 400.0f, y * 0.05f + 400.0f);
-    float rubyNoise = perlin(x * 0.05f + 600.0f, y * 0.05f + 600.0f);
-    float sapphireNoise = perlin(x * 0.05f + 800.0f, y * 0.05f + 800.0f);
+	float emeraldNoise = perlin(x * scale + 200.0f, y * scale + 200.0f);
+    float goldNoise = perlin(x * scale + 400.0f, y * scale + 400.0f);
+    float rubyNoise = perlin(x * scale + 600.0f, y * scale + 600.0f);
+    float sapphireNoise = perlin(x * scale + 800.0f, y * scale + 800.0f);
+    float rainbowNoise = perlin(x * scale + 1000.0f, y * scale + 1000.0f);
 
-    Item tree = *ItemRegistry::getInstance().get("Oak Tree");
-    Item tree2 = *ItemRegistry::getInstance().get("Pine Tree");
-	Item tree3 = *ItemRegistry::getInstance().get("Birch Tree");
-    Item rock = *ItemRegistry::getInstance().get("Rock");
-    Item wood = *ItemRegistry::getInstance().get("Wood");
-    
-	Item carp = *ItemRegistry::getInstance().get("Carpentry Bench");
+    float ironNoise = perlin(x * scale, y * scale);
+
+	float oakNoise = perlin(x * 0.005f + 5000.0f, y * 0.005f + 5000.0f);
+    float spruceNoise = perlin(x * 0.005f + 50000.0f, y * 0.005f + 50000.0f);
 
     if (type == GRASS) {
 
         float r = hashNoise(x, y, seed);
 
-
-        if (r < 0.04f && altitude < waterLevel + 70.0f) {
-            if (r < 0.013f) {
-                addItem(std::make_unique<Item>(tree));
+        if (oakNoise > 0.3f || spruceNoise > 0.3f) {
+            if (oakNoise > 0.3f /*&& altitude < waterLevel + 70.0f*/) {
+                if (r < 0.1f) {
+                    addObject("Oak Tree");
+                }
+                else if (r < 0.11f) {
+                    addObject("Stick");
+                }
+                else if (r < 0.13f) {
+                    addObject("Pebble");
+                }
             }
-            else if (r < 0.026f) {
-                addItem(std::make_unique<Item>(tree2));
+            if (spruceNoise > 0.3f) {
+                if (r < 0.1f) {
+                    addObject("Pine Tree");
+                }
+                else if (r < 0.11f) {
+                    addObject("Stick");
+                }
+                else if (r < 0.13f) {
+                    addObject("Pebble");
+                }
             }
-            else {
-                addItem(std::make_unique<Item>(tree3));
-                
-            }
-         }
-
-        else if (r < 0.09f && altitude < waterLevel + 70.0f) {
-            addItem(std::make_unique<Item>("Flower", L'*', sf::Color(getRandomInt(0, 255), getRandomInt(0, 255), getRandomInt(0, 255))));
-
         }
-        else if (r < 0.24f && altitude > waterLevel + 80.0f) {
-            addItem(std::make_unique<Item>(rock));
+        else {
+            float oreThreshold = 0.5f;
+            float oreSprinkler = hashNoise(x + 500.0f, y + 500.0f, seed);
+
+            if (oreSprinkler < 0.6f) {
+                if (ironNoise > oreThreshold - 0.1f) {
+                    items.clear();
+                    addObject("Raw Iron");
+                }
+                if (rubyNoise > oreThreshold - 0.1f) {
+                    items.clear();
+                    addObject("Copper");
+                    //animationType.type = WHITE_BREATHE;
+                }
+                if (sapphireNoise > oreThreshold) {
+                    items.clear();
+                    addObject("Coal");
+                }
+            }
+        }
+        
+		float rock = hashNoise(x + 10000.0f, y + 10000.0f, seed);
+        
+        if (rock < 0.1f && altitude > waterLevel + 80.0f) {
+            addObject("Rock");
+        }
+
+        float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
+
+        /*if (outposts < 0.0001f) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Outpost");
+            auto spawner = static_cast<Spawner*>(item.get());
+            spawner->x = x;
+			spawner->y = y;
+            addObject(item);
+
+			tiles.push_back({ x, y });
+        }*/
+
+
+  //      int itemSpawnRange = 3;
+
+  //      if (x == 0 && y == 0) {
+		//	items.clear();
+		//	addObject("Carpentry Bench");
+  //      }
+  //      if (x == 1 && y == 0) {
+  //          items.clear();
+  //          addObject("Anvil");
+  //      }
+  //      if (x == 2 && y == 0) {
+  //          items.clear();
+  //          auto item = ObjectRegistry::getInstance().get("Furnace");
+  //          auto f = static_cast<Furnace*>(item.get());
+  //          f->x = x;
+  //          f->y = y;
+  //          addObject(item);
+  //      }
+  //      if (x == 3 && y == 0) {
+  //          items.clear();
+  //          auto item = ObjectRegistry::getInstance().get("Furnace");
+  //          auto f = static_cast<Furnace*>(item.get());
+  //          f->x = x;
+		//	f->y = y;
+  //          addObject(item);
+  //      }
+
+        float scrapNoise = hashNoise(x + 20000.0f, y + 20000.0f, seed);
+
+        if (scrapNoise < 0.005f) {
+            items.clear();
+            addObject("Scrap Metal");
+        }
+
+        if (x == 0 && y == 0) {
+            addObject("Gun Bench");
         }
     }
 
 
-
-	float noise = hashNoise(x + 500, y + 500, seed);
-
-    if (noise < 0.3f) {
-		//water += 1.0f;
-		//newWater.push_back({ x, y });
-    }
-
-    if (x == 2 && y == 2) {
+    if (x > -2 && x < 2 && y > -2 && y < 2) {
         items.clear();
-        addItem(std::make_unique<Item>(carp));
+		auto item = ObjectRegistry::getInstance().get("Scrap Metal");
+		addObject(item);
+		mainWorld.addItemToMove(item, x, y);
     }
 
-    /*items.clear();
-    addItem(std::make_unique<Item>("DISPLAY", L'■', sf::Color(getRandomInt(0, 255), getRandomInt(0, 255), getRandomInt(0, 255))));
-    animationType = BREATHE;*/
-
-    //std::vector<Item> itempool = {wood, tree, tree2, rock, iron, emerald, gold, ruby, sapphire, topaz, diamond, flower, wheatSeed, chest, wall, stonePath, woodenFence};
-    /*std::vector<Item> itempool = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, xx, yy, z };
-
-
-    if (x == 100 && y == 100) {
-        items.clear();
-
-
-        for (int i = 0; i < 4800; i++) {
-			Item chosenitem = itempool[getRandomInt(0, itempool.size() - 1)];
-            auto item = std::make_unique<Item>(chosenitem);
-            Item* ptr = item.get();
-            addItem(std::move(item));
-            itemsToMove.push_back({ ptr, {x, y} });
-        }
-       
-
-    }*/
 
 
 
     // Sets starting displays, subject to change
     auto display = getTileDisplay(type);
 
-    charList = display.character;
-    charIndex = getRandomInt(0, charList.size() - 1);
-    character = charList[charIndex];
+    character = display.chars[0];
 
-    colorList = display.color;
-    color = colorList[charIndex];
-	origColorHolder = color;
-
-	this->x = x;
-	this->y = y;
+    color = display.colors[0];
 
     if (items.size() > 0) {
         walkable = getTileWalkable(items[0].get(), type);
@@ -454,128 +440,6 @@ void Tile::getTile(int x, int y) {
 
 sf::Clock animClock;
 sf::Clock colorClock;
-
-
-enum SedimentState {
-    DEPOSIT,
-    TRANSPORT,
-    ERODE
-};
-
-SedimentState hjulstromDiagram(float flowVelocity, float grainSize) {
-    if (flowVelocity < 0.1f) {
-        return DEPOSIT;
-		std::cout << "Deposit" << std::endl;
-    }
-    else if (flowVelocity < 1.0f) {
-        if (grainSize < 0.05f) {
-            return TRANSPORT;
-            std::cout << "Transport" << std::endl;
-        }
-        else {
-            return DEPOSIT;
-            std::cout << "Deposit" << std::endl;
-        }
-    }
-    else {
-        if (grainSize < 0.1f) {
-            return ERODE;
-            std::cout << "Erode" << std::endl;
-        }
-        else {
-            return TRANSPORT;
-            std::cout << "Transport" << std::endl;
-        }
-    }
-
-}
-
-
-/*
-
-UPDATING THE EROSION SIMULATION:
-
-Figure out where the water will flow
-Update positions of water
-Calculate deltaHeight
-Calculate sediment capacity (higher when water is moving faster and has more volume)
-If capacity > current sediment, erode
-If water slows, deposit
-
-
-*/
-
-void Tile::simulateWaterTile() {
-       
-    for (auto& i : basins) {
-        if (i.first == x && i.second == y) {
-            if (water < 500.0f) {
-                water += 200.5f;
-            }
-        }
-    }
-
-	//water += 1.0f;
-
-    /*if (altitude < waterLevel) {
-        water = 0.0f;
-        return;
-    }*/
-
-
-    float grainSize = 0.002f; // In meters
-
-    float surface = altitude + water;
-
-    for (auto& n : getNeighbors(x, y)) {
-        Tile& other = getTileRef(n.first, n.second);
-
-        float otherSurface = other.altitude + other.water;
-
-        if (surface > otherSurface) {
-
-            float flow = (surface - otherSurface) * 0.5f;
-
-            flow = std::min(flow, water);
-			this->flow = flow;
-
-            water -= flow;
-            other.water += flow;
-
-            surface = altitude + water;
-
-            // Hjulstrom's Graph implementation
-
-			float flowVelocity = flow * 10.0f;
-
-            float erosionStrength = 0.0005f;
-			float depositionStrength = 0.0003f;
-
-			SedimentState state = hjulstromDiagram(flowVelocity, grainSize);
-
-            if (state == ERODE) {
-                altitude -= flow * erosionStrength;
-            }
-            else if (state == DEPOSIT) {
-                other.altitude += flow * depositionStrength;
-			}
-
-            if (flow >= 1.0f) {
-                other.items.clear();
-            }
-			
-            //if (water < 0.001f) {
-            //    // Tiny water, we'll just pretend the soil soaked it up
-            //    water = 0.0f;
-            //}
-            
-        }
-    }
-}
-
-std::vector<std::pair<int, int>> getWater() {
-	return newWater;
-}
 
 struct RGB {
     float r, g, b;
@@ -602,13 +466,12 @@ void Tile::update() {
 
     // This method doesn't work if the tiles aren't rendered already, a real pain
 
-    // I dont know how it staggers the animations but Ill take it
-    // ^ Future me figured it out and its atrocious to think about
+    // Animation staggers come from global clocks
     
     // Needs some work, probably should be independent from item animations
 
 
-    if (animClock.getElapsedTime().asSeconds() > 0.001f) {
+    /*if (animClock.getElapsedTime().asSeconds() > 0.001f) {
         if (charIndex >= charList.size() - 1) {
             charIndex = 0;
         }
@@ -618,13 +481,7 @@ void Tile::update() {
         animClock.restart();
         character = charList[charIndex];
         color = colorList[charIndex];
-    }
-
-    if (enableWater) {
-        simulateWaterTile();
-    }
-    
-
+    }*/
 
     // Early exit, all other anims are based on items
     if (items.size() == 0) {
@@ -632,42 +489,87 @@ void Tile::update() {
     }
 
     // Animated Colors / Animated Displays (will be added later)
-    if (animationType == BREATHE) {
-        float time = colorClock.getElapsedTime().asSeconds();
+  //  if (animationType.type == BREATHE) {
+  //      float time = colorClock.getElapsedTime().asSeconds();
 
-		sf::Color itemColor = items[0]->baseColor;
+		//sf::Color itemColor = items[0]->baseColor;
 
-        float min = 0.2f;
-        float max = 1.0f;
+  //      float min = 0.2f;
+  //      float max = 1.0f;
 
-        float intensity = min + (max - min) * ((sin(time + animOffset) + 1.0f) / 2.0f);
+  //      float intensity = min + (max - min) * ((sin(time + animOffset) + 1.0f) / 2.0f);
 
-        color.r = static_cast<sf::Uint8>(itemColor.r * intensity);
-        color.g = static_cast<sf::Uint8>(itemColor.g * intensity);
-        color.b = static_cast<sf::Uint8>(itemColor.b * intensity);
+  //      color.r = static_cast<sf::Uint8>(itemColor.r * intensity);
+  //      color.g = static_cast<sf::Uint8>(itemColor.g * intensity);
+  //      color.b = static_cast<sf::Uint8>(itemColor.b * intensity);
 
-		items[0]->displayColor = color;
-    }
+		//items[0]->displayColor = color;
+  //  }
 
-    if (animationType == RAINBOW) {
-        float time = colorClock.getElapsedTime().asSeconds();
-        float hue = fmod((time * 60.0f) + animOffset * 60.0f, 360.0f); // Convert offset to degrees
-        RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
-        color.r = static_cast<sf::Uint8>(rgb.r * 255);
-        color.g = static_cast<sf::Uint8>(rgb.g * 255);
-		color.b = static_cast<sf::Uint8>(rgb.b * 255);
+  //  if (animationType.type == RAINBOW) {
+  //      float time = colorClock.getElapsedTime().asSeconds();
+  //      float hue = fmod((time * 60.0f) + animOffset * 60.0f, 360.0f);
+  //      RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
+  //      color.r = static_cast<sf::Uint8>(rgb.r * 255);
+  //      color.g = static_cast<sf::Uint8>(rgb.g * 255);
+		//color.b = static_cast<sf::Uint8>(rgb.b * 255);
 
-        //animOffset = 0.0f;
+		//items[0]->displayColor = color;
+  //  }
 
-		items[0]->displayColor = color;
-    }
+  //  if (animationType.type == RED_X) {
+  //      if (animationClock.getElapsedTime().asSeconds() > 0.5f) {
+  //          animationClock.restart();
+  //          animationType.isX = !animationType.isX;
+  //      }
 
-    
-    
+  //      if (animationType.isX) {
+  //          items[0]->displayChar = L'X';
+  //          items[0]->displayColor = sf::Color::Red;
+  //      }
+  //      else {
+  //          items[0]->displayChar = items[0]->baseChar;
+  //          items[0]->displayColor = items[0]->baseColor;
+  //      }
+  //  }
+
+  //  if (animationType.type == WHITE_BREATHE) {
+  //      float time = colorClock.getElapsedTime().asSeconds();
+
+  //      sf::Color itemColor = items[0]->baseColor;
+
+  //      float speed = 2.0f;
+  //      float wave = (sin(time * speed + animOffset) + 1.0f) * 0.5f; // 0 → 1
+
+  //      color.r = static_cast<sf::Uint8>(itemColor.r + (255 - itemColor.r) * wave);
+  //      color.g = static_cast<sf::Uint8>(itemColor.g + (255 - itemColor.g) * wave);
+  //      color.b = static_cast<sf::Uint8>(itemColor.b + (255 - itemColor.b) * wave);
+
+
+  //      items[0]->displayColor = color;
+  //  }
 
 
     for (auto& i : items) {
-        i->grow();
+        if (i->type == Type::Foliage_Crop) {
+			FoliageCrop* crop = static_cast<FoliageCrop*>(i.get());
+            crop->spawnProduce();
+        }
+
+        if (i->type == Type::Crop) {
+            Crop* cropPtr = static_cast<Crop*>(i.get());
+            cropPtr->grow();
+        }
+		
+        if (i->type == Type::Furnace) {
+            Furnace* furnacePtr = static_cast<Furnace*>(i.get());
+			furnacePtr->cook(0.1f);
+        }
+
+        if (i->type == Type::Spawner) {
+            Spawner* spawnerPtr = static_cast<Spawner*>(i.get());
+            spawnerPtr->update();
+        }
     }
 }
 
@@ -676,29 +578,40 @@ void Tile::changeTileChar(sf::String string) {
 
 void Tile::changeTileType(tileType newType) {
     type = newType;
-	typeString = "Water";
-    charList = getTileDisplay(newType).character;
-    colorList = getTileDisplay(newType).color;
-    character = charList[0];
-    color = colorList[0];
+   // charList = getTileDisplay(newType).chars;
+    //colorList = getTileDisplay(newType).colors;
+   // character = charList[0];
+   // color = colorList[0];
 }
 
-bool Tile::containsItem(const Item& item) {
+bool Tile::containsItem(const std::string& item) {
     for (auto& i : items) {
-        if (i->name == item.name) {
+        if (i->name == item) {
 			return true;
         }
     }
     return false;
 }
 
-void Tile::addItem(std::unique_ptr<Item> item) {
-    items.insert(items.begin(), std::move(item));
+
+void Tile::addObject(std::string itemName) {
+	auto item = ObjectRegistry::getInstance().get(itemName);
+    if (item) {
+		addObject(item);
+	}
 }
 
-void Tile::removeItem(const Item& item) {
+void Tile::addObject(std::shared_ptr<Object> item) {
+    items.insert(items.begin(), item);
+}
+
+void Tile::removeItem(std::shared_ptr<Object> item, int x, int y) {
+    auto stockpile = mainWorld.atStockpile(x, y);
+    if (stockpile) {
+        stockpile->removeItem(x, y, item);
+    }
     for (auto it = items.begin(); it != items.end(); ++it) {
-        if ((*it)->name == item.name) {
+        if ((*it)->name == item->name) {
             items.erase(it);
             return;
         }
@@ -720,17 +633,7 @@ tileDisplay getTileDisplay(tileType type) {
         return { {c}, {sf::Color(1, shade, 1)}};
     }
     case WATER:
-        return { {L'≈', L'≈', L'≈', L'≈',
-            L'≈', L'≈', L'≈', L'≈',
-            L'≈', L'≈', L'≈', L'≈',
-            L'≈', L'≈', L'≈', L'≈',
-            L'≈', L'≈', L'~'},
-            {sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, 
-            sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, 
-            sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, 
-            sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, sf::Color::Blue, 
-            sf::Color::Blue, sf::Color::Blue, sf::Color(255, 255, 255)}
-        };
+		return { {L'≈'}, {sf::Color(0, 0, 255)} };
 	case SAND:
 		c = L':';
         return { {c}, {sf::Color(255, 255, 0)}};
@@ -746,7 +649,7 @@ tileDisplay getTileDisplay(tileType type) {
     }
 }
 
-bool getTileWalkable(Item* itemOnTile, tileType type) {
+bool getTileWalkable(Object* itemOnTile, tileType type) {
 
 	// Will probably put this in item class later
 
@@ -766,8 +669,6 @@ bool getTileWalkable(Item* itemOnTile, tileType type) {
     switch (type) {
     case GRASS:
         return true;
-    case WATER:
-        return false;
 	case SAND:
         return true;
     default:
@@ -775,42 +676,16 @@ bool getTileWalkable(Item* itemOnTile, tileType type) {
     }
 }
 
-
-// The following 5 methods need to be gone
-void changeTileType(int x, int y, tileType type) {
-    Tile& tile = getTileRef(x, y);
-    tile.type = type;
-}
-
-void changeTileChar(int x, int y, wchar_t string) {
-    Tile& tile = getTileRef(x, y);
-    tile.character = string;
-}
-
-void changeTileColor(int x, int y, sf::Color color) {
-    Tile& tile = getTileRef(x, y);
-    tile.color = color;
-}
-
-void changeTileWalkable(int x, int y, bool walk) {
-    Tile& tile = getTileRef(x, y);
-    tile.walkable = walk;
-}
-
-//void changeTileItem(int x, int y, std::unique_ptr<Item> item) {
-//    Tile& tile = getTileRef(x, y);
-//    tile.itemOnTile = std::move(item);
-//}
-
 // The backbone of everything ever
 Tile& getTileRef(int x, int y) {
+
     int localX = (x % chunkDim + chunkDim) % chunkDim;
     int localY = (y % chunkDim + chunkDim) % chunkDim;
 
     int chunkX = static_cast<int>(std::floor((float)x / chunkDim));
     int chunkY = static_cast<int>(std::floor((float)y / chunkDim));
 
-    Chunk& chunk = loadOrGenerateChunk(chunkX, chunkY);
+    Chunk& chunk = mainWorld.loadOrGenerateChunk(chunkX, chunkY);
     return chunk.tiles[localX][localY];
 }
 

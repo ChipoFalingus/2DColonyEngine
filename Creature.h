@@ -8,74 +8,63 @@
 
 class Creature {
 	protected:
-
-
 		std::vector<std::pair<int, int>> currentPath;
 		std::pair<int, int> target;
 		
-		float weight;
-		float speed;
+		float weight = 1.0f;
 
-		sf::Clock clock;
-		sf::Clock attackClock;
 		
-		Creature* targetCreature;
 		
 
-		int hunger;
+		int hunger = 100;
 		int tiredness = 0;
 		bool sleeping = false;
-		
+
+		int lastTargetX = 0;
+		int lastTargetY = 0;
 
 	public:
+		sf::Clock clock;
+		sf::Clock attackClock;
+		sf::Clock repathClock;
 
-		static std::vector<Creature*> allCreatures;
+		Creature* targetCreature = nullptr;
+
 		int health = 100;
 		int lastHealth = 100;
 		wchar_t displayChar;
 		glm::vec3 displayColor;
 
 
+		float speed;
+
+
 		int xPos;
 		int yPos;
 
-		int xPixels;
-		int yPixels;
-
 		// Creatures can hold one item type and a weapon/tool
-		Item* itemInHand;
-		Tool* toolInHand;
-
-		virtual void doWork() = 0;
-		virtual ~Creature() = default;
+		std::shared_ptr<Object> itemInHand;
+		std::shared_ptr<Tool> toolInHand;
 
 		bool dead = false;
-
 
 		Creature(int x, int y, wchar_t glyph, glm::vec3 color)
 			: xPos(x), yPos(y), displayChar(glyph), displayColor(color) {
 		}
 
-	
-
-	std::vector<std::pair<int, int>> findPath(std::pair<int, int> goal);
-
-	
+		virtual void doWork() = 0;
+		virtual ~Creature() = default;
 
 
-	std::vector<std::pair<int, int>> getNeighbors(int x, int y);
-
-	bool isAtTile(int x, int y);
-
-	void attack();
-
-	void stop();
-
-	int heuristic(const std::pair<int, int>& a, const std::pair<int, int>& b);
 	float getDistance(Creature* other);
+	void takeDamage(int dmg, Creature* attacker);
 
-	static std::vector<Creature*> getCreatureList() {
-		return allCreatures;
+	void setCreaturePath(std::vector<std::pair<int, int>> path) {
+		currentPath = path;
+	}
+
+	std::vector<std::pair<int, int>>& getCreaturePath() {
+		return currentPath;
 	}
 
 };

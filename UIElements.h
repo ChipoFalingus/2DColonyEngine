@@ -7,7 +7,24 @@
 #include <fstream>
 #include <algorithm>
 
+#include "Globals.h"
 
+#define BLANK_CHAR L'@'
+
+
+enum Alignment {
+	TOP_LEFT,
+	TOP_CENTER,
+	TOP_RIGHT,
+	CENTER_LEFT,
+	CENTER,
+	CENTER_RIGHT,
+	BOTTOM_LEFT,
+	BOTTOM_CENTER,
+	BOTTOM_RIGHT
+};
+
+// Good for templates
 inline std::vector<std::vector<wchar_t>> txtTo2DArray(const std::string& filePath) {
 	std::wifstream file(filePath);
 	file.imbue(std::locale("en_US.UTF-8"));
@@ -30,10 +47,213 @@ inline std::vector<std::vector<wchar_t>> txtTo2DArray(const std::string& filePat
 	return array;
 }
 
-class Button {
-private:
+class UIElement {
+protected:
 	int lengthX, lengthY;
 	int xOffset, yOffset;
+	Alignment alignment;
+public:
+	virtual ~UIElement() = default;
+	virtual void draw(std::vector<std::vector<wchar_t>>& buffer) = 0;
+	virtual void update(int mouseX, int mouseY, bool mouseDown) {}
+
+	void setPosition(int xOffset, int yOffset) {
+		this->xOffset = xOffset;
+		this->yOffset = yOffset;
+	}
+
+	void setSize(int lengthX, int lengthY) {
+		this->lengthX = lengthX;
+		this->lengthY = lengthY;
+	}
+
+	int getXOffset() const { return xOffset; }
+	int getYOffset() const { return yOffset; }
+
+	int getXLength() const { return lengthX; }
+	int getYLength() const { return lengthY; }
+
+	Alignment getAlignment() const { return alignment; }
+};
+
+// Entire screen UI frame
+class Frame {
+private:
+	std::vector<std::unique_ptr<UIElement>> elements;
+	std::string name;
+public:
+	template<typename T, typename... Args>
+	T& addElement(Args&&... args) {
+		elements.push_back(std::make_unique<T>(std::forward<Args>(args)...));
+		return *static_cast<T*>(elements.back().get());
+	}
+
+	std::string getName() const {
+		return name;
+	}
+
+	void setName(std::string name) {
+		this->name = name;
+	}
+	
+	void draw(std::vector<std::vector<wchar_t>>& UI) {
+		for (auto& i : elements) {
+			i->draw(UI);
+		}
+	}
+
+	void update(int mouseX, int mouseY, bool mouseDown) {
+		if (elements.empty()) return;
+		for (auto& element : elements) {
+			element->update(mouseX, mouseY, mouseDown);
+		}
+	}
+};
+
+class Panel : public UIElement {
+private:
+	std::vector<std::unique_ptr<UIElement>> elements;
+public:
+	Panel(int xOffset, int yOffset, int lengthX, int lengthY, Alignment alignment)
+		: UIElement()
+	{
+		this->alignment = alignment;
+		setPosition(xOffset, yOffset);
+		setSize(lengthX, lengthY);
+	}
+
+	template<typename T, typename... Args>
+	T& addElement(Args&&... args) {
+		auto element = std::make_unique<T>(std::forward<Args>(args)...);
+		element->setPosition(
+			element->getXOffset() + xOffset,
+			element->getYOffset() + yOffset
+		);
+
+		elements.push_back(std::move(element));
+		return *static_cast<T*>(elements.back().get());
+	}
+
+	void clear() {
+		elements.clear();
+	}
+
+	void draw(std::vector<std::vector<wchar_t>>& UI) override {
+		for (int i = 0; i < lengthY; i++) {
+			for (int j = 0; j < lengthX; j++) {
+				if (yOffset + i < UI.size() && xOffset + j < UI[0].size()) {
+					UI[yOffset + i][xOffset + j] = L' ';
+
+					//Edges
+					if (i == 0 || i == lengthY - 1) UI[yOffset + i][xOffset + j] = L'─';
+					if (j == 0 || j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'│';
+
+					// Corners
+					if (i == 0 && j == 0) UI[yOffset + i][xOffset + j] = L'┌';
+					if (i == lengthY - 1 && j == 0) UI[yOffset + i][xOffset + j] = L'└';
+					if (i == 0 && j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'┐';
+					if (i == lengthY - 1 && j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'┘';
+				}
+			}
+		}
+		
+		
+		for (auto& element : elements) {
+			
+			element->draw(UI);
+		}
+	}
+};
+
+class Slider : public UIElement {
+private:
+	int minValue, maxValue;
+	int currentValue;
+	int segments;
+	bool vertical;
+public:
+	Slider(int xOffset, int yOffset, int minValue, int maxValue, int currentValue, int segments, bool vertical, Alignment alignment)
+		: minValue(minValue), maxValue(maxValue), currentValue(currentValue), segments(segments), vertical(vertical)
+	{
+		this->alignment = alignment;
+		setPosition(xOffset, yOffset);
+	}
+
+	void draw(std::vector<std::vector<wchar_t>>& UI) override {
+		float t = float(currentValue - minValue) / float(maxValue - minValue);
+		int knobIndex = static_cast<int>(std::round(t * (segments - 1)));
+
+		for (int i = 0; i < segments; i++) {
+			int drawX = xOffset + (vertical ? 0 : i);
+			int drawY = yOffset + (vertical ? i : 0);
+
+			if (drawY < 0 || drawY >= UI.size() ||
+				drawX < 0 || drawX >= UI[drawY].size())
+				continue;
+
+			UI[drawY][drawX] = (i == knobIndex) ? L'█' : (vertical ? L'│' : L'─');
+		}
+	}
+
+	void update(int mouseX, int mouseY, bool mouseDown) {
+		if (!mouseDown) return;
+
+		int pos = vertical ? (mouseY - yOffset) : (mouseX - xOffset);
+		if (pos > segments) pos = segments;
+		if (pos < 0) pos = 0;
+
+		float t = float(pos) / float(segments - 1);
+		int value = static_cast<int>(std::round(minValue + t * (maxValue - minValue)));
+
+		setValue(value);
+	}
+
+	void setValue(int value) {
+		if (value < minValue) currentValue = minValue;
+		else if (value > maxValue) currentValue = maxValue;
+		else currentValue = value;
+	}
+
+	int getValue() const {
+		return currentValue;
+	}
+};
+
+class Text : public UIElement {
+private:
+	std::wstring label;
+public:
+	Text(int xOffset, int yOffset, const std::wstring& label, Alignment alignment)
+		:UIElement(), label(label) 
+	{
+		this->alignment = alignment;
+		setPosition(xOffset, yOffset);
+	}
+
+	void draw(std::vector<std::vector<wchar_t>>& UI) override {
+		int line = 0;
+		int column = 0;
+		for (int i = 0; i < label.size(); i++) {
+			// | is a new line
+			if (label[i] == L'|') {
+				line++;
+				column = 0;
+				continue;
+			}
+			if (xOffset + i < UI[0].size() && yOffset < UI.size()) {
+				UI[yOffset + line][xOffset + column] = label[i];
+				column++;
+			}
+		}
+	}
+
+	void changeText(const std::wstring& newText) {
+		label = newText;
+	}
+};
+
+class Button : public UIElement {
+private:
 	std::vector<std::wstring> staticButton;
 	std::vector<std::wstring> hoveredButton;
 	std::vector<std::wstring> clickedButton;
@@ -43,33 +263,31 @@ private:
 
 	bool wasClickedLastFrame = false;
 
-public:
 	std::function<void()> onClick;
+	std::function<void()> onHover;
 
-
-	
-
+public:
 	Button(int xOffset, int yOffset, 
 		const std::vector<std::wstring> staticButton, 
 		const std::vector<std::wstring> hoveredButton, 
-		const std::vector<std::wstring> clickedButton)
-		:xOffset(xOffset), yOffset(yOffset), 
-		staticButton(staticButton), 
+		const std::vector<std::wstring> clickedButton,
+		Alignment alignment)
+		:staticButton(staticButton), 
 		hoveredButton(hoveredButton), 
-		clickedButton(clickedButton) 
+		clickedButton(clickedButton)
 	{
-		lengthX = staticButton[0].size();
-		lengthY = staticButton.size();
-	
+		this->alignment = alignment;
+		setPosition(xOffset, yOffset);
+		setSize(staticButton[0].size(), staticButton.size());
 	};
 
-	bool checkHover(int mouseX, int mouseY) {
-		return (mouseX >= xOffset && mouseX < xOffset + lengthX &&
-			mouseY >= yOffset && mouseY < yOffset + lengthY);
+	bool checkHover(int mouseX, int mouseY) { 
+		return (mouseX >= xOffset && mouseX < xOffset + staticButton[0].size()
+			&& mouseY >= yOffset && mouseY < yOffset + staticButton.size()); 
+		
 	}
 
-	std::vector<std::vector<wchar_t>> drawButton(std::vector<std::vector<wchar_t>> UI) {
-
+	void draw(std::vector<std::vector<wchar_t>>& UI) override {
 		const std::vector<std::wstring>* button;
 
 		if (isClicked) {
@@ -84,87 +302,128 @@ public:
 
 		for (int i = 0; i < button->size(); i++) {
 			for (int j = 0; j < (*button)[i].size(); j++) {
-				if (button->size() + xOffset <= UI[0].size() &&
-					button[0].size() + yOffset <= UI.size()) {
-					UI[i + yOffset][j + xOffset] = (*button)[i][j];
+				int drawX = xOffset + j;
+				int drawY = yOffset + i;
+
+				if (drawY >= 0 && drawY < UI.size() &&
+					drawX >= 0 && drawX < UI[drawY].size()) {
+					UI[drawY][drawX] = (*button)[i][j];
 				}
-			
 			}
 		}
-		return UI;
 	}
 
-	void update(int mouseX, int mouseY, bool clicked) {
-		
 
+	void update(int mouseX, int mouseY, bool mouseDown) {
 		isHovered = checkHover(mouseX, mouseY);
 
-		bool justClicked = clicked && !wasClickedLastFrame;
+		bool justPressed = mouseDown && !wasClickedLastFrame;
+		bool justReleased = !mouseDown && wasClickedLastFrame;
 
-		if (isHovered && justClicked && onClick) {
+		if (isHovered && justPressed) {
 			isClicked = true;
-			onClick();
 		}
 
-		wasClickedLastFrame = clicked;
+		if (isHovered && onHover) {
+			onHover();
+		}
+
+		if (isClicked && justReleased) {
+			if (isHovered) {
+				if (onClick) {
+					onClick();
+				}
+			}
+			
+			isClicked = false;
+		}
+
+		wasClickedLastFrame = mouseDown;
 	}
 
 	void setClickFunction(std::function<void()> func) {
 		onClick = func;
 	}
+
+	void setHoverFunction(std::function<void()> func) {
+		onHover = func;
+	}
 };
 
-
-class UI {
+class Checkbox : public UIElement {
+private:
+	bool isChecked = false;
+	bool isClicked = false;
+	bool wasClickedLastFrame = false;
 public:
 
-	// 2D array representing the UI
-	std::vector<std::vector<wchar_t>> UI;
-
-	// Original UI layout holder
-	// why does this exist??
-	std::vector<std::vector<wchar_t>> holder;
-	std::vector<Button> UIButtons;
-
-	void init(std::string path) {
-		holder = txtTo2DArray(path);
-		UI = holder;
+	Checkbox(int xOffset, int yOffset, Alignment alignment)
+	{
+		this->alignment = alignment;
+		setPosition(xOffset, yOffset);
+		setSize(1, 1);
 	}
 
-	void drawUI() {
-		// Erase UI
-		for (int x = 0; x < UI.size(); x++)
-			for (int y = 0; y < UI[0].size(); y++)
-				UI[x][y] = L'#';
+	bool checkHover(int mouseX, int mouseY) {
+		return (mouseX >= xOffset && mouseX < xOffset + 1
+			&& mouseY >= yOffset && mouseY < yOffset + 1);
 
+	}
 
-		// Currently resizes the UI array to whatever the dimensions of the txt are
-		// UI = holder;
-
-		for (auto& i : UIButtons) {
-			UI = i.drawButton(UI);
+	void draw(std::vector<std::vector<wchar_t>>& UI) override {
+		if (yOffset >= 0 && yOffset < UI.size() &&
+			xOffset >= 0 && xOffset < UI[yOffset].size()) {
+			UI[yOffset][xOffset] = isChecked ? 2611 : 2610;
 		}
 	}
 
-	void resizeUI(int newWidth, int newHeight) {
-		UI.resize(newHeight);
-		for (auto& row : UI) {
-			row.resize(newWidth, L'#');
+	void update(int mouseX, int mouseY, bool mouseDown) override {
+		bool isHovered = checkHover(mouseX, mouseY);
+
+		bool justPressed = mouseDown && !wasClickedLastFrame;
+		bool justReleased = !mouseDown && wasClickedLastFrame;
+
+		if (isHovered && justPressed) {
+			isClicked = true;
 		}
 
-		std::cout << "Resized UI to " << newWidth << "x" << newHeight << std::endl;
+		if (isClicked && justReleased) {
+			if (isHovered) {
+				isChecked = !isChecked;
+			}
+			isClicked = false;
+		}
+
+		wasClickedLastFrame = mouseDown;
 	}
+
 };
 
-extern Button Start;
-extern Button Options;
-extern Button Exit;
+// Used for logo
+class CustomElement : public UIElement {
+private:
+	std::vector<std::wstring> content;
+public:
+	CustomElement(int xOffset, int yOffset, const std::vector<std::wstring>& content)
+		:content(content) 
+	{
+		setPosition(xOffset, yOffset);
+		setSize(content[0].size(), content.size());
+	}
 
-extern Button BuildButton;
-extern Button ClearButton;
-extern Button PlantButton;
+	void setContent(const std::vector<std::wstring>& newContent) {
+		content = newContent;
+		setSize(content[0].size(), content.size());
+	}
 
-extern Button BuildStockpile;
-
-
-
+	void draw(std::vector<std::vector<wchar_t>>& UI) override {
+		for (int i = 0; i < content.size(); i++) {
+			for (int j = 0; j < content[i].size(); j++) {
+				if (content.size() + xOffset <= UI[0].size() &&
+					content[0].size() + yOffset <= UI.size()) {
+					UI[i + yOffset][j + xOffset] = content[i][j];
+				}
+			}
+		}
+	}
+};

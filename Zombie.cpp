@@ -5,13 +5,13 @@
 
 Zombie::Zombie(int x, int y)
 	: Monster(x, y, L'Z', glm::vec3(0, 255, 0))
-{}
-
-float walkSpeed = 0.4f;
+{
+	speed = 0.2f;
+}
 
 void Zombie::doWork() {
 
-	switch (state) {
+	/*switch (state) {
 		case monsterState::IDLE:
 			state = monsterState::WANDERING;
 			break;
@@ -29,48 +29,53 @@ void Zombie::doWork() {
 			if (getTileRef(newX, newY).walkable) {
 				currentPath.push_back({ newX, newY });
 			}
-			Creature* closestCreature = findClosestCreatureType<Villager>(xPos, yPos, [this](Creature* c) { return c != this; });
-			if (closestCreature && getDistance(closestCreature) < 500.0f) {
+			Creature* closestCreature = findClosestCreatureType<Villager>(xPos, yPos, 100, [this](Creature* c) { return c != this; });
+			if (closestCreature) {
 				state = monsterState::ATTACKING;
 			}
 			break;
 		}
 		case monsterState::ATTACKING:
-			if (currentPath.empty()) {
-				targetCreature = findClosestCreatureType<Villager>(xPos, yPos, [this](Creature* c) { return c != this; });
 
-				if (currentPath.empty()) {
-
-					targetCreature = findClosestCreatureType<Villager>(xPos, yPos,
-						[this](Creature* c) { return c != this; });
-
-					float bestDist = std::numeric_limits<float>::max();
-					int bestX = xPos;
-					int bestY = yPos;
-
-					for (auto& i : getNeighbors(xPos, yPos)) {
-						int dx = i.first - targetCreature->xPos;
-						int dy = i.second - targetCreature->yPos;
-						float dist = dx * dx + dy * dy;
-
-						if (dist < bestDist && getTileRef(i.first, i.second).walkable) {
-							bestDist = dist;
-							bestX = i.first;
-							bestY = i.second;
-						}
+			if (!targetCreature) {
+				targetCreature = findClosestCreatureType<Villager>(
+					xPos, yPos, 100,
+					[this](Creature* c) {
+						return c != static_cast<Creature*>(this);
 					}
+				);
+			}
 
-					if (bestDist < std::numeric_limits<float>::max()) {
-						currentPath.push_back({ bestX, bestY });
-					}
-					attack();
-				}
+			if (targetCreature && targetCreature->dead) targetCreature = nullptr;
+			if (!targetCreature) {
+				state = monsterState::WANDERING;
+				break;
 
 			}
-			break;
-	}
+			int targetTileX = targetCreature->xPos;
+			int targetTileY = targetCreature->yPos;
 
-	if (!currentPath.empty() && walkSpeed < clock.getElapsedTime().asSeconds()) {
+			if (std::abs(xPos - targetTileX) + std::abs(yPos - targetTileY) <= 1) {
+				if (attackClock.getElapsedTime().asSeconds() > 0.5f) {
+					attackClock.restart();
+					targetCreature->takeDamage(1, this);
+				}
+			}
+
+			if (currentPath.empty() ||
+				lastTargetTileX != targetTileX ||
+				lastTargetTileY != targetTileY)
+			{
+				currentPath = findPath(xPos, yPos, { targetTileX, targetTileY });
+
+				lastTargetTileX = targetTileX;
+				lastTargetTileY = targetTileY;
+			}
+
+			break;
+	}*/
+
+	if (!currentPath.empty() && speed < clock.getElapsedTime().asSeconds()) {
 		auto nextStep = currentPath.front();
 		currentPath.erase(currentPath.begin());
 		xPos = nextStep.first;
