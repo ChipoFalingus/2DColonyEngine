@@ -2,36 +2,31 @@
 
 
 struct Inventory {
-	//int slotCount = 3;
-	//std::unordered_map<Object, int> slot;
-	//float weight;
+	std::unordered_map<std::string, int> inventory;
 
-	//void addToInventory(const Object& item, const int amount) {
-	//	auto it = slot.find(item);
+	void add(const std::string& item, const int amount) {
+		auto it = inventory.find(item);
 
-	//	if (it != slot.end()) {
-	//		//if (it->second < item.maxStack) {
-	//		it->second += amount;
-	//		//}
-	//		return;
-	//	}
+		if (it != inventory.end()) {
+			it->second += amount;
+			return;
+		}
+		else {
+			inventory[item] = 1;
+		}
+	}
 
-	//	else if (slot.size() < slotCount) {
-	//		slot[item] = amount;
-	//	}
+	void remove(const std::string& item, const int amount) {
+		auto it = inventory.find(item);
+		if (it != inventory.end()) {
+			it->second -= amount;
+			if (it->second <= 0) {
+				inventory.erase(item);
+			}
+		}
+	}
 
-	//}
-
-	//void removeFromInventory(const Object& item, const int amount) {
-	//	auto it = slot.find(item);
-	//	if (it != slot.end()) {
-	//		//if (it->second < item.maxStack) {
-	//		it->second -= amount;
-	//		if (it->second <= 0) {
-	//			slot.erase(item);
-	//		}
-	//	}
-
-	//}
-
+	bool has(const std::string& item) {
+		return inventory.find(item) != inventory.end();
+	}
 };

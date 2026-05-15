@@ -6,7 +6,7 @@
 #include "Pair.h"
 #include "Tile.h"
 
-std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, std::function<bool(const Object& item)> filter) {
+std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, std::function<bool(const Object&, int, int)> filter) {
     std::queue<std::pair<int, int>> frontier;
     std::unordered_set<std::pair<int, int>, pair_hash> visited;
     frontier.push({ xPos, yPos });
@@ -22,8 +22,8 @@ std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, 
             continue;
 
         for (const auto& item : tile.items) {
-            if (filter(*item)) {
-                return ItemLocation(current.first, current.second, item.get());
+            if (filter(*item, current.first, current.second)) {
+                return ItemLocation(current.first, current.second, item);
             }
         }
         for (auto& neighbor : getNeighbors(current.first, current.second)) {

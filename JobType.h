@@ -1,8 +1,6 @@
 #pragma once
 #include <string>
 
-
-
 enum class JobType {
 	None,
 	Farmer,

@@ -35,6 +35,7 @@ private:
 
     std::shared_ptr<Object> selectedBuildItem;
     Object* selectedCraftItem;
+
 public:
     static Game& getInstance() {
         static Game instance;
@@ -144,7 +145,7 @@ public:
         return selectedBuildItem;
     }
 
-    void setBuildItem(std::string name) {
+    void setBuildItem(const std::string& name) {
         selectedBuildItem = ObjectRegistry::getInstance().get(name);
     }
 

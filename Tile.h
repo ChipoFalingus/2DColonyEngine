@@ -5,12 +5,12 @@
 #include "mathUtils.h"
 
 
-enum tileType {
-    GRASS = 1,
-    WATER = 2,
-    SAND = 3,
-    MOUNTAIN = 4,
-	MOUNTAIN_PEAK = 5,
+enum class tileType : uint8_t {
+    GRASS,
+    WATER,
+    SAND,
+    MOUNTAIN,
+	MOUNTAIN_PEAK,
 };
 
 enum animType {
@@ -24,7 +24,6 @@ enum animType {
 
 struct Animation {
     animType type;
-
     bool isX = false;
 };
 
@@ -59,6 +58,8 @@ public:
     int16_t altitude;
     bool walkable;
 
+    bool blocked = false;
+
 	bool markedForHarvest = false;
 
     //item
@@ -67,6 +68,11 @@ public:
     tileType type;
 
     Animation anim;
+
+    float animOffset = getRandomFloat(0, 2 * 3.1415926);
+    
+
+    int region = -1;
 
     void update();
 

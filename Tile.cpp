@@ -17,22 +17,24 @@
 #include "FoliageCrop.h"
 #include "Furnace.h"
 #include "Spawner.h"
+#include "Structure.h"
 #include <set>
 
 // A lot of this stuff is world generation, so it should be moved to a separate file later
 // A real big mess this all is :(
+// ^ A few months later, a less big mess this all is :)
 
 std::string typeToString(tileType type) {
     switch (type) {
-    case(GRASS): {
+    case(tileType::GRASS): {
         return "Grass";
-    }case(SAND): {
+    }case(tileType::SAND): {
         return "Sand";
-    }case(MOUNTAIN): {
+    }case(tileType::MOUNTAIN): {
         return "Mountain";
-    }case(MOUNTAIN_PEAK): {
+    }case(tileType::MOUNTAIN_PEAK): {
         return "Mountain Peak";
-    }case(WATER): {
+    }case(tileType::WATER): {
         return "Water";
     }
     }
@@ -76,7 +78,6 @@ Island findClosestIsland(int x, int y) {
         float xDist = i.x - x;
         float yDist = i.y - y;
         float dist = (xDist * xDist) + (yDist * yDist);
-
 
         if (dist < closestDistance) {
             closest = i;
@@ -266,20 +267,22 @@ Tile assignTileTypes(int x, int y) {
 
 
     if (tile.altitude > waterLevel + 135.0f) {
-        tile.type = MOUNTAIN_PEAK;
+        tile.type = tileType::MOUNTAIN_PEAK;
+        tile.blocked = true;
     }
     else if (tile.altitude > waterLevel + 105.0f) {
-        tile.type = MOUNTAIN;
+        tile.type = tileType::MOUNTAIN;
+        tile.blocked = true;
     }
     else if (tile.altitude < waterLevel) {
-        tile.type = WATER;
+        tile.type = tileType::WATER;
         tile.water = std::abs(waterLevel - tile.altitude);
     }
     else if (tile.altitude < waterLevel + 5.0f) {
-        tile.type = SAND;
+        tile.type = tileType::SAND;
     }
     else {
-        tile.type = GRASS;
+        tile.type = tileType::GRASS;
     }
 
 
@@ -303,30 +306,36 @@ void Tile::getTile(int x, int y) {
 	float oakNoise = perlin(x * 0.005f + 5000.0f, y * 0.005f + 5000.0f);
     float spruceNoise = perlin(x * 0.005f + 50000.0f, y * 0.005f + 50000.0f);
 
-    if (type == GRASS) {
+    if (type == tileType::GRASS) {
 
         float r = hashNoise(x, y, seed);
 
         if (oakNoise > 0.3f || spruceNoise > 0.3f) {
             if (oakNoise > 0.3f /*&& altitude < waterLevel + 70.0f*/) {
                 if (r < 0.1f) {
+                    items.clear();
                     addObject("Oak Tree");
                 }
                 else if (r < 0.11f) {
+                    items.clear();
                     addObject("Stick");
                 }
                 else if (r < 0.13f) {
+                    items.clear();
                     addObject("Pebble");
                 }
             }
             if (spruceNoise > 0.3f) {
                 if (r < 0.1f) {
+                    items.clear();
                     addObject("Pine Tree");
                 }
                 else if (r < 0.11f) {
+                    items.clear();
                     addObject("Stick");
                 }
                 else if (r < 0.13f) {
+                    items.clear();
                     addObject("Pebble");
                 }
             }
@@ -343,7 +352,7 @@ void Tile::getTile(int x, int y) {
                 if (rubyNoise > oreThreshold - 0.1f) {
                     items.clear();
                     addObject("Copper");
-                    //animationType.type = WHITE_BREATHE;
+                    anim.type = WHITE_BREATHE;
                 }
                 if (sapphireNoise > oreThreshold) {
                     items.clear();
@@ -355,12 +364,13 @@ void Tile::getTile(int x, int y) {
 		float rock = hashNoise(x + 10000.0f, y + 10000.0f, seed);
         
         if (rock < 0.1f && altitude > waterLevel + 80.0f) {
+            items.clear();
             addObject("Rock");
         }
 
         float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
 
-        /*if (outposts < 0.0001f) {
+        /*if (x == 20 && y == 20) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Outpost");
             auto spawner = static_cast<Spawner*>(item.get());
@@ -371,54 +381,120 @@ void Tile::getTile(int x, int y) {
 			tiles.push_back({ x, y });
         }*/
 
-
-  //      int itemSpawnRange = 3;
-
-  //      if (x == 0 && y == 0) {
-		//	items.clear();
-		//	addObject("Carpentry Bench");
-  //      }
-  //      if (x == 1 && y == 0) {
-  //          items.clear();
-  //          addObject("Anvil");
-  //      }
-  //      if (x == 2 && y == 0) {
-  //          items.clear();
-  //          auto item = ObjectRegistry::getInstance().get("Furnace");
-  //          auto f = static_cast<Furnace*>(item.get());
-  //          f->x = x;
-  //          f->y = y;
-  //          addObject(item);
-  //      }
-  //      if (x == 3 && y == 0) {
-  //          items.clear();
-  //          auto item = ObjectRegistry::getInstance().get("Furnace");
-  //          auto f = static_cast<Furnace*>(item.get());
-  //          f->x = x;
-		//	f->y = y;
-  //          addObject(item);
-  //      }
+        if (x == 10 && y == 10) {
+           items.clear();
+           auto item = ObjectRegistry::getInstance().get("Apple Tree");
+           auto spawner = static_cast<FoliageCrop*>(item.get());
+           spawner->x = x;
+           spawner->y = y;
+           addObject(item);
+        }
+        if (x == -10 && y == 10) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Berry Bush");
+            auto spawner = static_cast<FoliageCrop*>(item.get());
+            spawner->x = x;
+            spawner->y = y;
+            addObject(item);
+        }
 
         float scrapNoise = hashNoise(x + 20000.0f, y + 20000.0f, seed);
 
-        if (scrapNoise < 0.005f) {
+        /*if (scrapNoise < 0.005f) {
             items.clear();
             addObject("Scrap Metal");
         }
 
-        if (x == 0 && y == 0) {
-            addObject("Gun Bench");
+        int range = 10;
+
+        if (
+            (x == 5 || x == -5 || y == 5 || y == -5) &&
+            (x >= -5 && x <= 5 && y >= -5 && y <= 5) && x != 0
+            ) {
+            items.clear();
+            addObject("Wooden Wall");
+            blocked = true;
         }
+
+        if (
+            (x >= -4 && x <= 4 && y >= -4 && y <= 4)
+            ) {
+            items.clear();
+            addObject("Stone Floor");
+        }
+
+        if ((x == 4 && y == 4) ||
+            (x == -4 && y == 4) ||
+            (x == 4 && y == -4) ||
+            (x == -4 && y == -4)) {
+            items.clear();
+            addObject("Bed");
+        }
+        if ((x == 3 && y == 4) ||
+            (x == -3 && y == 4) ||
+            (x == 3 && y == -4) ||
+            (x == -3 && y == -4)) {
+            items.clear();
+            addObject("Wooden Chair");
+        }
+        if ((x == 4 && y == 3) ||
+            (x == -4 && y == 3) ||
+            (x == 4 && y == -3) ||
+            (x == -4 && y == -3)) {
+            items.clear();
+            addObject("Wooden Chair");
+        }
+
+        if (x == 10 && y >= 0 && y <= 5) {
+            items.clear();
+            addObject("Wooden Chair");
+        }
+        if (x == 9 && y >= 0 && y <= 5) {
+            items.clear();
+            addObject("Wooden Table");
+        }
+
+        if (x == -0 && y == 0) {
+            items.clear();
+            addObject("Furnace");
+        }
+        if (x == -1 && y == 0) {
+            items.clear();
+            addObject("Carpentry Bench");
+        }
+        if (x == 1 && y == 0) {
+            items.clear();
+            addObject("Anvil");
+        }*/
+
     }
 
 
-    if (x > -2 && x < 2 && y > -2 && y < 2) {
+    /*if (x > -2 && x < 2 && y > -2 + 20 && y < 2 + 20) {
         items.clear();
-		auto item = ObjectRegistry::getInstance().get("Scrap Metal");
+        auto item = ObjectRegistry::getInstance().get("Stone Chair");
 		addObject(item);
 		mainWorld.addItemToMove(item, x, y);
     }
+    if (x > -2 && x < 2 && y > -2 + 24 && y < 2 + 24) {
+        items.clear();
+        auto item = ObjectRegistry::getInstance().get("Stone Table");
+        addObject(item);
+        mainWorld.addItemToMove(item, x, y);
+    }
 
+    if (x > -2 && x < 2 && y > -2 + 28 && y < 2 + 28) {
+        items.clear();
+        auto item = ObjectRegistry::getInstance().get("Wooden Chair");
+        addObject(item);
+        mainWorld.addItemToMove(item, x, y);
+    }
+    if (x > -2 && x < 2 && y > -2 + 32 && y < 2 + 32) {
+        items.clear();
+        auto item = ObjectRegistry::getInstance().get("Wooden Table");
+        addObject(item);
+        mainWorld.addItemToMove(item, x, y);
+    }*/
 
 
 
@@ -437,118 +513,10 @@ void Tile::getTile(int x, int y) {
     }
 }
 
-
-sf::Clock animClock;
-sf::Clock colorClock;
-
-struct RGB {
-    float r, g, b;
-};
-
-RGB HSVtoRGB(float h, float s, float v) {
-    float c = v * s;
-    float x = c * (1 - fabs(fmod(h / 60.0f, 2) - 1));
-    float m = v - c;
-
-    float r, g, b;
-
-    if (h < 60) { r = c; g = x; b = 0; }
-    else if (h < 120) { r = x; g = c; b = 0; }
-    else if (h < 180) { r = 0; g = c; b = x; }
-    else if (h < 240) { r = 0; g = x; b = c; }
-    else if (h < 300) { r = x; g = 0; b = c; }
-    else { r = c; g = 0; b = x; }
-
-    return { r + m, g + m, b + m };
-}
-
 void Tile::update() {
-
-    // This method doesn't work if the tiles aren't rendered already, a real pain
-
-    // Animation staggers come from global clocks
-    
-    // Needs some work, probably should be independent from item animations
-
-
-    /*if (animClock.getElapsedTime().asSeconds() > 0.001f) {
-        if (charIndex >= charList.size() - 1) {
-            charIndex = 0;
-        }
-        else {
-            charIndex++;
-        }
-        animClock.restart();
-        character = charList[charIndex];
-        color = colorList[charIndex];
-    }*/
-
-    // Early exit, all other anims are based on items
     if (items.size() == 0) {
         return;
     }
-
-    // Animated Colors / Animated Displays (will be added later)
-  //  if (animationType.type == BREATHE) {
-  //      float time = colorClock.getElapsedTime().asSeconds();
-
-		//sf::Color itemColor = items[0]->baseColor;
-
-  //      float min = 0.2f;
-  //      float max = 1.0f;
-
-  //      float intensity = min + (max - min) * ((sin(time + animOffset) + 1.0f) / 2.0f);
-
-  //      color.r = static_cast<sf::Uint8>(itemColor.r * intensity);
-  //      color.g = static_cast<sf::Uint8>(itemColor.g * intensity);
-  //      color.b = static_cast<sf::Uint8>(itemColor.b * intensity);
-
-		//items[0]->displayColor = color;
-  //  }
-
-  //  if (animationType.type == RAINBOW) {
-  //      float time = colorClock.getElapsedTime().asSeconds();
-  //      float hue = fmod((time * 60.0f) + animOffset * 60.0f, 360.0f);
-  //      RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
-  //      color.r = static_cast<sf::Uint8>(rgb.r * 255);
-  //      color.g = static_cast<sf::Uint8>(rgb.g * 255);
-		//color.b = static_cast<sf::Uint8>(rgb.b * 255);
-
-		//items[0]->displayColor = color;
-  //  }
-
-  //  if (animationType.type == RED_X) {
-  //      if (animationClock.getElapsedTime().asSeconds() > 0.5f) {
-  //          animationClock.restart();
-  //          animationType.isX = !animationType.isX;
-  //      }
-
-  //      if (animationType.isX) {
-  //          items[0]->displayChar = L'X';
-  //          items[0]->displayColor = sf::Color::Red;
-  //      }
-  //      else {
-  //          items[0]->displayChar = items[0]->baseChar;
-  //          items[0]->displayColor = items[0]->baseColor;
-  //      }
-  //  }
-
-  //  if (animationType.type == WHITE_BREATHE) {
-  //      float time = colorClock.getElapsedTime().asSeconds();
-
-  //      sf::Color itemColor = items[0]->baseColor;
-
-  //      float speed = 2.0f;
-  //      float wave = (sin(time * speed + animOffset) + 1.0f) * 0.5f; // 0 → 1
-
-  //      color.r = static_cast<sf::Uint8>(itemColor.r + (255 - itemColor.r) * wave);
-  //      color.g = static_cast<sf::Uint8>(itemColor.g + (255 - itemColor.g) * wave);
-  //      color.b = static_cast<sf::Uint8>(itemColor.b + (255 - itemColor.b) * wave);
-
-
-  //      items[0]->displayColor = color;
-  //  }
-
 
     for (auto& i : items) {
         if (i->type == Type::Foliage_Crop) {
@@ -560,15 +528,15 @@ void Tile::update() {
             Crop* cropPtr = static_cast<Crop*>(i.get());
             cropPtr->grow();
         }
-		
-        if (i->type == Type::Furnace) {
-            Furnace* furnacePtr = static_cast<Furnace*>(i.get());
-			furnacePtr->cook(0.1f);
-        }
 
         if (i->type == Type::Spawner) {
             Spawner* spawnerPtr = static_cast<Spawner*>(i.get());
             spawnerPtr->update();
+        }
+		
+        if (i->type == Type::Furnace) {
+            Furnace* furnacePtr = static_cast<Furnace*>(i.get());
+			furnacePtr->cook();
         }
     }
 }
@@ -606,6 +574,7 @@ void Tile::addObject(std::shared_ptr<Object> item) {
 }
 
 void Tile::removeItem(std::shared_ptr<Object> item, int x, int y) {
+    anim.type = animType::NONE;
     auto stockpile = mainWorld.atStockpile(x, y);
     if (stockpile) {
         stockpile->removeItem(x, y, item);
@@ -620,27 +589,35 @@ void Tile::removeItem(std::shared_ptr<Object> item, int x, int y) {
 
 tileDisplay getTileDisplay(tileType type) {
 
-    // Bad approach, should have animation timings stored somewhere
     wchar_t c;
     switch (type) {
-    case GRASS: {
+    case tileType::GRASS: {
         static const sf::String grass = L",.'~`";
+        const std::vector<sf::Color> colors = {
+            {95,195,20},
+            {121,208,33},
+            {161,223,80},
+            {55, 174, 15}
+
+        };
         int index = getRandomInt(0, grass.getSize() - 1);
         int shade = getRandomInt(100, 255);
 
+
 		c = grass[index];
 
-        return { {c}, {sf::Color(1, shade, 1)}};
+        sf::Color color = colors[getRandomInt(0, colors.size() - 1)];
+        return { {c}, {color}};
     }
-    case WATER:
+    case tileType::WATER:
 		return { {L'≈'}, {sf::Color(0, 0, 255)} };
-	case SAND:
+	case tileType::SAND:
 		c = L':';
         return { {c}, {sf::Color(255, 255, 0)}};
-    case MOUNTAIN:
+    case tileType::MOUNTAIN:
         c = L'Δ';
         return { {c}, {sf::Color(128,128,128)}};
-	case MOUNTAIN_PEAK:
+	case tileType::MOUNTAIN_PEAK:
 		c = L'▲';
 		return { {c}, {sf::Color(200,200,200)} };
     default:
@@ -654,10 +631,10 @@ bool getTileWalkable(Object* itemOnTile, tileType type) {
 	// Will probably put this in item class later
 
     if (itemOnTile) {
-        if (itemOnTile->name == "Tr") {
+        if (itemOnTile->name == "Wooden Wall") {
             return false;
         }
-        else if (itemOnTile->name == "a") {
+        else if (itemOnTile->name == "Rock") {
             return false;
         }
         else {
@@ -667,9 +644,9 @@ bool getTileWalkable(Object* itemOnTile, tileType type) {
 
 
     switch (type) {
-    case GRASS:
+    case tileType::GRASS:
         return true;
-	case SAND:
+	case tileType::SAND:
         return true;
     default:
         return false;

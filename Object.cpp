@@ -38,7 +38,7 @@ void loadObjects() {
 				tool->type = Type::Tool;
 
 				tool->durability = 100.0f;
-				tool->efficiency = 0.1f;
+				tool->efficiency = 2.0f;
 				tool->luck = 0.0f;
 				tool->material = ToolMaterial::WOOD;
 
@@ -132,6 +132,24 @@ void loadObjects() {
 				return obj;
 				});
 		}
+		else if (type == "structure") {
+			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
+				auto obj = std::make_unique<Object>();
+				obj->name = name;
+				obj->type = Type::Structure;
+
+				return obj;
+				});
+		}
+		else if (type == "furniture") {
+			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
+				auto obj = std::make_unique<Object>();
+				obj->name = name;
+				obj->type = Type::Furniture;
+
+				return obj;
+				});
+				}
 		else {
 			std::cout << "Unknown object type: " << type << std::endl;
 		}

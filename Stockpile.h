@@ -7,8 +7,18 @@
 #include "Item.h"
 #include "Pair.h"
 
+
+struct Reserve {
+    bool incoming = false;
+	bool outgoing = false;
+	std::shared_ptr<Object> item;
+};
+
 class Stockpile {
 private:
+
+    std::unordered_map<Type, bool> filter;
+
     int width, height;
     std::pair<int, int> location;
 
@@ -19,12 +29,27 @@ private:
     std::unordered_set<std::pair<int, int>, pair_hash> claimedTiles;
 public:
     Stockpile(std::pair<int, int> loc, int width, int height)
-		: location(loc), width(width), height(height) {
+        : location(loc), width(width), height(height) {
+
+		filter.insert({ Type::Item, true });
+		filter.insert({ Type::Tool, true });
+		filter.insert({ Type::Food, true });
+		filter.insert({ Type::Crop, true });
+		filter.insert({ Type::Foliage_Crop, true });
+		filter.insert({ Type::Furnace, true });
+		filter.insert({ Type::Gun, true });
+		filter.insert({ Type::Bench, true });
+		filter.insert({ Type::Structure, true });
+
     }
 
-	std::pair<int, int> getLocation() const { return location; }
+    std::pair<int, int> getLocation() const { return location; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
+
+    std::unordered_map<std::pair<int, int>, std::vector<std::shared_ptr<Object>>, pair_hash> getItems() {
+        return tileItems;
+    }
 
     bool atStockpile(int x, int y) {
         return x >= location.first &&
@@ -122,6 +147,10 @@ public:
     void claimItem(int x, int y) {
 
     }
+
+    void setFilter(Type type, bool accepts) {
+        filter[type] = accepts;
+	}
 
     void printContents() {
         std::cout << "Stockpile at (" << location.first << "," << location.second << ") contains:" << std::endl;

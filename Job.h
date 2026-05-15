@@ -8,30 +8,43 @@
 #include "JobType.h"
 #include "Crafting.h"
 #include "ItemLocation.h"
+#include "Food.h"
 
 
 class Villager;
 
+enum class JobState {
+	Active,
+	Queued,
+	Waiting,
+	Completed,
+	Failed
+};
+
+
 struct Job {
-	Villager* villager; // Who is assigned to the job
-	Tool* preferredTool;
+	Villager* villager = nullptr; // Who is assigned to the job
+	Tool* preferredTool = nullptr;
 	std::string preferredToolName;
-	JobType preferredJob;
+	JobType type;
+	JobState state = JobState::Queued;
 
 	int x, y; // Where the job requires you to be
 	int priority = 0; // Higher priority jobs get assigned first
-	bool taken = false;
-	bool completed = false;
 
 	Job(Villager* v, Tool* preferredTool, JobType jobtype)
-		:villager(v), preferredTool(preferredTool), preferredJob(jobtype) {
+		:villager(v), preferredTool(preferredTool), type(jobtype) {
 
 		if (preferredTool) {
 			preferredToolName = preferredTool->name;
 		}
 	}
 
+	virtual ~Job() = default;
+
 	virtual void update() {}
+	virtual void onComplete() {}
+	virtual void onFail() {}
 };
 
 
@@ -75,7 +88,6 @@ public:
 	HarvestTile(Villager* v, Tool* tool, JobType job, std::string i, int locX, int locY)
 		: Job(v, tool, job), item(i), locX(locX), locY(locY)
 	{
-		std::cout << "CTOR this=" << this << " item=" << tool->name << "\n";
 		x = locX;
 		y = locY;
 	}
@@ -124,11 +136,11 @@ public:
 
 class PlaceItem : public Job {
 public:
-	Object& itemToPlace;
+	Object* itemToPlace;
 	int locX, locY;
 
 	PlaceItem(Villager* v, Tool* tool, JobType job, Object* item, int locX, int locY)
-		: Job(v, tool, job), itemToPlace(*item), locX(locX), locY(locY)
+		: Job(v, tool, job), itemToPlace(item), locX(locX), locY(locY)
 	{}
 
 	void update();
@@ -186,7 +198,6 @@ class Craft : public Job {
 public:
 	std::string itemName;
 	std::unordered_map<std::string, int> ingredients;
-	bool requestedSubJobs = false;
 	std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>> reserve;
 	bool init = false;
 	bool grabbedAllItems = false;
@@ -204,8 +215,10 @@ public:
 
 class Move : public Job {
 public:
-	Move(Villager* v, Tool* tool, JobType job)
-		: Job(v, tool, job)
+	int toX;
+	int toY;
+	Move(Villager* v, Tool* tool, JobType job, int x, int y)
+		: Job(v, tool, job), toX(x), toY(y)
 	{
 	}
 	void update();
@@ -216,7 +229,10 @@ public:
 	std::shared_ptr<Object> itemToMove;
 	int fromX, fromY;
 	int toX, toY;
+
 	bool itemPickedUp = false;
+	bool claimedSpot = false;
+
 	MoveItem(Villager* v, Tool* tool, JobType job, std::shared_ptr<Object> item, int fX, int fY, int tX, int tY)
 		: Job(v, tool, job), itemToMove(item), fromX(fX), fromY(fY), toX(tX), toY(tY)
 	{
@@ -228,10 +244,50 @@ public:
 
 class FindFood : public Job {
 public:
-	bool foodFound = false;
-	std::optional<ItemLocation> foodLocation;
-	FindFood(Villager* v, Tool* tool, JobType job)
-		: Job(v, tool, job)
+
+	enum State {
+		Find,
+		Grab,
+		Eat,
+	};
+
+	float eatTimer = 0.0f;
+	int tX, tY;
+	std::shared_ptr<Food> food;
+	std::optional<ItemLocation> place = std::nullopt;
+
+	State foodState = State::Grab;
+
+	FindFood(Villager* v, Tool* tool, JobType job, int x, int y, std::shared_ptr<Food> food)
+		: Job(v, tool, job), tX(x), tY(y), food(food)
 	{}
 	void update();
+};
+
+class Sit : public Job {
+public:
+	int tX, tY;
+	bool init = false;
+	Sit(Villager* v, Tool* tool, JobType job, int x, int y)
+		: Job(v, tool, job), tX(x), tY(y)
+	{
+	}
+	~Sit();
+
+	void update();
+	
+};
+
+class Wander : public Job {
+
+public:
+	int tX;
+	int tY;
+	bool hasTarget = false;
+	Wander(Villager* v, Tool* tool, JobType job)
+		: Job(v, tool, job)
+	{}
+
+	void update();
+	void pickNewTarget();
 };

@@ -6,12 +6,12 @@
 class Rule {
 public:
 	std::string target;
-	std::string produces;
+	std::vector<std::string> produces;
 	int amount;
 	std::string toolRequired;
 	JobType jobType;
 
-	Rule(std::string target, std::string produces, int amount, std::string toolRequired, JobType jobType)
+	Rule(std::string target, std::vector<std::string> produces, int amount, std::string toolRequired, JobType jobType)
 		: target(target), produces(produces), amount(amount), toolRequired(toolRequired), jobType(jobType) {
 	}
 };

@@ -12,10 +12,10 @@ struct UITile {
 
 class UIManager {
 private:
-    std::vector<std::string> frameStack;
+    std::vector<UI> frameStack;
     std::vector<std::vector<wchar_t>> masterUI;
 
-    std::unordered_map<std::string, std::unique_ptr<Frame>> allFrames;
+    std::unordered_map<UI, std::unique_ptr<Frame>> allFrames;
 
     
 public:
@@ -23,14 +23,14 @@ public:
         return masterUI;
     }
 
-    Frame* getFrame(const std::string& name) {
+    Frame* getFrame(const UI& name) {
         auto it = allFrames.find(name);
         if (it != allFrames.end())
             return it->second.get();
         return nullptr;
     }
 
-    bool hasFrame(const std::string& name) {
+    bool hasFrame(const UI& name) {
         return std::find(frameStack.begin(), frameStack.end(), name) != frameStack.end();
     }
    
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    void push(const std::string name) {
+    void push(const UI name) {
         for (auto& i : frameStack) {
             if (i == name) {
                 return;
@@ -77,14 +77,14 @@ public:
 
     }
 
-    void remove(const std::string& name) {
+    void remove(const UI& name) {
         frameStack.erase(
             std::remove(frameStack.begin(), frameStack.end(), name),
             frameStack.end()
         );
 	}
     // Swaps two different frames, this only works if both aren't active
-    void swapFrame(const std::string& name, const std::string& name2) {
+    void swapFrame(const UI& name, const UI& name2) {
         if (hasFrame(name)) {
 			std::replace(frameStack.begin(), frameStack.end(), name, name2);
         }
@@ -93,7 +93,7 @@ public:
         }
 	}
 
-    void addOrRemoveFrame(const std::string& name) {
+    void addOrRemoveFrame(const UI name) {
         if (!hasFrame(name)) {
             push(name);
         }
@@ -102,14 +102,14 @@ public:
         }
 	}
 
-    void deleteFrame(const std::string& name) {
+    void deleteFrame(const UI& name) {
         frameStack.erase(
             std::remove(frameStack.begin(), frameStack.end(), name),
             frameStack.end()
         );
     }
 
-    void addFrame(std::unique_ptr<Frame> frame, const std::string& name) {
+    void addFrame(std::unique_ptr<Frame> frame, const UI& name) {
         allFrames[name] = std::move(frame);
     }
 

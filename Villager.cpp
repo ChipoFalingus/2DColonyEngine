@@ -12,9 +12,6 @@
 #include "Item.h"
 #include "Zombie.h"
 
-
-std::vector<std::pair<int, int>> Villager::harvestTiles;
-
 std::vector<std::string> names = {
     //Male
     "Wyatt",
@@ -36,6 +33,7 @@ std::vector<std::string> names = {
 	"Richard",
 	"Joseph",
 	"Thomas",
+	"Tom",
 	"Christopher",
 	"Charles",
 	"Daniel",
@@ -192,212 +190,218 @@ std::vector<std::string> lastnames = {
 
 };
 
+std::string activityStateToString(ActivityState state) {
+	switch (state) {
+
+	case ActivityState::None:
+		return "Nothing";
+		break;
+	case ActivityState::Sitting:
+		return "Sitting";
+		break;
+	case ActivityState::Sleeping:
+		return "Sleeping";
+		break;
+	case ActivityState::Eating:
+		return "Eating";
+		break;
+	case ActivityState::Wandering:
+		return "Wandering";
+		break;
+	case ActivityState::Working:
+		return "Working";
+		break;
+	}
+
+	return "NULL";
+}
+
+void Villager::sense() {
+	if (findBedClock > 1.0f) {
+		findBedClock = 0.0f;
+		claimBed();
+	}
+
+	if (checkThreatsClock > 1.0f) {
+		checkThreatsClock = 0.0f;
+		auto z = findClosestCreatureType<Zombie>(xPos, yPos, alertness);
+		if (z) {
+			threat = z;
+		}
+	}
+}
+
+void Villager::idle() {
+
+	// Fallback idling stuff here
+	int rand = getRandomInt(1, 50);
+
+	if (rand == 0) {
+		auto obj = ObjectRegistry::getInstance().get("Chair");
+		auto chair = findClosestItemType(xPos, yPos, 50, [](const Object& item, int x, int y) {
+			return item.name == "Chair" && !item.claimed;
+			});
+
+		if (chair) {
+			chair->item.lock()->claimed = true;
+			object_in_use = chair->item.lock().get();
+			jobQueue.push_back(new Sit(this, nullptr, JobType::None, chair->x, chair->y));
+		}
+	}
+	else {
+		//if (activity_state != ActivityState::Wandering) {
+			activity_state = ActivityState::Wandering;
+			jobQueue.push_back(new Wander(this, nullptr, JobType::None));
+		//}
+	}
+
+	
+}
+
+void Villager::decide() {
+	if (threat) {
+		if (itemInHand) {
+			activity_state = ActivityState::None;
+			Job* job = new Attack(this, nullptr, JobType::None, threat);
+			job->priority = 9999;
+			addToJobQueue(job);
+		}
+		else {
+			currentPath.clear();
+			activity_state = ActivityState::None;
+			Job* job = new Retreat(this, nullptr, JobType::None, threat);
+			job->priority = 9999;
+			addToJobQueue(job);
+		}
+	}
+
+	if (tirednessClock > 2.0f && !sleeping) {
+		tiredness++;
+		tirednessClock = 0.0f;
+	}
+
+	if (tiredness >= 100) {
+		if (findBedClock > 1.0f) {
+			findBedClock = 0.0f;
+			claimBed();
+		}
+		activity_state = ActivityState::Sleeping;
+		auto* sleepJob = new Sleep(this, nullptr, JobType::None);
+		sleepJob->priority = 1000;
+		jobQueue.push_back(sleepJob);
+		tiredness = 0;
+	}
+
+	if (hungerClock > 1.f) {
+		hungerClock = 0.0f;
+		hunger--;
+	}
+
+	if (hunger <= 10 && !isHungry) {
+		isHungry = true;
+	}
+
+	
+	if (isHungry && findFoodClock > 2.0f && activity_state != ActivityState::Eating) {
+		findFoodClock = 0.0f;
+
+		auto foodLocation = findClosestItemType(xPos, yPos, 100, [](const Object& item, int x, int y) {
+			return item.type == Type::Food && !item.claimed;
+			//return true;
+			});
+		if (foodLocation) {
+			std::cout << "Found food at " << foodLocation->x << ", " << foodLocation->y << std::endl;
+
+			auto food = std::dynamic_pointer_cast<Food>(foodLocation->item.lock());
+			if (!food) {
+				return;
+			}
+			food->claimed = true;
+			activity_state = ActivityState::Eating;
+			Job* eat = new FindFood(this, nullptr, JobType::None, foodLocation->x, foodLocation->y, food);
+			eat->priority = 1000;
+			jobQueue.push_back(eat);
+		}
+	}
+
+	if (!jobQueue.empty()) {
+		currentJob = jobQueue.front();
+	}
+	else {
+		idle();
+	}
+}
+
+void Villager::move() {
+
+	if (currentJob) {
+		currentJob->update();
+
+		if (currentPath.empty() || currentJob->x != lastTargetX || currentJob->y != lastTargetY) {
+			currentPath = findPath(xPos, yPos, { currentJob->x, currentJob->y });
+			lastTargetX = currentJob->x;
+			lastTargetY = currentJob->y;
+		}
+
+		if (currentJob->state == JobState::Completed) {
+			for (int i = 0; i < jobQueue.size(); i++) {
+				if (jobQueue[i] == currentJob) {
+					jobQueue[i] = jobQueue.back();
+					jobQueue.pop_back();
+					break;
+				}
+			}
+			delete currentJob;
+			currentJob = nullptr;
+		}
+	}
+
+	if (!currentPath.empty()) {
+		if (moveClock > speed) {
+			auto nextStep = currentPath.front();
+			currentPath.erase(currentPath.begin());
+			xPos = nextStep.first;
+			yPos = nextStep.second;
+			moveClock = 0.0f;
+		}
+	}
+}
+
 void Villager::doWork() {
 
-	// Calculate new harvest speed based on tool
+	clock += Clock::deltaTime;
+	moveClock += Clock::deltaTime;
+	idleClock += Clock::deltaTime;
+	findFoodClock += Clock::deltaTime;
+	checkThreatsClock += Clock::deltaTime;
+	hungerClock += Clock::deltaTime;
+	findBedClock += Clock::deltaTime;
+	tirednessClock += Clock::deltaTime;
+
 	if (toolInHand) {
 		harvestTime = toolInHand->efficiency / materialToEfficiency(toolInHand->material);
 	}
 	else {
 		harvestTime = 1.0f;
 	}
-    
-	evaluateNeeds();
 
-	if (checkThreatsClock.getElapsedTime().asSeconds() > 1.0f) {
-		checkThreatsClock.restart();
-		if (itemInHand) {
-			auto z = findClosestCreatureType<Zombie>(xPos, yPos, alertness);
-			if (z) {
-				Job* job = new Attack(this, nullptr, JobType::None, z);
-				job->priority = 999;
-				addToJobQueue(job);
-			}
-		}
-		else {
-			auto z = findClosestCreatureType<Zombie>(xPos, yPos, alertness);
-			if (z) {
-				retreating = true;
-				threat = z;
-			}
-		}
-		
-	}
+	std::sort(jobQueue.begin(), jobQueue.end(),
+		[](Job* a, Job* b) {
+			return a->priority > b->priority;
+		});
 
-	// Fallback idling
-	if (jobQueue.empty()) {
-		addToJobQueue(new Idle(this, nullptr, JobType::None));
-	}
-	
-
-	currentJob = jobQueue.top();
-
-	if (retreating && threat) {
-		currentPath.clear();
-		retreat(threat);
-		return;
-	}
-
-	if (currentJob) { 
-		currentJob->update(); 
-		if (currentJob->completed) { 
-			jobQueue.pop();
-			delete currentJob;
-			currentJob = nullptr; 
-		} 
-	} 
-	
-	if (currentJob) { 
-		if (currentPath.empty() || currentJob->x != lastTargetX || currentJob->y != lastTargetY) {
-			currentPath = findPath(xPos, yPos, { currentJob->x, currentJob->y });
-			lastTargetX = currentJob->x;
-			lastTargetY = currentJob->y;
-		}
-	}
-	
-	if (!currentPath.empty()) { 
-		if (moveClock.getElapsedTime().asSeconds() > speed) {
-			auto nextStep = currentPath.front(); 
-			currentPath.erase(currentPath.begin()); 
-			xPos = nextStep.first; 
-			yPos = nextStep.second; 
-			moveClock.restart();
-		} 
-	}
-}
-
-
-void Villager::evaluateNeeds() {
-
-	if (tirednessClock.getElapsedTime().asSeconds() > 2.0f && !sleeping) {
-		tiredness++;
-		tirednessClock.restart();
-	}
-
-
-	if (tiredness >= 100) {
-		std::cout << "Adding sleep job for " << firstname + " " + lastname << std::endl;
-		if (findBedClock.getElapsedTime().asSeconds() > 1.0f) {
-			findBedClock.restart();
-			claimBed();
-		}
-		auto* sleepJob = new Sleep(this, nullptr, JobType::None);
-		sleepJob->priority = 1000;
-		jobQueue.push(sleepJob);
-		tiredness = 0;
-	}
-
-	if (eatClock.getElapsedTime().asSeconds() > 4.2f) {
-		eatClock.restart();
-		//hunger--;
-	}
-	
-	if (hunger <= 10 && !isHungry) {
-		isHungry = true;
-		Job* eat = new FindFood(this, nullptr, JobType::None);
-		eat->priority = 1000;
-		jobQueue.push(eat);
-	}
+	sense();
+	decide();
+	move();
 }
 
 void Villager::pickUpItem(std::shared_ptr<Object> item, int x, int y, Stockpile* stockpile) {
 	getTileRef(x, y).removeItem(item, x, y);
-
-	// Inventory logic goes here later
+	inventory.add(item->name, 1);
 }
 
 void Villager::dropItem(std::shared_ptr<Object> item, int x, int y) {
+	if (!inventory.has(item->name)) return;
+	inventory.remove(item->name, 1);
 	getTileRef(x, y).addObject(item);
-
-	// Adds to stockpile if dropped on one
-	/*if (auto s = mainWorld.atStockpile(x, y)) {
-		s->addItem(item, x, y);
-	}*/
-
-	// Inventory logic goes here later
-}
-
-void Villager::retreat(Creature* threat) {
-	int safeScore = -1;
-
-	if (!threat || threat->dead) {
-		retreating = false;
-		threat = nullptr;
-		return;
-	}
-
-	float dx = xPos - threat->xPos;
-	float dy = yPos - threat->yPos;
-
-	float distance = sqrt(dx * dx + dy * dy);
-
-	int dim = 64;
-
-	auto threatMap = buildThreatMap(xPos, yPos, dim);
-
-	int startX = xPos - dim / 2;
-	int startY = yPos - dim / 2;
-
-	float bestScore = 99999.0f;
-	std::pair<int, int> bestMove = { 0, 0 };
-
-	std::vector<std::pair<int, int>> dirs = {
-		{1,0}, {0,1}, {-1,0}, {0,-1}
-	};
-
-	std::shuffle(dirs.begin(), dirs.end(), rng);
-
-	bool foundMove = false;
-
-	for (auto& i : dirs) {
-		int nx = xPos + i.first;
-		int ny = yPos + i.second;
-
-		int fx = nx - startX;
-		int fy = ny - startY;
-
-		if (fx < 0 || fy < 0 || fx >= dim || fy >= dim)
-			continue;
-
-		if (!getTileRef(nx, ny).walkable)
-			continue;
-
-		float score = threatMap[fx][fy];
-
-		if (lastMove != i) {
-			score += 0.5f;
-		}
-
-		score += getRandomFloat(-0.2f, 0.2f);
-
-		if (score < bestScore) {
-			bestScore = score;
-			bestMove = i;
-			foundMove = true;
-		}
-
-		/*int cx = xPos - startX;
-		int cy = yPos - startY;
-
-		if (cx >= 0 && cy >= 0 && cx < dim && cy < dim) {
-			float stayScore = threatMap[cx][cy];
-
-			if (stayScore <= bestScore) {
-				bestMove = { 0,0 };
-			}
-		}*/
-	}
-
-	if (foundMove && moveClock.getElapsedTime().asSeconds() > speed) {
-		xPos += bestMove.first;
-		yPos += bestMove.second;
-
-		lastMove = bestMove;
-		moveClock.restart();
-	}
-
-	if (distance > 20) {
-		retreating = false;
-		threat = nullptr;
-	}
 }

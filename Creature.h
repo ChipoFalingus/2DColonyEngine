@@ -14,9 +14,6 @@ class Creature {
 		float weight = 1.0f;
 
 		
-		
-
-		int hunger = 100;
 		int tiredness = 0;
 		bool sleeping = false;
 
@@ -35,6 +32,7 @@ class Creature {
 		wchar_t displayChar;
 		glm::vec3 displayColor;
 
+		int hunger = 100;
 
 		float speed;
 

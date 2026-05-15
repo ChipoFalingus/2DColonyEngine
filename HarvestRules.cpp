@@ -12,16 +12,24 @@ void loadHarvestRules() {
 
     for (auto& i : data.at("rules")) {
 
-        std::string produces = i.at("produces").get<std::string>();
+        int amount;
+
+        std::vector<std::string> outputs;
+        for (const auto& p : i.at("produces")) {
+            amount = p.at("amount").get<int>();
+            for (int j = 0; j < amount; j++) {
+                outputs.push_back(p.at("item").get<std::string>());
+            }
+        }
+
         std::string toolRequired = i.at("tool_required").get<std::string>();
-        int amount = i.at("amount").get<int>();
         JobType jobType = stringToJobType(i.at("job_required").get<std::string>());
 
         for (auto& j : i.at("target")) {
 
             std::string target = j;
 
-            Rule rule(target, produces, amount, toolRequired, jobType);
+            Rule rule(target, outputs, amount, toolRequired, jobType);
             HarvestRuleRegistry::getInstance().addRule(rule);
         }
     }

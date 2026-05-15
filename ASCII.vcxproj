@@ -207,6 +207,7 @@
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="Squad.h" />
     <ClInclude Include="Stockpile.h" />
+    <ClInclude Include="Structure.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="TileAnimation.h" />
@@ -215,6 +216,7 @@
     <ClInclude Include="UI.h" />
     <ClInclude Include="UIElements.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="UITypes.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Villager.h" />
     <ClInclude Include="WaterSimulation.h" />

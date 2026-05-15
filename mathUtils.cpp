@@ -73,7 +73,7 @@ Vec2 getGradient(int hash) {
 }
 
 float calculateMapSize() {
-    return 1200.0f;
+    return 500.0f;
 }
 
 
@@ -105,11 +105,10 @@ float getRandomFloat(float low, float high) {
     return num(rng);
 }
 
-std::vector<std::pair<int, int>> createVoronoiMap(int num, int left, int right, int top, int bottom) {
-    int numPoints = num;
+std::vector<std::pair<int, int>> createVoronoiMap(int amount, int left, int right, int top, int bottom) {
 	std::vector<std::pair<int, int>> voronoiDots;
 
-    for (int i = 0; i < numPoints; i++) {
+    for (int i = 0; i < amount; i++) {
         /*Dot dot;
         dot.ID = getRandomInt(0, 21000000);
         dot.pos = { getRandomFloat(-100, 100), getRandomFloat(-100, 100) };
@@ -164,33 +163,23 @@ int heuristic(const std::pair<int, int>& a, const std::pair<int, int>& b) {
     return abs(a.first - b.first) + abs(a.second - b.second);
 }
 
-float getTileCost(int x, int y, int fromX, int fromY) {
-    Tile& t = getTileRef(x, y);
-
-    float cost = 1.0f;
-
-    // Avoid water
-    if (t.type == WATER) cost += 1000;
-
-    // Prefer flat terrain
-    float slope = std::abs(t.altitude - getTileRef(fromX, fromY).altitude);
-    cost += slope * 2.0f;
-
-    if (t.containsItem("Path")) {
-		cost = 0.0f; // Paths are faster
-    }
-
-    // Add slight randomness (natural feel)
-    cost += (rand() % 10) * 0.1f;
-
-    return cost;
-}
-
 std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal) {
 
     if (!getTileRef(goal.first, goal.second).walkable) {
         return {};
     }
+
+    if (getTileRef(startX, startY).region != getTileRef(goal.first, goal.second).region) {
+        return {};
+    }
+
+    //int radius = 250;
+
+   /* int dx = goal.first - startX;
+    int dy = goal.second - startY;
+
+    if (dx * dx + dy * dy > radius * radius)
+        return {};*/
 
     std::pair<int, int> start = { startX, startY };
 
@@ -253,19 +242,26 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
 
 std::vector<std::pair<int, int>> bresenham(int x0, int y0, int x1, int y1) {
     std::vector<std::pair<int, int>> points;
+
     int dx = std::abs(x1 - x0);
     int dy = std::abs(y1 - y0);
+
     int sx = (x0 < x1) ? 1 : -1;
     int sy = (y0 < y1) ? 1 : -1;
+
     int err = dx - dy;
+
     while (true) {
         points.push_back({x0, y0});
+
         if (x0 == x1 && y0 == y1) break;
-        int err2 = err * 2;
+
+        int err2 = err << 1;
         if (err2 > -dy) {
             err -= dy;
             x0 += sx;
         }
+
         if (err2 < dx) {
             err += dx;
             y0 += sy;
@@ -276,8 +272,8 @@ std::vector<std::pair<int, int>> bresenham(int x0, int y0, int x1, int y1) {
 
 
 bool raycast(int x0, int y0, int x1, int y1) {
-    int dx = abs(x1 - x0);
-    int dy = abs(y1 - y0);
+    int dx = std::abs(x1 - x0);
+    int dy = std::abs(y1 - y0);
 
     int sx = (x0 < x1) ? 1 : -1;
     int sy = (y0 < y1) ? 1 : -1;

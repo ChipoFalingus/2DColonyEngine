@@ -8,11 +8,23 @@
 #include <algorithm>
 
 #include "Globals.h"
+#include "UITypes.h"
 
 #define BLANK_CHAR L'@'
 
+//enum Anchor {
+//	TOP_LEFT,
+//	TOP_CENTER,
+//	TOP_RIGHT,
+//	CENTER_LEFT,
+//	CENTER,
+//	CENTER_RIGHT,
+//	BOTTOM_LEFT,
+//	BOTTOM_CENTER,
+//	BOTTOM_RIGHT
+//};
 
-enum Alignment {
+enum Anchor {
 	TOP_LEFT,
 	TOP_CENTER,
 	TOP_RIGHT,
@@ -51,7 +63,8 @@ class UIElement {
 protected:
 	int lengthX, lengthY;
 	int xOffset, yOffset;
-	Alignment alignment;
+	int xPos, yPos;
+	Anchor anchor;
 public:
 	virtual ~UIElement() = default;
 	virtual void draw(std::vector<std::vector<wchar_t>>& buffer) = 0;
@@ -73,14 +86,72 @@ public:
 	int getXLength() const { return lengthX; }
 	int getYLength() const { return lengthY; }
 
-	Alignment getAlignment() const { return alignment; }
+	int getXPos() const { return xPos; }
+	int getYPos() const { return yPos; }
+
+	Anchor getAlignment() const { return anchor; }
+
+	std::pair<int, int> getAnchorPosition(int scrLength, int scrHeight) const {
+		int x = xOffset;
+		int y = yOffset;
+
+		switch (anchor)
+		{
+		case Anchor::TOP_LEFT:
+			break;
+
+		case Anchor::TOP_CENTER:
+			x = scrLength / 2 - lengthX / 2;
+			break;
+
+		case Anchor::TOP_RIGHT:
+			x = scrLength - lengthX;
+			break;
+
+		case Anchor::CENTER_LEFT:
+			y = scrHeight / 2 - lengthY / 2;
+			break;
+
+		case Anchor::CENTER:
+			x = scrLength / 2 - lengthX / 2;
+			y = scrHeight / 2 - lengthY / 2;
+			break;
+
+		case Anchor::CENTER_RIGHT:
+			x = scrLength - lengthX;
+			y = scrHeight / 2 - lengthY / 2;
+			break;
+
+		case Anchor::BOTTOM_LEFT:
+			y = scrHeight - lengthY;
+			break;
+
+		case Anchor::BOTTOM_CENTER:
+			x = scrLength / 2 - lengthX / 2;
+			y = scrHeight - lengthY;
+			break;
+
+		case Anchor::BOTTOM_RIGHT:
+			x = scrLength - lengthX;
+			y = scrHeight - lengthY;
+			break;
+		}
+
+		return { x, y };
+	}
+
+	void setAnchorPosition(int l, int h) {
+		auto pair = getAnchorPosition(l, h);
+		xPos = pair.first + xOffset;
+		yPos = pair.second + yOffset;
+	}
 };
 
 // Entire screen UI frame
 class Frame {
 private:
 	std::vector<std::unique_ptr<UIElement>> elements;
-	std::string name;
+	UI type;
 public:
 	template<typename T, typename... Args>
 	T& addElement(Args&&... args) {
@@ -88,12 +159,12 @@ public:
 		return *static_cast<T*>(elements.back().get());
 	}
 
-	std::string getName() const {
-		return name;
+	UI getName() const {
+		return type;
 	}
 
-	void setName(std::string name) {
-		this->name = name;
+	void setType(UI type) {
+		this->type = type;
 	}
 	
 	void draw(std::vector<std::vector<wchar_t>>& UI) {
@@ -114,10 +185,10 @@ class Panel : public UIElement {
 private:
 	std::vector<std::unique_ptr<UIElement>> elements;
 public:
-	Panel(int xOffset, int yOffset, int lengthX, int lengthY, Alignment alignment)
+	Panel(int xOffset, int yOffset, int lengthX, int lengthY, Anchor alignment)
 		: UIElement()
 	{
-		this->alignment = alignment;
+		this->anchor = anchor;
 		setPosition(xOffset, yOffset);
 		setSize(lengthX, lengthY);
 	}
@@ -172,11 +243,23 @@ private:
 	int segments;
 	bool vertical;
 public:
-	Slider(int xOffset, int yOffset, int minValue, int maxValue, int currentValue, int segments, bool vertical, Alignment alignment)
+	Slider(int xOffset, int yOffset, int minValue, int maxValue, int currentValue, int segments, bool vertical, Anchor alignment)
 		: minValue(minValue), maxValue(maxValue), currentValue(currentValue), segments(segments), vertical(vertical)
 	{
-		this->alignment = alignment;
+		this->anchor = anchor;
 		setPosition(xOffset, yOffset);
+	}
+
+	bool checkHover(int mouseX, int mouseY) {
+		if (vertical) {
+			return (mouseX >= xOffset && mouseX < xOffset + 1
+				&& mouseY >= yOffset && mouseY < yOffset + segments);
+		}
+		else {
+			return (mouseX >= xOffset && mouseX < xOffset + segments
+				&& mouseY >= yOffset && mouseY < yOffset + 1);
+		}
+
 	}
 
 	void draw(std::vector<std::vector<wchar_t>>& UI) override {
@@ -197,6 +280,7 @@ public:
 
 	void update(int mouseX, int mouseY, bool mouseDown) {
 		if (!mouseDown) return;
+		if (!checkHover(mouseX, mouseY)) return;
 
 		int pos = vertical ? (mouseY - yOffset) : (mouseX - xOffset);
 		if (pos > segments) pos = segments;
@@ -223,10 +307,10 @@ class Text : public UIElement {
 private:
 	std::wstring label;
 public:
-	Text(int xOffset, int yOffset, const std::wstring& label, Alignment alignment)
+	Text(int xOffset, int yOffset, const std::wstring& label, Anchor anchor)
 		:UIElement(), label(label) 
 	{
-		this->alignment = alignment;
+		this->anchor = anchor;
 		setPosition(xOffset, yOffset);
 	}
 
@@ -271,19 +355,19 @@ public:
 		const std::vector<std::wstring> staticButton, 
 		const std::vector<std::wstring> hoveredButton, 
 		const std::vector<std::wstring> clickedButton,
-		Alignment alignment)
+		Anchor alignment)
 		:staticButton(staticButton), 
 		hoveredButton(hoveredButton), 
 		clickedButton(clickedButton)
 	{
-		this->alignment = alignment;
+		this->anchor = alignment;
 		setPosition(xOffset, yOffset);
 		setSize(staticButton[0].size(), staticButton.size());
 	};
 
 	bool checkHover(int mouseX, int mouseY) { 
 		return (mouseX >= xOffset && mouseX < xOffset + staticButton[0].size()
-			&& mouseY >= yOffset && mouseY < yOffset + staticButton.size()); 
+			&& mouseY >= yOffset && mouseY < yOffset + staticButton.size());
 		
 	}
 
@@ -357,9 +441,9 @@ private:
 	bool wasClickedLastFrame = false;
 public:
 
-	Checkbox(int xOffset, int yOffset, Alignment alignment)
+	Checkbox(int xOffset, int yOffset, Anchor anchor)
 	{
-		this->alignment = alignment;
+		this->anchor = anchor;
 		setPosition(xOffset, yOffset);
 		setSize(1, 1);
 	}

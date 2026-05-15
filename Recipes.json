@@ -59,6 +59,22 @@
             "required_bench": "None"
         },
 
+        {
+            "result": "Wooden Floor",
+            "quantity": 1,
+            "ingredients": {
+                "Wooden Plank": 1
+            },
+            "required_bench": "None"
+        },
+        {
+            "result": "Stone Floor",
+            "quantity": 1,
+            "ingredients": {
+                "Stone": 1
+            },
+            "required_bench": "None"
+        },
 
         {
             "result": "Wooden Plank",
@@ -68,16 +84,9 @@
             },
             "required_bench": "Carpentry Bench"
         },
+
         {
-            "result": "Wooden Floor",
-            "quantity": 2,
-            "ingredients": {
-                "Wood": 1
-            },
-            "required_bench": "Carpentry Bench"
-        },
-        {
-            "result": "Chair",
+            "result": "Wooden Chair",
             "quantity": 1,
             "ingredients": {
                 "Wooden Plank": 3
@@ -85,12 +94,28 @@
             "required_bench": "Carpentry Bench"
         },
         {
-            "result": "Table",
+            "result": "Wooden Table",
             "quantity": 1,
             "ingredients": {
                 "Wooden Plank": 4
             },
             "required_bench": "Carpentry Bench"
+        },
+        {
+            "result": "Stone Chair",
+            "quantity": 1,
+            "ingredients": {
+                "Stone Brick": 3
+            },
+            "required_bench": "Stone Cutter"
+        },
+        {
+            "result": "Stone Table",
+            "quantity": 1,
+            "ingredients": {
+                "Stone Brick": 4
+            },
+            "required_bench": "Stone Cutter"
         },
         {
             "result": "Bed",
@@ -142,12 +167,9 @@
             "ingredients": {
                 "Iron": 1
             },
-            "time": 200,
+            "time": 2,
             "required_bench": "Furnace"
         },
-
-
-
         {
             "result": "Pistol",
             "quantity": 1,
@@ -174,6 +196,14 @@
             },
             "time": 200,
             "required_bench": "Gun Bench"
+        },
+        {
+            "result": "Bread",
+            "quantity": 1,
+            "ingredients": {
+                "Bundled Wheat": 4
+            },
+            "required_bench": "Carpentry Bench"
         }
     ]
 }

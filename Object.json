@@ -236,7 +236,7 @@
         },
         {
             "name": "Wooden Wall",
-            "type": "object",
+            "type": "structure",
             "visual": {
                 "character": "%",
                 "color": [ 100, 65, 23 ]
@@ -246,21 +246,29 @@
             "name": "Wooden Floor",
             "type": "object",
             "visual": {
-                "character": "#",
+                "character": ".",
                 "color": [ 100, 65, 23 ]
             }
         },
         {
             "name": "Stone Wall",
-            "type": "object",
+            "type": "structure",
             "visual": {
                 "character": "%",
                 "color": [ 128, 128, 128 ]
             }
         },
         {
-            "name": "Bed",
+            "name": "Stone Floor",
             "type": "object",
+            "visual": {
+                "character": ".",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Bed",
+            "type": "furniture",
             "visual": {
                 "character": "B",
                 "color": [ 100, 65, 23 ]
@@ -271,6 +279,14 @@
             "type": "furnace",
             "visual": {
                 "character": "O",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Oven",
+            "type": "furnace",
+            "visual": {
+                "character": "H",
                 "color": [ 128, 128, 128 ]
             }
         },
@@ -307,19 +323,35 @@
             }
         },
         {
-            "name": "Chair",
-            "type": "object",
+            "name": "Wooden Chair",
+            "type": "furniture",
             "visual": {
                 "character": "h",
                 "color": [ 148, 77, 0 ]
             }
         },
         {
-            "name": "Table",
-            "type": "object",
+            "name": "Wooden Table",
+            "type": "furniture",
             "visual": {
                 "character": "T",
                 "color": [ 148, 77, 0 ]
+            }
+        },
+        {
+            "name": "Stone Chair",
+            "type": "furniture",
+            "visual": {
+                "character": "h",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Stone Table",
+            "type": "furniture",
+            "visual": {
+                "character": "T",
+                "color": [ 128, 128, 128 ]
             }
         },
         {
@@ -385,6 +417,23 @@
             ]
         },
         {
+            "name": "Wheat Seed",
+            "type": "object",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            }
+        },
+        {
+            "name": "Bundled Wheat",
+            "type": "object",
+            "visual": {
+                "character": "#",
+                "color": [ 218, 197, 134 ]
+            }
+        },
+
+        {
             "name": "Carrot",
             "type": "crop",
             "visual": {
@@ -412,13 +461,13 @@
             ]
         },
         {
-            "name": "Grape Bush",
+            "name": "Berry Bush",
             "type": "foliage_crop",
             "visual": {
-                "character": "?",
+                "character": "&",
                 "color": [ 0, 255, 0 ]
             },
-            "produce": "Grape"
+            "produce": "Berry"
         },
 
         {
@@ -431,11 +480,11 @@
             "nutrition": 52
         },
         {
-            "name": "Grape",
+            "name": "Berry",
             "type": "food",
             "visual": {
                 "character": "o",
-                "color": [ 128, 0, 128 ]
+                "color": [ 153, 15, 75 ]
             },
             "nutrition": 30
         },
@@ -522,6 +571,14 @@
             "range": 100.0,
             "attack_cooldown": 5.0
 
+        },
+        {
+            "name": "Ghost",
+            "type": "object",
+            "visual": {
+                "character": "%",
+                "color": [ 67, 203, 255 ]
+            }
         }
 
     ]

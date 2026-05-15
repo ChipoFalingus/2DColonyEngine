@@ -26,7 +26,7 @@ void World::renderWorld() {
 
         for (int cy = -chunkRadius; cy < chunkRadius; cy++) {
             for (int cx = -chunkRadius; cx < chunkRadius; cx++) {
-                    loadOrGenerateChunk(cx, cy);
+                loadOrGenerateChunk(cx, cy);
             }
         }
 
@@ -41,7 +41,7 @@ void World::renderWorld() {
 
 void addPaths() {
 	int mapDim = calculateMapSize();
-    auto points = createVoronoiMap(10, -mapDim, mapDim, -mapDim, mapDim);
+    auto points = createVoronoiMap(100, -mapDim, mapDim, -mapDim, mapDim);
 
     for (int i = 0; i < points.size(); i++) {
         auto& point1 = points[getRandomInt(0, points.size() - 1)];
@@ -55,6 +55,49 @@ void addPaths() {
             }
 		}
 	}
+}
+
+
+
+void createRegions() {
+    int size = calculateMapSize();
+    int regionID = 0;
+
+    for (int x = -size; x < size; x++) {
+        for (int y = -size; y < size; y++) {
+            Tile& tile = getTileRef(x, y);
+            if (!tile.walkable || tile.region != -1)
+                continue;
+
+            std::queue<std::pair<int, int>> q;
+            q.push({ x, y });
+            tile.region = regionID;
+
+            std::vector<std::pair<int, int>> directions = {
+                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+            };
+
+            while (!q.empty()) {
+                auto [cx, cy] = q.front();
+                q.pop();
+
+                for (auto [dx, dy] : directions) {
+                    int nx = cx + dx;
+                    int ny = cy + dy;
+
+                    Tile& nt = getTileRef(nx, ny);
+
+                    if (!nt.walkable) continue;
+                    if (nt.region != -1) continue;
+
+                    nt.region = regionID;
+                    q.push({ nx, ny });
+                }
+            }
+
+            regionID++;
+        }
+    }
 }
 
 // Adds creatures to the world
@@ -75,12 +118,12 @@ void World::addCreatures() {
     auto axe = ObjectRegistry::getInstance().get("Axe");
     auto pickaxe = ObjectRegistry::getInstance().get("Pickaxe");
 
-	int LUMBERJACKS = 3;
-	int MINERS = 0;
-    int FARMERS = 0;
-    int BUILDERS = 0;
-	int CARPENTERS = 0;
-    int BLACKSMITHS = 0;
+	int LUMBERJACKS = 1;
+	int MINERS = 1;
+    int FARMERS = 1;
+    int BUILDERS = 1;
+	int CARPENTERS = 1;
+    int BLACKSMITHS = 1;
 
     auto gun = ObjectRegistry::getInstance().get("Minigun");
 
@@ -166,13 +209,23 @@ void World::generateWorld() {
         renderWorld();
         addCreatures();
 
+        initLightMap();
+
+        auto newMap = Game::getInstance()
+            .getLightManager()
+            .BFSLight();
+
+        setLightMap(newMap);
+
+        createRegions();
+
         //addPaths();
 
         currentlyRendering = false;
         rendered = true;
 
-        Game::getInstance().getUIManager().remove("loading");
-        Game::getInstance().getUIManager().push("ingame");
+        Game::getInstance().getUIManager().remove(UI::Loading);
+        Game::getInstance().getUIManager().push(UI::InGame);
         }).detach();
 
     

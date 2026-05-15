@@ -30,13 +30,13 @@ void Squad::update() {
 			};
 		}
 
-		if (attackScanClock.getElapsedTime().asSeconds() > 0.5f) {
+		if (attackScanClock.getElapsedTime().asSeconds() > 2.0f) {
 			attackScanClock.restart();
 
 			Creature* c = findClosestCreatureType<Villager>(
 				avg.first,
 				avg.second,
-				32
+				64
 			);
 
 			if (c) {
@@ -87,7 +87,7 @@ void Squad::followLeader() {
 		lastTargetPos = { targetPos.first, targetPos.second };
 	}
 
-	if (field.empty()) {
+	if (flow.empty()) {
 		return;
 	}
 	//flow = field;

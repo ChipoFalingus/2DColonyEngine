@@ -51,16 +51,17 @@ private:
     // Stockpiles need to be in the colony class
     std::vector<Stockpile> stockpiles;
 	
+    // This needs to be in the colony class too
     std::vector<std::pair<std::shared_ptr<Object>, std::pair<int, int>>> itemsToMove;
 
-    std::vector<std::vector<float>> lightMap;
+
+    std::vector<float> lightMap;
 
     void renderWorld();
     void addCreatures();
 public:
-	
 
-	PlacementMode placementMode = PlacementMode::SQUARE;
+	PlacementMode placementMode = PlacementMode::LINE;
     
     static World& get();
 
@@ -86,22 +87,29 @@ public:
     void initLightMap() {
         int size = calculateMapSize() * 2 + 1;
 
-        lightMap.resize(size, std::vector<float>(size, 1.0f));
+        lightMap.resize(size * size);
+        std::fill(lightMap.begin(), lightMap.end(), 0.2f);
     }
 
-    std::vector<std::vector<float>>& getLightMap() {
+    void setLightMap(const std::vector<float>& newMap) {
+        lightMap = newMap;
+    }
+
+    std::vector<float>& getLightMap() {
         return lightMap;
     }
 
     float getLightMapIndex(int x, int y) {
+        x += calculateMapSize();
+        y += calculateMapSize();
         int size = calculateMapSize() * 2 + 1;
         if (x < 0 || x >= size || y < 0 || y >= size)
-            return 0.0f;
+            return 0.2f;
 
-        return lightMap[x][y];
+        return lightMap[x + y * size];
     }
 
-    std::vector<Stockpile> getStockpiles() {
+    std::vector<Stockpile>& getStockpiles() {
         return stockpiles;
     }
 
@@ -223,6 +231,8 @@ public:
     int getChunksRendered() { return chunksRendered; }
     bool isCurrentlyRendering() const { return currentlyRendering; };
     bool isRendered() const { return rendered; }
+
+
 };
 
 extern World& mainWorld;

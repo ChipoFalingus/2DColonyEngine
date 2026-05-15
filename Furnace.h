@@ -14,13 +14,10 @@ public:
 
 	int fuelAmount = 9999;
 
-    float progress = 0.0f;
-
-	float remainingCookTime = 0.0f;
-
 	bool stopped = false;
-
     int x, y;
+
+    float clock = 0.0f;
 
 	Recipe* currentRecipe = nullptr;
 
@@ -29,19 +26,26 @@ public:
 
     void addInput(std::shared_ptr<Object> item) {
         input = item;
-        currentRecipe = RecipeRegistry::getInstance().get("Iron Bar_Furnace");
-        progress = 0.0f;
-
+        currentRecipe = RecipeRegistry::getInstance().get("Iron Bar");
+        clock = 0.0f;
         addLight();
 	}
 
     void addLight() {
-		Game::getInstance().getLightManager().addLight(glm::vec2(x,y),glm::vec3(255, 140, 0), 100.0f, 0.5f, -1.0f);
+		Game::getInstance().getLightManager().addLight(glm::vec2(x,y),glm::vec3(255, 140, 0), 100.0f, 1.f, currentRecipe->time);
+        std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
+        mainWorld.setLightMap(map);
 	}
 
-    void cook(float dt) {
+    void cook() {
+
+		clock += Clock::deltaTime;
 
         if (!currentRecipe) {
+            return;
+        }
+
+        if (clock < currentRecipe->time) {
             return;
         }
 
@@ -52,11 +56,15 @@ public:
         if (fuelAmount > 0) {
             stopped = false;
 
-            fuelAmount -= dt;
-            progress += dt;
+            //fuelAmount -= dt;
 
-            if (progress >= currentRecipe->time) {
-                finish();
+            if (clock >= currentRecipe->time) {
+                clock = 0.0f;
+                auto i = ObjectRegistry::getInstance().get(currentRecipe->result);
+                mainWorld.addItemToMove(i, x, y);
+                getTileRef(x, y).addObject(i);
+                input = nullptr;
+                currentRecipe = nullptr;
             }
         }
         else {
@@ -68,15 +76,7 @@ public:
     }
 
 	void addFuel(std::shared_ptr<Object> fuel) {
-		// fuelAmount += fuel->fuelValue;
-	}
+        //fuelAmount += fuel->fuelValue;
 
-    void finish() {
-		auto i = ObjectRegistry::getInstance().get(currentRecipe->result);
-        mainWorld.addItemToMove(i, x, y);
-		getTileRef(x, y).addObject(i); // Replace with actual furnace tile coordinates
-        input = nullptr;
-        currentRecipe = nullptr;
-		progress = 0.0f;
-    }   
+	}
 };

@@ -18,6 +18,8 @@ enum struct Type {
 	Furnace,
 	Gun,
 	Bench,
+	Structure,
+	Furniture,
 	Spawner
 };
 
@@ -56,8 +58,6 @@ public:
 
 	// Default
 	std::string name;
-	wchar_t baseChar;
-	sf::Color baseColor;
 
 	// Changeable
 	wchar_t displayChar;
@@ -67,10 +67,10 @@ public:
 
 	Type type;
 
-	Object() : name(""), baseChar(L' '), baseColor(sf::Color::White) {}
+	Object() : name("") {}
 
 	Object(std::string name, wchar_t ch, sf::Color col)
-		: name(name), baseChar(ch), baseColor(col) {
+		: name(name) {
 		displayChar = ch;
 		displayColor = col;
 	}

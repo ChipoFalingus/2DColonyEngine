@@ -30,6 +30,7 @@
 #include "Game.h"
 #include "UI.h"
 #include "Creature.h"
+#include "TileAnimation.h"
 
 #include "Pig.h"
 #include "Zombie.h"
@@ -53,12 +54,6 @@
 void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void setMode(Mode mode);
-Button& createButton(
-    Frame& frame,
-    int x, int y,
-    const std::wstring& label,
-    Alignment align
-);
 
 std::random_device rd;
 int seed;
@@ -172,6 +167,8 @@ std::unordered_map<FT_ULong, CustomGlyph> customGlyphs = {
     {0xA33, {0xA33, 16, 16, 0, 16, 16, checkedboxBitmap}},
 };
 
+sf::Clock day;
+
 void generateFontAtlas(const std::string& fontPath, int fontSize) {
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) { std::cerr << "Could not init FreeType\n"; return; }
@@ -181,8 +178,8 @@ void generateFontAtlas(const std::string& fontPath, int fontSize) {
     FT_Set_Pixel_Sizes(face, 0, fontSize);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    const int atlasWidth = 8192;
-    const int atlasHeight = 8192;
+    const int atlasWidth = 4096;
+    const int atlasHeight = 4096;
     unsigned char* atlasData = new unsigned char[atlasWidth * atlasHeight];
     memset(atlasData, 0, atlasWidth * atlasHeight);
 
@@ -272,7 +269,7 @@ void drawTxtToMap(const std::string& filePath, int x, int y) {
             Tile& tile = getTileRef(tileX, tileY);
             tile.walkable = false;
             //tile.items[0] = std::make_unique<Item>(DISPLAY);
-            tile.items[0]->displayChar = ch;
+            //tile.items[0]->displayChar = ch;
         }
         offsetY++;
     }
@@ -387,16 +384,25 @@ void drawMiniMap(Shader& shader) {
     for (int y = yPlayer - yFrustum / 2; y < yPlayer + yFrustum / 2; y++) {
         for (int x = xPlayer - xFrustum / 2; x < xPlayer + xFrustum / 2; x++) {
 
-            int chunkX = static_cast<int>(std::floor((float)x));
+            /*int chunkX = static_cast<int>(std::floor((float)x));
             int chunkY = static_cast<int>(std::floor((float)y));
 
             int localX = (x % chunkDim + chunkDim) % chunkDim;
-            int localY = (y % chunkDim + chunkDim) % chunkDim;
+            int localY = (y % chunkDim + chunkDim) % chunkDim;*/
 
             float screenX = (x - numX) * xTextSpacing;
             float screenY = scrHeight - ((y - numY + 1) * yTextSpacing);
 
-            Chunk& chunk = mainWorld.loadOrGenerateChunk(chunkX, chunkY);
+            //Chunk& chunk = mainWorld.loadOrGenerateChunk(chunkX, chunkY);
+
+            Tile* a = nullptr;
+            Chunk* chunk = nullptr;
+
+            if (mainWorld.isRendered()) {
+                int chunkX = static_cast<int>(std::floor((float)x));
+                int chunkY = static_cast<int>(std::floor((float)y));
+                chunk = mainWorld.getChunk(chunkX, chunkY);
+            }
 
             std::wstring charStr;
             glm::vec3 color;
@@ -425,27 +431,31 @@ void drawMiniMap(Shader& shader) {
                     }
                 }
             }
+
+            if (!chunk) {
+                continue;
+            }
             
             if (!viewHeightMap) {
                 // Convert vector<wchar_t> to wstring(use first character if available)
-                charStr = chunk.dominantDisplay.chars.empty() ? L" " : std::wstring(1, chunk.dominantDisplay.chars[0]);
+                charStr = chunk->dominantDisplay.chars.empty() ? L" " : std::wstring(1, chunk->dominantDisplay.chars[0]);
                 // Convert vector<sf::Color> to glm::vec3 (use first color if available)
-                color = chunk.dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                color = chunk->dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
-                        chunk.dominantDisplay.colors[0].r / 255.0f,
-                        chunk.dominantDisplay.colors[0].g / 255.0f,
-                        chunk.dominantDisplay.colors[0].b / 255.0f
+                        chunk->dominantDisplay.colors[0].r / 255.0f,
+                        chunk->dominantDisplay.colors[0].g / 255.0f,
+                        chunk->dominantDisplay.colors[0].b / 255.0f
                     );
             }
             else {
                 // Convert vector<wchar_t> to wstring(use first character if available)
                 charStr = L'■';
                 // Convert vector<sf::Color> to glm::vec3 (use first color if available)
-                color = chunk.dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                color = chunk->dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
-                        altitudeToColor(chunk.avgHeight, -100.0f, 100.0f).r / 255.0f,
-                        altitudeToColor(chunk.avgHeight, -100.0f, 100.0f).g / 255.0f,
-                        altitudeToColor(chunk.avgHeight, -100.0f, 100.0f).b / 255.0f
+                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).r / 255.0f,
+                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).g / 255.0f,
+                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).b / 255.0f
                     );
             }
             
@@ -454,10 +464,32 @@ void drawMiniMap(Shader& shader) {
     }
 }
 
+sf::Color regionColor(int region) {
+    // deterministic pseudo-random based on region id
+    unsigned int x = static_cast<unsigned int>(region);
+
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+
+    // extract RGB components
+    sf::Uint8 r = 80 + (x & 0x7F);         x >>= 8;
+    sf::Uint8 g = 80 + (x & 0x7F);         x >>= 8;
+    sf::Uint8 b = 80 + (x & 0x7F);
+
+    return sf::Color(r, g, b);
+}
+
 void drawMap(Shader& shader)
 {
     int numX = xPlayer - xFrustum / 2;
     int numY = yPlayer - yFrustum / 2;
+
+    std::vector<std::pair<int, int>> line;
+
+    if (mainWorld.placementMode == PlacementMode::LINE && placing) {
+        line = bresenham(corner.first, corner.second, mouseTileX, mouseTileY);
+    }
 
 
     std::unordered_map<std::pair<int, int>, Creature*, pair_hash> creaturesInScope;
@@ -480,11 +512,11 @@ void drawMap(Shader& shader)
 
             float screenX = (x - numX) * xTextSpacing;
             Tile* a = nullptr;
-
+            Chunk* chunk = nullptr;
             if (mainWorld.isRendered()) {
                 int chunkX = x / chunkDim;
                 int chunkY = y / chunkDim;
-                Chunk* chunk = mainWorld.getChunk(chunkX, chunkY);
+                chunk = mainWorld.getChunk(chunkX, chunkY);
 
                 if (chunk) {
                     a = &getTileRef(x, y);
@@ -518,7 +550,7 @@ void drawMap(Shader& shader)
                 }
             }
 
-            if (!mainWorld.isRendered()) {
+            if (!mainWorld.isRendered() || !chunk) {
                 continue;
             }
 
@@ -534,6 +566,13 @@ void drawMap(Shader& shader)
                 else {
                     color = glm::vec3(display.displayColor.r / 255.0f, display.displayColor.g / 255.0f, display.displayColor.b / 255.0f);
                 }
+
+
+                if (tile.anim.type != animType::NONE) {
+                    sf::Color d = getColor(tile);
+                    color = glm::vec3(d.r / 255.0f, d.g / 255.0f, d.b / 255.0f);
+                }
+
                 string = display.displayChar;
             }
             else {
@@ -563,8 +602,7 @@ void drawMap(Shader& shader)
                     }
                 }
                 if (mainWorld.placementMode == PlacementMode::LINE) {
-                    auto tiles = bresenham(corner.first, corner.second, mouseTileX, mouseTileY);
-                    if (std::find(tiles.begin(), tiles.end(), std::make_pair(x, y)) != tiles.end()) {
+                    if (std::find(line.begin(), line.end(), std::make_pair(x, y)) != line.end()) {
                         string = L"+";
                         color = glm::vec3(1.0f, 0.0f, 0.0f);
                     }
@@ -597,13 +635,27 @@ void drawMap(Shader& shader)
                     );
             }
 
-			//color *= Game::getInstance().getLightManager().calculateLightLevel(x, y);
+           /* sf::Color reg = regionColor(getTileRef(x, y).region);
+
+            color.r = reg.r / 255.0f;
+            color.g = reg.g / 255.0f;
+            color.b = reg.b / 255.0f;*/
 
             int size = calculateMapSize();
             int lx = x + size;
             int ly = y + size;
-            color *= mainWorld.getLightMapIndex(lx, ly);
 
+            float dayLength = 600.0f;
+            float pi = 3.14159f;
+
+            float t = day.getElapsedTime().asSeconds() - 300.0f;
+            float cycle = t * (2.0f * pi / dayLength);
+
+            float time = 0.5f * sin(cycle - pi / 2.0f) + 0.5f;
+
+            float ambient = std::max(time, 0.2f);
+            //float ambient = 0.2f;
+            color *= std::max(mainWorld.getLightMapIndex(x, y), ambient);
             if (!string.empty()) {
                 RenderText(shader, string, screenX, screenY, fontSize, color, false);
             }
@@ -693,9 +745,7 @@ int main() {
 
 	uiManager.resize(xFrustum, yFrustum);
 
-    uiManager.push("main");
-    
-    Game::getInstance().getLightManager().addLight(glm::vec2(0,0), glm::vec3(1.0f), 100000.0f, 10000000000.0f, -1.0f);
+    uiManager.push(UI::Main);
 	
     double lastTime = glfwGetTime();
     int nbFrames = 0;
@@ -709,24 +759,22 @@ int main() {
 
     //music.play();
 
-	bool calculatedLights = false;
-
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	glfwSwapInterval(1);
-
-    mainWorld.initLightMap();
+	glfwSwapInterval(0);
 
    /* Clock gameClock;
     double lastTime = glfwGetTime();*/
 
+    float lightClock = 0.0f;
+
     while (!glfwWindowShouldClose(window)) {
 
-       /* double currentTime = glfwGetTime();
+        double currentTime = glfwGetTime();
         float dt = currentTime - lastTime;
         lastTime = currentTime;
 
-        gameClock.update(dt);*/
+        Clock::update(dt);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -746,15 +794,16 @@ int main() {
         // Inputs
         processInput(window);
 
-        static double lastTime = glfwGetTime();
-        double currentTime = glfwGetTime();
+        Game::getInstance().getLightManager().update(dt);
 
-        float deltaTime = static_cast<float>(currentTime - lastTime);
-        lastTime = currentTime;
+        lightClock += dt;
+        if (lightClock > .1f) {
+			lightClock = 0.0f;
+            std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
+            mainWorld.setLightMap(map);
+        }
 
-        Game::getInstance().getLightManager().update(deltaTime);
         // Update creatures
-
         // Move this to the World class later
         auto& creatures = mainWorld.getAllCreatures();
 
@@ -784,7 +833,14 @@ int main() {
         if (mainWorld.isCurrentlyRendering()) {
             LoadingUI& ui = Game::getInstance().getLoadingUI();
             int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
-            ui.chunks->changeText(std::to_wstring(mainWorld.getChunksRendered()) + L"/" + std::to_wstring(numChunks));
+
+            if (numChunks > mainWorld.getChunksRendered()) {
+                ui.chunks->changeText(std::to_wstring(mainWorld.getChunksRendered()) + L"/" + std::to_wstring(numChunks));
+            }
+            else {
+                ui.chunks->changeText(L"Finishing things up...");
+            }
+
 
             int barLength = xFrustum - 2;
 
@@ -800,8 +856,7 @@ int main() {
 
         if (mainWorld.isRendered()) {
 
-            squad1.update();
-
+            // All dynamic tiles need to be added to this list
             for (auto& tile : tiles) {
                 auto i = getTileRef(tile.first, tile.second).items[0];
                 if (i->type == Type::Spawner) {
@@ -810,7 +865,7 @@ int main() {
                 }
             }
 
-            // Move this to the World class later
+            // Move this to the Colony class later
             //std::vector<Villager*> shuffled = mainWorld.getAllVillagers();
             //std::shuffle(shuffled.begin(), shuffled.end(), rng);
 
@@ -822,7 +877,7 @@ int main() {
 
             // Stockpile item moving
 
-            // Move this to the World class later
+            // Move this to the Colony class later
             auto& itemsToMove = mainWorld.getItemsToMove();
 
             for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
@@ -836,7 +891,7 @@ int main() {
 
                     Job* job = new MoveItem(nullptr, nullptr, JobType::None, item, it->second.first, it->second.second, pos.first, pos.second);
 
-                    //job->priority = 5;
+                    job->priority = 5;
                     JobManager::addJob(job);
                     it = itemsToMove.erase(it);
                 }
@@ -864,5 +919,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     yFrustum = scrHeight / yTextSpacing;
     std::cout << "Tile dimesions resized to " << xFrustum << "x" << yFrustum << std::endl;
 
-    //uiManager.resize(xFrustum, yFrustum);
+
+    auto& menu = Game::getInstance().getMainMenuUI();
+    menu.layout(xFrustum, yFrustum);
 }

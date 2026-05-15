@@ -8,6 +8,7 @@
 #include "Globals.h"
 #include "mathUtils.h"
 #include "Tile.h"
+#include "World.h"
 
 // Needs to be optimized and more robust
 
@@ -88,7 +89,6 @@ public:
                 }
             }
         }
-
     }
 
     std::vector<PointLight> getLights() {
@@ -102,7 +102,7 @@ public:
     }
 
     glm::vec3 calculateLightLevel(int x, int y) {
-        glm::vec3 lightColor(0.1f, 0.1f, 0.1f);
+        glm::vec3 lightColor(0.1f);
 
         for (auto& light : lights) {
             float dx = x - light.position.x;
@@ -140,74 +140,79 @@ public:
 
         return glm::min(lightColor, glm::vec3(1.0f));
     }
-    
-
-    //glm::vec3 calculateLight(int x, int y) {
-        // THE PLAN:
-
-        // The Tricky Part:
-            // This needs to light up the whole world, but stay fast and optimal
-            // I only need to get the visual part correct, the rest can just be updated upon it coming into view
-
-        // Way Around It:
-            // Run a BFS search for the whole world once during the loading screen for setup
-            // Whenever a new light is added to the scene, only update the chunk it resides in + any it bleeds into (Only if its in view)
-            // If I'm desperate for performance, I can offload the BFS search to another thread
-
-        // Possible issues:
-            // NPC's will need to know how bright adjacent tiles are, should there be thousands of NPC's scattered, the whole world needs updates constantly
-
-        // Addressing issues:
-            // NPC's may not need the actual light level, they just need the location of light sources to guess the brightness
-
-
-    //}
 
 
     // This should update a global light map, it can be a static array because the world size cant change
-    std::vector<std::vector<float>> BFSLight(int width, int height) {
-        std::vector<std::vector<float>> lightMap(width, std::vector<float>(height, 0.0f));
+    std::vector<float> BFSLight() {
+
+        int dim = calculateMapSize();
+        int size = dim * 2 + 1;
+
+        std::vector<float> lightMap(size * size, 0.0f);
 
         struct Node {
             int x, y;
             float intensity;
+            int dx, dy;
         };
 
         std::queue<Node> q;
 
         for (auto& light : lights) {
 
-            int x = light.position.x;
-            int y = light.position.y;
+            int lx = light.position.x + dim;
+            int ly = light.position.y + dim;
 
-            q.push({ x, y, light.intensity });
+            q.push({ lx, ly, light.intensity, 0, 0 });
 
-            lightMap[x][y] = std::max(lightMap[x][y], light.intensity);
+            lightMap[lx + ly * size] = std::max(lightMap[lx + ly * size], light.intensity);
         }
 
-        const int dirs[4][2] = {
-        {1,0}, {-1,0}, {0,1}, {0,-1}
+        const int dirs[8][2] = {
+        {1,0}, {-1,0}, {0,1}, {0,-1},
+        {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
         };
 
         while (!q.empty()) {
             Node curr = q.front();
             q.pop();
 
-            if (curr.intensity < lightMap[curr.x][curr.y]) continue;
+            if (curr.intensity < lightMap[curr.x + curr.y * size]) continue;
 
             for (auto& d : dirs) {
                 int nx = curr.x + d[0];
                 int ny = curr.y + d[1];
 
-                if (!getTileRef(nx, ny).walkable) continue;
+                int worldX = nx - dim;
+                int worldY = ny - dim;
 
-                float newIntensity = curr.intensity * 0.8f;
+                if (nx < 0 || nx >= size || ny < 0 || ny >= size) {
+                    continue;
+                }
 
-                if (newIntensity < 0.01f) continue;
+                if (getTileRef(worldX, worldY).blocked) {
+                    continue;
+                }
 
-                if (newIntensity > lightMap[nx][ny]) {
-                    lightMap[nx][ny] = newIntensity;
-                    q.push({ nx, ny, newIntensity });
+                float newIntensity = curr.intensity * 0.95f;
+
+                // slight diagonal penalty
+                if (d[0] != 0 && d[1] != 0) {
+                    newIntensity *= 0.99f;
+                }
+
+                // turn penalty
+                if (curr.dx != 0 || curr.dy != 0) {
+                    if (d[0] != curr.dx || d[1] != curr.dy) {
+                        newIntensity *= 0.8f;
+                    }
+                }
+
+                if (newIntensity < 0.05f) continue;
+
+                if (newIntensity > lightMap[nx + ny * size]) {
+                    lightMap[nx + ny * size] = newIntensity;
+                    q.push({ nx, ny, newIntensity, d[0], d[1]});
                 }
             }
         }

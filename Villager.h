@@ -8,6 +8,7 @@
 #include "CreatureUtils.h"
 #include "Stockpile.h"
 #include "ItemUtils.h"
+#include "Clock.h"
 
 #include <queue>
 #include <array>
@@ -48,12 +49,6 @@ enum class TraitType {
 
 	// Sociability: Affects trading
 	Sociability,
-
-	// Patience: idk
-	Patience,
-
-	// Greed: idk
-	Greed,
 	
 	COUNT
 };
@@ -62,9 +57,23 @@ struct Traits {
 	std::array<float, static_cast<size_t>(TraitType::COUNT)> values;
 };
 
+enum class ActivityState {
+	None,
+	Sitting,
+	Sleeping,
+	Eating,
+	Wandering,
+	Working
+};
+
+
+std::string activityStateToString(ActivityState state);
+
 class Villager : public Creature {
 private:
-	std::priority_queue<Job*, std::vector<Job*>, JobCompare> jobQueue;
+	// replace with vector
+	//std::priority_queue<Job*, std::vector<Job*>, JobCompare> jobQueue;
+	std::vector<Job*> jobQueue;
 	JobType jobType;
 	Job* currentJob;
 
@@ -74,15 +83,14 @@ public:
 	std::string firstname = names[getRandomInt(0, names.size() - 1)];
 	std::string lastname = lastnames[getRandomInt(0, lastnames.size() - 1)];
 
-	bool harvesting;
-
-	sf::Clock clock;
-	sf::Clock idleClock;
-	sf::Clock checkThreatsClock;
-	sf::Clock moveClock;
-	sf::Clock tirednessClock;
-	sf::Clock eatClock;
-	sf::Clock findBedClock;
+	float clock;
+	float idleClock;
+	float checkThreatsClock;
+	float moveClock;
+	float tirednessClock;
+	float hungerClock;
+	float findBedClock;
+	float findFoodClock;
 
 	int moveSpeed;
 	float harvestTime = 1.0f;
@@ -92,19 +100,20 @@ public:
 
 	bool clockRestart = false;
 
+	Object* object_in_use;
+
 
 	std::pair<int, int> bed = {0, 0};
 
 	Inventory inventory;
 
-	static std::vector<std::pair<int, int>> harvestTiles;
-
-
-	int hunger = 100;
 	bool isHungry = false;
 
 	int thirst = 100;
 	int tiredness = 0;
+
+	ActivityState activity_state;
+
 
 	int alertness = 20;
 	std::pair<int, int> lastMove = { 0,0 };
@@ -131,8 +140,12 @@ public:
 		}
 	}
 
+	void sense();
+	void idle();
+	void decide();
+	void move();
+
 	void doWork() override;
-	void evaluateNeeds();
 	//void getBestWeapon();
 
 	void pickUpItem(std::shared_ptr<Object> item, int x, int y, Stockpile* stockpile = nullptr);
@@ -142,19 +155,19 @@ public:
 
 	void claimBed() {
 
-		auto loc = findClosestItemType(xPos, yPos, 50, [&](const Object& obj) {
+		auto loc = findClosestItemType(xPos, yPos, 50, [&](const Object& obj, int x, int y) {
 			return obj.name == "Bed" && !obj.claimed;
 			});
 
 		if (loc) {
 			bed = { loc->x, loc->y };
-			loc->item->claimed = true;
+			loc->item.lock()->claimed = true;
 		}
 
 	}
 
 	void addToJobQueue(Job* job) {
-		jobQueue.push(job);
+		jobQueue.push_back(job);
 	}
 
 	void setJob(JobType jt) {

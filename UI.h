@@ -2,18 +2,29 @@
 #include "UIElements.h"
 
 struct MainMenuUI {
-    std::string name = "main";
+    UI type = UI::Main;
 
     Button* new_game;
     Button* load;
     Button* settingsButton;
     Button* exit;
+
+    void layout(int screenW, int screenH) {
+        new_game->setAnchorPosition(screenW, screenH);
+        load->setAnchorPosition(screenW, screenH);
+        settingsButton->setAnchorPosition(screenW, screenH);
+        exit->setAnchorPosition(screenW, screenH);
+
+        std::cout << "New Game Button at " << 
+            new_game->getAnchorPosition(screenW, screenH).first << " " << 
+            new_game->getAnchorPosition(screenW, screenH).second << std::endl;
+    }
 };
 
 MainMenuUI getMainMenuFrame();
 
 struct SettingsUI {
-    std::string name = "settings";
+    UI type = UI::Settings;
 
 	Text* text;
     Button* back;
@@ -22,19 +33,21 @@ struct SettingsUI {
 SettingsUI getSettingsFrame();
 
 struct WorldSettingsUI {
-    std::string name = "worldsettings";
+    UI type = UI::WorldSettings;
 
     Text* text;
     Button* back;
 
     Panel* panel;
+    Slider* waterLevel;
+
     Button* begin;
 };
 
 WorldSettingsUI getWorldSettingsFrame();
 
 struct LoadingUI {
-    std::string name = "loading";
+    UI type = UI::Loading;
 
     Panel* panel;
     Text* text;
@@ -45,7 +58,7 @@ struct LoadingUI {
 LoadingUI getLoadingFrame();
 
 struct InGameUI {
-    std::string name = "ingame";
+    UI type = UI::InGame;
 
     Text* playerPos;
     Text* FPS;
@@ -67,7 +80,7 @@ struct InGameUI {
 InGameUI getInGameFrame();
 
 struct MiniMapUI {
-    std::string name = "minimap";
+    UI type = UI::Minimap;
     Text* text;
     Text* seed;
 };
@@ -75,7 +88,7 @@ struct MiniMapUI {
 MiniMapUI getMiniMapFrame();
 
 struct BuildUI {
-    std::string name = "build";
+    UI type = UI::Build;
 
     Button* structureButton;
     Button* furnitureButton;
@@ -86,7 +99,7 @@ struct BuildUI {
 BuildUI getBuildFrame();
 
 struct ProductionUI {
-    std::string name = "production";
+    UI type = UI::Production;
 
     Button* carpentry_bench;
 	Button* stone_cutter;
@@ -97,7 +110,7 @@ struct ProductionUI {
 ProductionUI getProductionFrame();
 
 struct StructureUI {
-    std::string name = "structure";
+    UI type = UI::Structure;
 
     Button* wood_wall;
     Button* stone_wall;
@@ -109,15 +122,18 @@ struct StructureUI {
 StructureUI getStructureFrame();
 
 struct FurnitureUI {
-    std::string name = "furniture";
-    Button* chair;
-    Button* bed;
+    UI type = UI::Furniture;
+
+    Panel* panel;
+    std::vector<Button*> buttons;
+
+    void configureFurnitureFrame();
 };
 
 FurnitureUI getFurnitureFrame();
 
 struct CarpentryBenchUI {
-    std::string name = "carpentry";
+    UI type = UI::Carpentry;
 
     Text* text;
     Text* ingredients;
@@ -131,7 +147,7 @@ struct CarpentryBenchUI {
 CarpentryBenchUI getCarpentryBenchFrame();
 
 struct AnvilUI {
-    std::string name = "anvil";
+    UI type = UI::Anvil;
     Text* text;
     Panel* panel;
     std::vector<Button*> craftable_items;
@@ -141,7 +157,7 @@ struct AnvilUI {
 AnvilUI getAnvilFrame();
 
 struct GunBenchUI {
-    std::string name = "gun";
+    UI type = UI::Gun;
     Text* text;
     Text* ingredients;
     Panel* panel;
@@ -152,20 +168,22 @@ struct GunBenchUI {
 GunBenchUI getGunBenchFrame();
 
 struct VillagerInfoUI {
-    std::string name = "villager";
+    UI type = UI::Villager;
 
     Panel* infoPanel;
 
     Text* text;
     Text* job;
+    Text* inventory;
 
+    Text* hunger;
     Text* health;
 };
 
 VillagerInfoUI getVillagerInfoFrame();
 
 struct HarvestUI {
-    std::string name = "harvest";
+    UI type = UI::Harvest;
 
 	Panel* infoPanel;
 
@@ -178,7 +196,7 @@ struct HarvestUI {
 HarvestUI getHarvestFrame();
 
 struct InfoUI {
-    std::string name = "info";
+    UI type = UI::Info;
     Panel* infoPanel;
 	Text* itemName;
     Text* ingredients;
@@ -191,7 +209,7 @@ Button& createButton(
     Frame& frame,
     int x, int y,
     const std::wstring& label,
-    Alignment align
+    Anchor anchor
 );
 
 void setMode(Mode mode);

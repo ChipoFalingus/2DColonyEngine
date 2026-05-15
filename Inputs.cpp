@@ -12,6 +12,8 @@ double lastTime = glfwGetTime();
 int nbFrames = 0;
 std::string fps;
 
+float moveClock = 0.0f;
+
 Villager* viewing;
 /*
 
@@ -41,20 +43,25 @@ void stockpile(int left, int right, int top, int bottom);
 
 void processInput(GLFWwindow* window) {
 
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        yPlayer--;
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        yPlayer++;
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        xPlayer--;
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        xPlayer++;
+    moveClock += Clock::deltaTime;
+
+    if (moveClock > 0.01f) {
+        moveClock = 0.0f;
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window, true);
+        }
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            yPlayer--;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            yPlayer++;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            xPlayer--;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            xPlayer++;
+        }
     }
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !clicked) {
@@ -65,18 +72,20 @@ void processInput(GLFWwindow* window) {
             if (!placing) {
                 corner = { mouseTileX, mouseTileY };
                 placing = true;
-                
             }
             else {
+                handleMode();
 
-				handleMode();
-                
-                placing = false;
+                if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
+                {
+                    placing = false;
+                    currentMode = Mode::NONE;
+                }
             }
         }
         else {
 
-            if (&World::isRendered) {
+            if (mainWorld.isRendered()) {
                 placing = false;
 
                 for (auto& i : mainWorld.getAllVillagers()) {
@@ -86,6 +95,11 @@ void processInput(GLFWwindow* window) {
                     }
                 }
                 handleClickedItem(mouseTileX, mouseTileY);
+
+
+                Game::getInstance().getLightManager().addLight(glm::vec2(mouseTileX, mouseTileY), glm::vec3(1.0f), 1.0f, 1.0f, 1.0f);
+                std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
+                mainWorld.setLightMap(map);
             }
 
 			auto s = mainWorld.atStockpile(mouseTileX, mouseTileY);
@@ -114,7 +128,7 @@ void processInput(GLFWwindow* window) {
         }
 
         auto& UIManager = Game::getInstance().getUIManager();
-		UIManager.swapFrame("minimap", "ingame");
+		UIManager.swapFrame(UI::Minimap, UI::InGame);
     }
 
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
@@ -197,15 +211,24 @@ void processInput(GLFWwindow* window) {
         i.text->changeText(std::wstring(str.begin(), str.end()));
         std::string jobStr = jobTypeToString(viewing->getJob());
 		i.job->changeText(std::wstring(jobStr.begin(), jobStr.end()));
-        std::string health = std::to_string(viewing->health) + " / 100";
-        i.health->changeText(std::wstring(health.begin(), health.end()));
-        i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 2, 6);
+        
+        std::string inv = activityStateToString(viewing->activity_state);
+        /*for (auto& i : viewing->inventory.inventory) {
+            inv += i.first + " " + std::to_string(i.second);
+        }*/
+        i.inventory->changeText(std::wstring(inv.begin(), inv.end()));
 
-        Game::getInstance().getUIManager().push("villager");
+        std::string health = std::to_string(viewing->health) + " / 100";
+        std::string hunger = "Hunger: " + std::to_string(viewing->hunger);
+        i.health->changeText(std::wstring(health.begin(), health.end()));
+        i.hunger->changeText(std::wstring(hunger.begin(), hunger.end()));
+        i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 2, 7);
+
+        Game::getInstance().getUIManager().push(UI::Villager);
     }
     else {
-        if (Game::getInstance().getUIManager().hasFrame("villager")) {
-            Game::getInstance().getUIManager().deleteFrame("villager");
+        if (Game::getInstance().getUIManager().hasFrame(UI::Villager)) {
+            Game::getInstance().getUIManager().deleteFrame(UI::Villager);
         }
     }
 
@@ -231,6 +254,7 @@ void processInput(GLFWwindow* window) {
                 itemStr += " (" + materialToString(tool->material) + ")";
             }
 
+            itemStr += " " + item->claimed;
             itemStr += "|";
         }
 
@@ -281,17 +305,29 @@ void handleClickedItem(int x, int y) {
     auto& uiManager = Game::getInstance().getUIManager();
 
     if (getTileRef(x, y).containsItem("Carpentry Bench")) {
-        uiManager.addOrRemoveFrame("carpentry");
+        uiManager.addOrRemoveFrame(UI::Carpentry);
     }
     else if (getTileRef(x, y).containsItem("Anvil")) {
-        uiManager.addOrRemoveFrame("anvil");
+        uiManager.addOrRemoveFrame(UI::Anvil);
 	}
     else if (getTileRef(x, y).containsItem("Furnace")) {
-		auto furnace = static_cast<Furnace*>(getTileRef(x, y).items[0].get());
-        furnace->addInput(ObjectRegistry::getInstance().get("Raw Iron"));
+        Tile& tile = getTileRef(x, y);
+
+        std::shared_ptr<Object> furnaceObj = nullptr;
+        for (auto& it : tile.items) {
+            if (it && it->type == Type::Furnace) {
+                furnaceObj = it;
+                break;
+            }
+        }
+
+        if (furnaceObj) {
+            auto furnace = std::static_pointer_cast<Furnace>(furnaceObj);
+            furnace->addInput(ObjectRegistry::getInstance().get("Raw Iron"));
+        }
     }
     else if (getTileRef(x, y).containsItem("Gun Bench")) {
-        uiManager.addOrRemoveFrame("gun");
+        uiManager.addOrRemoveFrame(UI::Gun);
     }
 }
 
@@ -299,28 +335,25 @@ void build(int left, int right, int top, int bottom) {
 
     auto item = Game::getInstance().getBuildItem();
 
+    Game::getInstance().getFurnitureUI().configureFurnitureFrame();
+
     if (!item) return;
 
 	std::cout << "Building: " << item->name << std::endl;
     std::string itemName = item->name;
-    
 
     if (mainWorld.placementMode == PlacementMode::SINGLE) {
         JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, mouseTileX, mouseTileY));
-		return;
     }
 
-    if (mainWorld.placementMode == PlacementMode::LINE) {
-        for (int x = left; x <= right; x++) {
-            JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, x, mouseTileY));
+    else if (mainWorld.placementMode == PlacementMode::LINE) {
+        auto line = bresenham(top, left, bottom, right);
+        for (auto& i : line) {
+            JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, i.first, i.second));
         }
-        for (int y = top; y <= bottom; y++) {
-            JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, mouseTileX, y));
-        }
-        return;
 	}
 
-    if (mainWorld.placementMode == PlacementMode::SQUARE) {
+    else if (mainWorld.placementMode == PlacementMode::SQUARE) {
         for (int x = left; x <= right; x++) {
             for (int y = top; y <= bottom; y++) {
                 if (x == left || x == right || y == top || y == bottom) {
@@ -329,14 +362,10 @@ void build(int left, int right, int top, int bottom) {
             }
         }
     }
+
 }
 
 void harvest(int left, int right, int top, int bottom) {
-
-    auto& uiManager = Game::getInstance().getUIManager();
-	auto& ui = Game::getInstance().getHarvestUI();
-
-    std::unordered_map<std::string, int> itemTracker;
 
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
@@ -347,30 +376,25 @@ void harvest(int left, int right, int top, int bottom) {
                 continue;
             }
 
+
             if (tile.items.size() != 0 && !tile.markedForHarvest) {
+
+                tile.markedForHarvest = true;
 
                 // Retrieves harvest information based on item name
                 Rule* rule = HarvestRuleRegistry::getInstance().get(tile.items[0]->name);
                 if (rule) {
 
-                    if (itemTracker.find(tile.items[0]->name) == itemTracker.end()) {
-                        itemTracker[tile.items[0]->name] = 1;
-                    }
-                    else {
-                        itemTracker[tile.items[0]->name]++;
-					}
-
-					
-                    tile.markedForHarvest = true;
+                    tile.anim.type = animType::RED_X;
                     if (rule->toolRequired == "None") {
 
-                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, JobType::None, tile.items[0].get()->name, x, y));
+                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, rule->jobType, tile.items[0].get()->name, x, y));
                     }
                     else {
 						auto toolInRegistry = ObjectRegistry::getInstance().get(rule->toolRequired);
 						Tool* tool = dynamic_cast<Tool*>(toolInRegistry.get());
                         if (tool) {
-							std::cout << "Adding harvest job for " << tile.items[0]->name << " at (" << x << ", " << y << ") with tool " << tool->name << std::endl;
+							//std::cout << "Adding harvest job for " << tile.items[0]->name << " at (" << x << ", " << y << ") with tool " << tool->name << std::endl;
                             Job* harvestJob = new HarvestTile(nullptr, tool, rule->jobType, tile.items[0].get()->name, x, y);
                             harvestJob->priority = 50;
                             JobManager::JobList.push_back(harvestJob);
@@ -385,24 +409,6 @@ void harvest(int left, int right, int top, int bottom) {
             }
         }
     }
-
-	ui.infoPanel->clear();
-
-	int num = 0;
-    for (auto& pair : itemTracker) {
-		std::string itemStr = pair.first + ": x" + std::to_string(pair.second);
-		std::wstring itemName = std::wstring(itemStr.begin(), itemStr.end());
-        &ui.infoPanel->addElement<Text>(3, 2 + num, itemName, Alignment::TOP_CENTER);
-		&ui.infoPanel->addElement<Checkbox>(1, 2 + num, Alignment::TOP_CENTER);
-		
-        num++;
-    }
-
-    std::wstring infoText = L"Select what to harvest:";
-    &ui.infoPanel->addElement<Text>(1, 1, infoText, Alignment::TOP_CENTER);
-    ui.infoPanel->setSize(infoText.size() + 2, num + 3);
-
-    //uiManager.addOrRemoveFrame("harvest");
 }
 
 void plant(int left, int right, int top, int bottom) {

@@ -2,72 +2,92 @@
 
 #include "Tile.h"
 
+sf::Clock animationClock;
+
+struct RGB {
+    float r, g, b;
+};
+
+
+RGB HSVtoRGB(float h, float s, float v) {
+    float c = v * s;
+    float x = c * (1 - fabs(fmod(h / 60.0f, 2) - 1));
+    float m = v - c;
+
+    float r, g, b;
+
+    if (h < 60) { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+
+    return { r + m, g + m, b + m };
+}
 
 sf::Color getColor(Tile& tile) {
 
 	// Animated Colors / Animated Displays (will be added later)
-  //  sf::Color color;
-  //  
+    sf::Color color;
 
-  //  if (tile.anim.type == BREATHE) {
-  //      float time = colorClock.getElapsedTime().asSeconds();
+    auto& display = VisualRegistry::getInstance().get(tile.items[0]->name);
 
-		//sf::Color itemColor = tile.items[0]->baseColor;
+    float time = animationClock.getElapsedTime().asSeconds();
 
-  //      float min = 0.2f;
-  //      float max = 1.0f;
+    if (tile.anim.type == BREATHE) {
 
-  //      float intensity = min + (max - min) * ((sin(time + animOffset) + 1.0f) / 2.0f);
+		sf::Color itemColor = display.displayColor;
 
-  //      color.r = static_cast<sf::Uint8>(itemColor.r * intensity);
-  //      color.g = static_cast<sf::Uint8>(itemColor.g * intensity);
-  //      color.b = static_cast<sf::Uint8>(itemColor.b * intensity);
-  //  }
+        float min = 0.2f;
+        float max = 1.0f;
 
-  //  if (tile.anim.type == RAINBOW) {
-  //      float time = colorClock.getElapsedTime().asSeconds();
-  //      float hue = fmod((time * 60.0f) + animOffset * 60.0f, 360.0f);
-  //      RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
-  //      color.r = static_cast<sf::Uint8>(rgb.r * 255);
-  //      color.g = static_cast<sf::Uint8>(rgb.g * 255);
-		//color.b = static_cast<sf::Uint8>(rgb.b * 255);
+        float intensity = min + (max - min) * ((sin(time + tile.animOffset) + 1.0f) / 2.0f);
 
-		//items[0]->displayColor = color;
-  //  }
+        color.r = static_cast<sf::Uint8>(itemColor.r * intensity);
+        color.g = static_cast<sf::Uint8>(itemColor.g * intensity);
+        color.b = static_cast<sf::Uint8>(itemColor.b * intensity);
+    }
 
-  //  if (tile.anim.type == RED_X) {
-  //      if (animationClock.getElapsedTime().asSeconds() > 0.5f) {
-  //          animationClock.restart();
-  //          animationType.isX = !animationType.isX;
-  //      }
+    else if (tile.anim.type == RAINBOW) {
+        float hue = fmod((time * 60.0f) + tile.animOffset * 60.0f, 360.0f);
+        RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
+        color.r = static_cast<sf::Uint8>(rgb.r * 255);
+        color.g = static_cast<sf::Uint8>(rgb.g * 255);
+		color.b = static_cast<sf::Uint8>(rgb.b * 255);
+    }
 
-  //      if (tile.anim.isX) {
-  //          items[0]->displayChar = L'X';
-  //          items[0]->displayColor = sf::Color::Red;
-  //      }
-  //      else {
-  //          items[0]->displayChar = items[0]->baseChar;
-  //          items[0]->displayColor = items[0]->baseColor;
-  //      }
-  //  }
+    else if (tile.anim.type == RED_X) {
+        tile.anim.isX = fmod(time, 1.0f) > 0.5f;
 
-  //  if (tile.anim.type == WHITE_BREATHE) {
-  //      float time = colorClock.getElapsedTime().asSeconds();
+        if (tile.anim.isX) {
+            tile.items[0]->displayChar = L'X';
+            color = sf::Color::Red;
+        }
+        else {
+            tile.items[0]->displayChar = display.displayChar;
 
-  //      sf::Color itemColor = tile.items[0]->baseColor;
+            if (tile.items[0]->type == Type::Crop) {
+                color = tile.items[0]->displayColor;
+            }
+            else {
+                color = display.displayColor;
+            }
+        }
+    }
 
-  //      float speed = 2.0f;
-  //      float wave = (sin(time * speed + animOffset) + 1.0f) * 0.5f; // 0 → 1
+    else if (tile.anim.type == WHITE_BREATHE) {
+        sf::Color itemColor = display.displayColor;
 
-  //      color.r = static_cast<sf::Uint8>(itemColor.r + (255 - itemColor.r) * wave);
-  //      color.g = static_cast<sf::Uint8>(itemColor.g + (255 - itemColor.g) * wave);
-  //      color.b = static_cast<sf::Uint8>(itemColor.b + (255 - itemColor.b) * wave);
+        float speed = 2.0f;
+        float wave = (sin(time * speed + tile.animOffset) + 1.0f) * 0.5f; // 0 → 1
 
+        color.r = static_cast<sf::Uint8>(itemColor.r + (255 - itemColor.r) * wave);
+        color.g = static_cast<sf::Uint8>(itemColor.g + (255 - itemColor.g) * wave);
+        color.b = static_cast<sf::Uint8>(itemColor.b + (255 - itemColor.b) * wave);
+    }
 
-  //      items[0]->displayColor = color;
-  //  }
-
-  //  return color;
+    return color;
 }
 
 
