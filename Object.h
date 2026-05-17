@@ -20,8 +20,12 @@ enum struct Type {
 	Bench,
 	Structure,
 	Furniture,
-	Spawner
+	Spawner,
+	COUNT
 };
+
+std::vector<Type> getAllTypes();
+std::string itemTypeToString(Type type);
 
 struct Visual {
 	wchar_t displayChar;

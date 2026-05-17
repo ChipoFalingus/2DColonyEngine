@@ -112,7 +112,7 @@ void World::addCreatures() {
         }
     }
 
-    int range = 1;
+    int range = 2;
 
 
     auto axe = ObjectRegistry::getInstance().get("Axe");

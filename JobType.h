@@ -11,9 +11,24 @@ enum class JobType {
 	Gunsmith,
 	Cook,
 	Builder,
-	Guard,
-	Nomad
+	Guard
 };
+
+inline std::vector<JobType> getAllJobTypes() {
+    return {
+        JobType::None,
+        JobType::Farmer,
+        JobType::Miner,
+        JobType::Lumberjack,
+        JobType::Carpenter,
+        JobType::Blacksmith,
+        JobType::Gunsmith,
+        JobType::Cook,
+        JobType::Builder,
+        JobType::Guard
+    };
+}
+
 
 inline std::string jobTypeToString(JobType type) {
     switch (type) {
@@ -27,7 +42,6 @@ inline std::string jobTypeToString(JobType type) {
 	case JobType::Cook:        return "Cook";
 	case JobType::Builder:     return "Builder";
 	case JobType::Guard:       return "Guard";
-	case JobType::Nomad:       return "Nomad";
     default:                   return "Unknown";
     }
 }
@@ -44,6 +58,49 @@ inline JobType stringToJobType(const std::string& type) {
     if (type == "Cook")        return JobType::Cook;
     if (type == "Builder")     return JobType::Builder;
     if (type == "Guard")       return JobType::Guard;
-    if (type == "Nomad")       return JobType::Nomad;
     return JobType::None;
+}
+
+enum class SkillType {
+    Farming,
+    Mining,
+    Woodcutting,
+    Carpentry,
+    Blacksmithing,
+    Gunsmithing,
+    Cooking,
+    Building,
+    Melee,
+    Shooting
+};
+
+inline std::vector<SkillType> getAllSkillTypes() {
+    return {
+        SkillType::Farming,
+        SkillType::Mining,
+        SkillType::Woodcutting,
+        SkillType::Carpentry,
+        SkillType::Blacksmithing,
+        SkillType::Gunsmithing,
+        SkillType::Cooking,
+        SkillType::Building,
+        SkillType::Melee,
+        SkillType::Shooting
+    };
+}
+
+inline std::string skillTypeToString(SkillType type) {
+    switch (type) {
+    case SkillType::Farming:      return "Farming";
+    case SkillType::Mining:       return "Mining";
+    case SkillType::Woodcutting:  return "Woodcutting";
+    case SkillType::Carpentry:    return "Carpentry";
+    case SkillType::Blacksmithing:return "Blacksmithing";
+    case SkillType::Gunsmithing:  return "Gunsmithing";
+    case SkillType::Cooking:      return "Cooking";
+    case SkillType::Building:     return "Building";
+    case SkillType::Melee:        return "Melee Combat";
+    case SkillType::Shooting:     return "Shooting";
+    default:                     return "Unknown";
+    }
 }

@@ -528,13 +528,60 @@ GunBenchUI getGunBenchFrame() {
     return ui;
 }
 
+StockpileUI getStockpileFrame() {
+    StockpileUI ui;
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+    ui.infoPanel = &frame->addElement<Panel>(0, 14, 6, 7, Anchor::TOP_CENTER);
+    ui.text = &ui.infoPanel->addElement<Text>(20, 1, L"Filters:", Anchor::TOP_CENTER);
+    ui.capacity = &ui.infoPanel->addElement<Text>(40, 2, L"", Anchor::TOP_CENTER);
+    ui.contents = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
+
+    int num = ui.infoPanel->getYOffset() + 2;
+    for (int i = 0; i < getAllTypes().size(); i++) {
+		std::string type = itemTypeToString(getAllTypes()[i]);
+		std::wstring typeName = std::wstring(type.begin(), type.end());
+		frame->addElement<Checkbox>(20, num, Anchor::TOP_CENTER);
+		frame->addElement<Text>(23, num, typeName, Anchor::TOP_CENTER);
+        num++;
+	}
+
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
+void StockpileUI::updateStockpileUI(Stockpile& stockpile) {
+    typeFilters.clear();
+    //std::wstring capacityStr = L"Capacity: " + std::to_wstring(stockpile.getHeight() * stockpile.getWidth());
+
+    //capacity->changeText(capacityStr);
+    std::wstring contentsStr = L"Contents:||";
+
+	auto items = stockpile.getItemCounts();
+
+    for (auto& [name, count] : items) {
+        contentsStr += std::wstring(name.begin(), name.end()) + L": x" + std::to_wstring(count) + L"|";
+	}
+
+    int num = 1;
+    for (auto& [type, enabled] : stockpile.getFilter()) {
+        //typeFilters.push_back(new Checkbox(1, num, Anchor::TOP_CENTER));
+        
+        num++;
+    }
+
+	infoPanel->setSize(40, 14);
+
+    contents->changeText(contentsStr);
+}
+
 VillagerInfoUI getVillagerInfoFrame() {
     VillagerInfoUI ui;
 
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.infoPanel = &frame->addElement<Panel>(0, 10, 6, 7, Anchor::TOP_CENTER);
+    ui.infoPanel = &frame->addElement<Panel>(0, 10, 6, 17, Anchor::TOP_CENTER);
 
     ui.text = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
 	ui.job = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_CENTER);
@@ -542,6 +589,8 @@ VillagerInfoUI getVillagerInfoFrame() {
 
     ui.health = &ui.infoPanel->addElement<Text>(1, 4, L"", Anchor::TOP_CENTER);
     ui.hunger = &ui.infoPanel->addElement<Text>(1, 5, L"", Anchor::TOP_CENTER);
+
+	ui.skills = &ui.infoPanel->addElement<Text>(1, 6, L"", Anchor::TOP_CENTER);
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;

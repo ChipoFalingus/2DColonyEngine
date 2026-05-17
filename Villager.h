@@ -77,8 +77,11 @@ private:
 	JobType jobType;
 	Job* currentJob;
 
+
 public:
 	Traits traits;
+
+	std::unordered_map<SkillType, int> skills;
 
 	std::string firstname = names[getRandomInt(0, names.size() - 1)];
 	std::string lastname = lastnames[getRandomInt(0, lastnames.size() - 1)];
@@ -134,6 +137,21 @@ public:
 	}
 
 	void initTraits() {
+
+		int skillListSize = getAllSkillTypes().size();
+		int rand = getRandomInt(0, skillListSize - 1);
+
+		for (int i = 0; i < skillListSize; i++) {
+			SkillType skillType = static_cast<SkillType>(i);
+			if (i == rand) {
+				// One random high skill
+				skills[skillType] = getRandomInt(10, 13);
+			}
+			else {
+				skills[skillType] = getRandomInt(1, 3);
+			}
+		}
+
 		for (int i = 0; i < (int)TraitType::COUNT; i++) {
 			TraitType traitType = static_cast<TraitType>(i);
 			traits.values[i] = getRandomFloat(0.0f, 1.0f);

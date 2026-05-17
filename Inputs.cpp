@@ -97,14 +97,15 @@ void processInput(GLFWwindow* window) {
                 handleClickedItem(mouseTileX, mouseTileY);
 
 
-                Game::getInstance().getLightManager().addLight(glm::vec2(mouseTileX, mouseTileY), glm::vec3(1.0f), 1.0f, 1.0f, 1.0f);
-                std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
-                mainWorld.setLightMap(map);
+                //Game::getInstance().getLightManager().addLight(glm::vec2(mouseTileX, mouseTileY), glm::vec3(1.0f), 1.0f, 10.0f, 10.0f);
+                //std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
+                //mainWorld.setLightMap(map);
             }
 
 			auto s = mainWorld.atStockpile(mouseTileX, mouseTileY);
             if (s) {
-                s->printContents();
+                Game::getInstance().getStockpileUI().updateStockpileUI(*s);
+				Game::getInstance().getUIManager().addOrRemoveFrame(UI::Stockpile);
             }
         }
 
@@ -222,7 +223,15 @@ void processInput(GLFWwindow* window) {
         std::string hunger = "Hunger: " + std::to_string(viewing->hunger);
         i.health->changeText(std::wstring(health.begin(), health.end()));
         i.hunger->changeText(std::wstring(hunger.begin(), hunger.end()));
-        i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 2, 7);
+
+		std::string skills = "Skills:|";
+        for (auto& skill : viewing->skills) {
+            skills += skillTypeToString(skill.first) + ": " + std::to_string(skill.second) + "|";
+		}
+        i.skills->changeText(std::wstring(skills.begin(), skills.end()));
+
+
+        i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 8, 18);
 
         Game::getInstance().getUIManager().push(UI::Villager);
     }

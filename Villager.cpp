@@ -251,7 +251,7 @@ void Villager::idle() {
 	else {
 		//if (activity_state != ActivityState::Wandering) {
 			activity_state = ActivityState::Wandering;
-			jobQueue.push_back(new Wander(this, nullptr, JobType::None));
+			//jobQueue.push_back(new Wander(this, nullptr, JobType::None));
 		//}
 	}
 

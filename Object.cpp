@@ -5,6 +5,31 @@
 #include "Furnace.h"
 #include "Spawner.h"
 
+std::vector<Type> getAllTypes() {
+	std::vector<Type> types;
+	for (int i = 0; i < static_cast<int>(Type::COUNT); i++) {
+		types.push_back(static_cast<Type>(i));
+	}
+	return types;
+}
+
+std::string itemTypeToString(Type type) {
+	switch (type) {
+	case Type::Item: return "Item";
+	case Type::Tool: return "Tool";
+	case Type::Food: return "Food";
+	case Type::Crop: return "Crop";
+	case Type::Foliage_Crop: return "Foliage Crop";
+	case Type::Furnace: return "Furnace";
+	case Type::Gun: return "Gun";
+	case Type::Bench: return "Bench";
+	case Type::Structure: return "Structure";
+	case Type::Furniture: return "Furniture";
+	case Type::Spawner: return "Spawner";
+	default: return "Unknown";
+	}
+}
+
 void loadObjects() {
 	std::ifstream file("Object.json");
 	json j;

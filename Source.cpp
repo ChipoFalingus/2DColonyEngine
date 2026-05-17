@@ -433,6 +433,7 @@ void drawMiniMap(Shader& shader) {
             }
 
             if (!chunk) {
+                RenderText(shader, std::wstring(1, L'≈'), screenX, screenY, fontSize, glm::vec3(0, 0, 1), false);
                 continue;
             }
             
@@ -645,17 +646,17 @@ void drawMap(Shader& shader)
             int lx = x + size;
             int ly = y + size;
 
-            float dayLength = 600.0f;
+            float dayLength = 60000.0f;
             float pi = 3.14159f;
 
-            float t = day.getElapsedTime().asSeconds() - 300.0f;
+            float t = day.getElapsedTime().asSeconds();
             float cycle = t * (2.0f * pi / dayLength);
 
             float time = 0.5f * sin(cycle - pi / 2.0f) + 0.5f;
 
             float ambient = std::max(time, 0.2f);
             //float ambient = 0.2f;
-            color *= std::max(mainWorld.getLightMapIndex(x, y), ambient);
+            color *= std::max(mainWorld.getLightMapIndex(x, y), 1.0f);
             if (!string.empty()) {
                 RenderText(shader, string, screenX, screenY, fontSize, color, false);
             }
@@ -896,7 +897,7 @@ int main() {
                     it = itemsToMove.erase(it);
                 }
                 else {
-                    ++it;
+                    it++;
                 }
             }
         

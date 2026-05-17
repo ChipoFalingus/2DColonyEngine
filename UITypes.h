@@ -14,6 +14,7 @@ enum class UI {
     Carpentry,
     Anvil,
     Gun,
+    Stockpile,
     Villager,
     Harvest,
     Info

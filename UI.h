@@ -1,5 +1,6 @@
 #pragma once
 #include "UIElements.h"
+#include "Stockpile.h"
 
 struct MainMenuUI {
     UI type = UI::Main;
@@ -167,6 +168,20 @@ struct GunBenchUI {
 
 GunBenchUI getGunBenchFrame();
 
+struct StockpileUI {
+    UI type = UI::Stockpile;
+    Panel* infoPanel;
+    Text* text;
+    Text* capacity;
+    Text* contents;
+
+	std::vector<Checkbox*> typeFilters;
+
+    void updateStockpileUI(Stockpile& stockpile);
+};
+
+StockpileUI getStockpileFrame();
+
 struct VillagerInfoUI {
     UI type = UI::Villager;
 
@@ -178,6 +193,8 @@ struct VillagerInfoUI {
 
     Text* hunger;
     Text* health;
+
+    Text* skills;
 };
 
 VillagerInfoUI getVillagerInfoFrame();

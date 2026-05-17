@@ -317,17 +317,30 @@ public:
 	void draw(std::vector<std::vector<wchar_t>>& UI) override {
 		int line = 0;
 		int column = 0;
-		for (int i = 0; i < label.size(); i++) {
-			// | is a new line
-			if (label[i] == L'|') {
+
+		if (UI.empty() || UI[0].empty()) return;
+
+		for (size_t idx = 0; idx < label.size(); ++idx) {
+			wchar_t ch = label[idx];
+
+			if (ch == L'|') {
 				line++;
 				column = 0;
 				continue;
 			}
-			if (xOffset + i < UI[0].size() && yOffset < UI.size()) {
-				UI[yOffset + line][xOffset + column] = label[i];
-				column++;
+
+			int drawY = yOffset + line;
+			int drawX = xOffset + column;
+
+			if (drawY < 0 || drawY >= static_cast<int>(UI.size())) {
+				continue;
 			}
+			if (drawX < 0 || drawX >= static_cast<int>(UI[drawY].size())) {
+				continue;
+			}
+
+			UI[drawY][drawX] = ch;
+			++column;
 		}
 	}
 

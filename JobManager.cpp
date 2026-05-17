@@ -641,6 +641,12 @@ void MoveItem::update() {
 		if (villager->xPos == x && villager->yPos == y) {
 
 			villager->dropItem(itemToMove, toX, toY);
+
+			auto* s = mainWorld.atStockpile(toX, toY);
+			if (s) {
+				s->placeItem(itemToMove, toX, toY);
+			}
+
 			state = JobState::Completed;
 		}
 	}
@@ -727,7 +733,6 @@ void FindFood::update() {
 			y = place->y;
 		}
 		else {
-			std::cout << "Table + Chair not found" << std::endl;
 			x = villager->xPos;
 			y = villager->yPos;
 		}
