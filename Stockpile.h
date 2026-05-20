@@ -102,6 +102,7 @@ public:
         if (it == tileItems.end())
             return;
 
+		std::cout << "Removing " << item->name << " from stockpile at: " << x << "," << y << std::endl;
         auto& vec = it->second;
 
         vec.erase(
@@ -109,13 +110,15 @@ public:
             vec.end()
         );
 
-        if (vec.empty()) {
-            tileItems.erase(it);
-            claimedTiles.erase({ x, y });
-            std::cout << "Removed item from stockpile at: " << x << "," << y << "\n";
-        }
 
-        
+        if (vec.empty()) {
+            std::cout << "Removed " << item->name << " from stockpile at: " << x << "," << y << "\n";
+        }
+        else {
+			std::cout << "Removed " << item->name << " from stockpile at: " << x << "," << y << ", but there are still " << vec.size() << " items there\n";
+        }
+        tileItems.erase(it);
+        claimedTiles.erase({ x, y });
     }
 
 	// Returns the item at a given location, if it exists
@@ -143,8 +146,6 @@ public:
 
 	// Finds the first item with the given name and returns its coordinates
     std::optional<std::pair<int, int>> findItemLocation(const std::string& name) {
-        std::cout << "Looking for: " << name << "\n";
-
         for (auto& [pos, item] : tileItems) {
             if (item[0]->name == name) {
                 std::cout << "Found item!\n";

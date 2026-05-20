@@ -62,7 +62,7 @@ void loadObjects() {
 				tool->name = name;
 				tool->type = Type::Tool;
 
-				tool->durability = 100.0f;
+				tool->durability = 3.0f;
 				tool->efficiency = 2.0f;
 				tool->luck = 0.0f;
 				tool->material = ToolMaterial::WOOD;

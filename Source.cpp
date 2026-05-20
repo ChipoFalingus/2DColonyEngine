@@ -764,10 +764,8 @@ int main() {
 
 	glfwSwapInterval(0);
 
-   /* Clock gameClock;
-    double lastTime = glfwGetTime();*/
-
     float lightClock = 0.0f;
+	float waitingUpdateTimer = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
 
@@ -870,11 +868,18 @@ int main() {
             //std::vector<Villager*> shuffled = mainWorld.getAllVillagers();
             //std::shuffle(shuffled.begin(), shuffled.end(), rng);
 
-            for (auto j : JobManager::JobList) {
+			//std::cout << JobManager::JobList.size() << " jobs in queue and " << JobManager::WaitingJobList.size() << " waiting jobs." << std::endl;
+
+            // Assign jobs
+            /*for (auto& j : JobManager::JobList) {
                 if (!j) continue;
-                if (j->villager && j->villager->getJobQueueSize() > 0) continue;
+                if (j->villager) continue;
                 JobManager::findBestColonistForJob(*j);
-            }
+            }*/
+
+            JobManager::update();
+			//std::cout << JobManager::JobList.size() << " jobs in queue" << std::endl;
+
 
             // Stockpile item moving
 
@@ -890,7 +895,7 @@ int main() {
                     auto [stockpile, pos] = *spotOpt;
                     stockpile->addItem(item, pos.first, pos.second);
 
-                    Job* job = new MoveItem(nullptr, nullptr, JobType::None, item, it->second.first, it->second.second, pos.first, pos.second);
+                    Job* job = new MoveItem(nullptr, nullptr, SkillType::None, item, it->second.first, it->second.second, pos.first, pos.second);
 
                     job->priority = 5;
                     JobManager::addJob(job);

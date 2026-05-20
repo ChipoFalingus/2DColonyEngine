@@ -62,6 +62,7 @@ inline JobType stringToJobType(const std::string& type) {
 }
 
 enum class SkillType {
+    None,
     Farming,
     Mining,
     Woodcutting,

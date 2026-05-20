@@ -81,12 +81,6 @@
     <ClCompile Include="Animal.cpp">
       <Filter>Source Files\Creatures\Animals</Filter>
     </ClCompile>
-    <ClCompile Include="Item.cpp">
-      <Filter>Source Files\Items</Filter>
-    </ClCompile>
-    <ClCompile Include="Crop.cpp">
-      <Filter>Source Files\Items</Filter>
-    </ClCompile>
     <ClCompile Include="Building.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -101,9 +95,6 @@
     </ClCompile>
     <ClCompile Include="Monster.cpp">
       <Filter>Source Files\Creatures\Monsters</Filter>
-    </ClCompile>
-    <ClCompile Include="Gun.cpp">
-      <Filter>Source Files\Items</Filter>
     </ClCompile>
     <ClCompile Include="JobManager.cpp">
       <Filter>Source Files</Filter>
@@ -310,6 +301,9 @@
     </ClInclude>
     <ClInclude Include="Structure.h">
       <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="SquadManager.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -143,14 +143,11 @@
     <ClCompile Include="Crafting.cpp" />
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="CreatureUtils.cpp" />
-    <ClCompile Include="Crop.cpp" />
     <ClCompile Include="FurnaceRecipes.json" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Globals.cpp" />
-    <ClCompile Include="Gun.cpp" />
     <ClCompile Include="HarvestRules.cpp" />
     <ClCompile Include="Inputs.cpp" />
-    <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemUtils.cpp" />
     <ClCompile Include="JobManager.cpp" />
     <ClCompile Include="Monster.cpp" />
@@ -206,6 +203,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="Squad.h" />
+    <ClInclude Include="SquadManager.h" />
     <ClInclude Include="Stockpile.h" />
     <ClInclude Include="Structure.h" />
     <ClInclude Include="ThreadPool.h" />

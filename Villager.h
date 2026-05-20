@@ -73,7 +73,7 @@ class Villager : public Creature {
 private:
 	// replace with vector
 	//std::priority_queue<Job*, std::vector<Job*>, JobCompare> jobQueue;
-	std::vector<Job*> jobQueue;
+	//std::vector<Job*> jobQueue;
 	JobType jobType;
 	Job* currentJob;
 
@@ -143,6 +143,9 @@ public:
 
 		for (int i = 0; i < skillListSize; i++) {
 			SkillType skillType = static_cast<SkillType>(i);
+			if (skillType == SkillType::None) {
+				continue;
+			}
 			if (i == rand) {
 				// One random high skill
 				skills[skillType] = getRandomInt(10, 13);
@@ -184,17 +187,35 @@ public:
 
 	}
 
+
+	/*std::vector<Job*>& getJobQueue() { return jobQueue; }
+	const std::vector<Job*>& getJobQueue() const { return jobQueue; }
+
 	void addToJobQueue(Job* job) {
+		if (job) {
+			job->villager = this;
+		}
 		jobQueue.push_back(job);
+	}*/
+	Job* getCurrentJob() {
+		return currentJob;
 	}
 
 	void setJob(JobType jt) {
 		jobType = jt;
 	}
 
+	void setCurrentJob(Job* job) {
+		currentJob = job;
+	}
+
+	/*void removeJob(Job* job) {
+		jobQueue.erase(std::remove(jobQueue.begin(), jobQueue.end(), job), jobQueue.end());
+	}
+
 	int getJobQueueSize() {
 		return jobQueue.size();
-	}
+	}*/
 
 	JobType getJob() {
 		return jobType;

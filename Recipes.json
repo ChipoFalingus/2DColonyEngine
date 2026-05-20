@@ -144,6 +144,16 @@
             "required_bench": "Carpentry Bench"
         },
         {
+            "result": "Axe",
+            "material": "Wood",
+            "quantity": 1,
+            "ingredients": {
+                "Wooden Plank": 1,
+                "Stick": 1
+            },
+            "required_bench": "Carpentry Bench"
+        },
+        {
             "result": "Pickaxe",
             "material": "Iron",
             "quantity": 1,

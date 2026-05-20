@@ -234,100 +234,104 @@ void Villager::sense() {
 void Villager::idle() {
 
 	// Fallback idling stuff here
-	int rand = getRandomInt(1, 50);
+	//int rand = getRandomInt(1, 50);
 
-	if (rand == 0) {
-		auto obj = ObjectRegistry::getInstance().get("Chair");
-		auto chair = findClosestItemType(xPos, yPos, 50, [](const Object& item, int x, int y) {
-			return item.name == "Chair" && !item.claimed;
-			});
+	//if (rand == 0) {
+	//	auto obj = ObjectRegistry::getInstance().get("Chair");
+	//	auto chair = findClosestItemType(xPos, yPos, 50, [](const Object& item, int x, int y) {
+	//		return item.name == "Chair" && !item.claimed;
+	//		});
 
-		if (chair) {
-			chair->item.lock()->claimed = true;
-			object_in_use = chair->item.lock().get();
-			jobQueue.push_back(new Sit(this, nullptr, JobType::None, chair->x, chair->y));
-		}
-	}
-	else {
-		//if (activity_state != ActivityState::Wandering) {
-			activity_state = ActivityState::Wandering;
-			//jobQueue.push_back(new Wander(this, nullptr, JobType::None));
-		//}
-	}
+	//	if (chair) {
+	//		chair->item.lock()->claimed = true;
+	//		object_in_use = chair->item.lock().get();
+	//		jobQueue.push_back(new Sit(this, nullptr, SkillType::None, chair->x, chair->y));
+	//	}
+	//}
+	//else {
+	//	//if (activity_state != ActivityState::Wandering) {
+	//		activity_state = ActivityState::Wandering;
+	//		//jobQueue.push_back(new Wander(this, nullptr, JobType::None));
+	//	//}
+	//}
 
 	
 }
 
 void Villager::decide() {
-	if (threat) {
-		if (itemInHand) {
-			activity_state = ActivityState::None;
-			Job* job = new Attack(this, nullptr, JobType::None, threat);
-			job->priority = 9999;
-			addToJobQueue(job);
-		}
-		else {
-			currentPath.clear();
-			activity_state = ActivityState::None;
-			Job* job = new Retreat(this, nullptr, JobType::None, threat);
-			job->priority = 9999;
-			addToJobQueue(job);
-		}
-	}
+	//if (threat) {
+	//	if (itemInHand) {
+	//		activity_state = ActivityState::None;
+	//		Job* job = new Attack(this, nullptr, SkillType::None, threat);
+	//		job->priority = 9999;
+	//		addToJobQueue(job);
+	//	}
+	//	else {
+	//		currentPath.clear();
+	//		activity_state = ActivityState::None;
+	//		Job* job = new Retreat(this, nullptr, SkillType::None, threat);
+	//		job->priority = 9999;
+	//		addToJobQueue(job);
+	//	}
+	//}
 
-	if (tirednessClock > 2.0f && !sleeping) {
-		tiredness++;
-		tirednessClock = 0.0f;
-	}
+	//if (tirednessClock > 2.0f && !sleeping) {
+	//	tiredness++;
+	//	tirednessClock = 0.0f;
+	//}
 
-	if (tiredness >= 100) {
-		if (findBedClock > 1.0f) {
-			findBedClock = 0.0f;
-			claimBed();
-		}
-		activity_state = ActivityState::Sleeping;
-		auto* sleepJob = new Sleep(this, nullptr, JobType::None);
-		sleepJob->priority = 1000;
-		jobQueue.push_back(sleepJob);
-		tiredness = 0;
-	}
+	//if (tiredness >= 100) {
+	//	if (findBedClock > 1.0f) {
+	//		findBedClock = 0.0f;
+	//		claimBed();
+	//	}
+	//	activity_state = ActivityState::Sleeping;
+	//	auto* sleepJob = new Sleep(this, nullptr, SkillType::None);
+	//	sleepJob->priority = 1000;
+	//	jobQueue.push_back(sleepJob);
+	//	tiredness = 0;
+	//}
 
-	if (hungerClock > 1.f) {
-		hungerClock = 0.0f;
-		hunger--;
-	}
+	//if (hungerClock > 1.f) {
+	//	hungerClock = 0.0f;
+	//	hunger--;
+	//}
 
-	if (hunger <= 10 && !isHungry) {
-		isHungry = true;
-	}
+	//if (hunger <= 10 && !isHungry) {
+	//	isHungry = true;
+	//}
 
-	
-	if (isHungry && findFoodClock > 2.0f && activity_state != ActivityState::Eating) {
-		findFoodClock = 0.0f;
+	//
+	//if (isHungry && findFoodClock > 2.0f && activity_state != ActivityState::Eating) {
+	//	findFoodClock = 0.0f;
 
-		auto foodLocation = findClosestItemType(xPos, yPos, 100, [](const Object& item, int x, int y) {
-			return item.type == Type::Food && !item.claimed;
-			//return true;
-			});
-		if (foodLocation) {
-			std::cout << "Found food at " << foodLocation->x << ", " << foodLocation->y << std::endl;
+	//	auto foodLocation = findClosestItemType(xPos, yPos, 100, [](const Object& item, int x, int y) {
+	//		return item.type == Type::Food && !item.claimed;
+	//		//return true;
+	//		});
+	//	if (foodLocation) {
+	//		std::cout << "Found food at " << foodLocation->x << ", " << foodLocation->y << std::endl;
 
-			auto food = std::dynamic_pointer_cast<Food>(foodLocation->item.lock());
-			if (!food) {
-				return;
-			}
-			food->claimed = true;
-			activity_state = ActivityState::Eating;
-			Job* eat = new FindFood(this, nullptr, JobType::None, foodLocation->x, foodLocation->y, food);
-			eat->priority = 1000;
-			jobQueue.push_back(eat);
-		}
-	}
+	//		auto food = std::dynamic_pointer_cast<Food>(foodLocation->item.lock());
+	//		if (!food) {
+	//			return;
+	//		}
+	//		food->claimed = true;
+	//		activity_state = ActivityState::Eating;
+	//		Job* eat = new FindFood(this, nullptr, SkillType::None, foodLocation->x, foodLocation->y, food);
+	//		eat->priority = 1000;
+	//		jobQueue.push_back(eat);
+	//	}
+	//}
 
-	if (!jobQueue.empty()) {
-		currentJob = jobQueue.front();
-	}
-	else {
+	/*if (!currentJob) {
+		JobManager::findJobForColonist(*this);
+	}*/
+
+
+	if (currentJob) {
+		currentJob->state = JobState::Active;
+	} else {
 		idle();
 	}
 }
@@ -344,14 +348,13 @@ void Villager::move() {
 		}
 
 		if (currentJob->state == JobState::Completed) {
-			for (int i = 0; i < jobQueue.size(); i++) {
+			/*for (int i = 0; i < jobQueue.size(); i++) {
 				if (jobQueue[i] == currentJob) {
 					jobQueue[i] = jobQueue.back();
 					jobQueue.pop_back();
 					break;
 				}
-			}
-			delete currentJob;
+			}*/
 			currentJob = nullptr;
 		}
 	}
@@ -385,10 +388,10 @@ void Villager::doWork() {
 		harvestTime = 1.0f;
 	}
 
-	std::sort(jobQueue.begin(), jobQueue.end(),
+	/*std::sort(jobQueue.begin(), jobQueue.end(),
 		[](Job* a, Job* b) {
 			return a->priority > b->priority;
-		});
+		});*/
 
 	sense();
 	decide();
@@ -397,11 +400,11 @@ void Villager::doWork() {
 
 void Villager::pickUpItem(std::shared_ptr<Object> item, int x, int y, Stockpile* stockpile) {
 	getTileRef(x, y).removeItem(item, x, y);
-	inventory.add(item->name, 1);
+	inventory.add(item);
 }
 
 void Villager::dropItem(std::shared_ptr<Object> item, int x, int y) {
 	if (!inventory.has(item->name)) return;
-	inventory.remove(item->name, 1);
+	inventory.remove(item->name);
 	getTileRef(x, y).addObject(item);
 }

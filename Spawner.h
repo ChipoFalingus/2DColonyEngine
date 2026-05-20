@@ -18,10 +18,12 @@ public:
 	int x, y;
 	int radius;
 
+	int maxSquadSize = 10;
+
 	sf::Clock spawnClock;
 
 	void spawn() {
-		if (spawnClock.getElapsedTime().asSeconds() >= cooldown) {
+		if (spawnClock.getElapsedTime().asSeconds() >= cooldown && squad->memberCount() < maxSquadSize) {
 			// Spawn logic here
 			spawnClock.restart();
 

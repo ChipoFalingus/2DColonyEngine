@@ -2,9 +2,11 @@
 
 
 struct Inventory {
-	std::unordered_map<std::string, int> inventory;
+	//std::unordered_map<std::string, int> inventory;
 
-	void add(const std::string& item, const int amount) {
+	std::vector<std::shared_ptr<Object>> items;
+
+	/*void add(const std::string& item, const int amount) {
 		auto it = inventory.find(item);
 
 		if (it != inventory.end()) {
@@ -28,5 +30,35 @@ struct Inventory {
 
 	bool has(const std::string& item) {
 		return inventory.find(item) != inventory.end();
+	}*/
+
+	void add(std::shared_ptr<Object> item) {
+		items.push_back(item);
 	}
+
+	void remove(const std::string& item) {
+		auto it = std::find_if(items.begin(), items.end(), [&](const std::shared_ptr<Object>& obj) {
+			return obj->name == item;
+			});
+		if (it != items.end()) {
+			items.erase(it);
+		}
+	}
+
+	bool has(const std::string& item) {
+		return std::any_of(items.begin(), items.end(), [&](const std::shared_ptr<Object>& obj) {
+			return obj->name == item;
+			});
+	}
+
+	std::shared_ptr<Object> get(const std::string& item) {
+		auto it = std::find_if(items.begin(), items.end(), [&](const std::shared_ptr<Object>& obj) {
+			return obj->name == item;
+			});
+		if (it != items.end()) {
+			return *it;
+		}
+		return nullptr;
+	}
+
 };

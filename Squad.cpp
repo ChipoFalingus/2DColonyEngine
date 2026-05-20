@@ -1,9 +1,5 @@
-
-
 #include "Squad.h"
-
 #include "CreatureUtils.h"
-
 #include "Villager.h"
 
 void Squad::addMember(Creature* member) {
@@ -13,27 +9,30 @@ void Squad::addMember(Creature* member) {
 void Squad::update() {
 	removeDeadMembers();
 
+	idleWanderClock += Clock::deltaTime;
+	attackScanClock += Clock::deltaTime;
+
 	switch (state) {
 	case IDLE: {
 
 		auto avg = getAvgPos();
 		int range = 5;
 
-		if (idleWanderClock.getElapsedTime().asSeconds() > 1.0f) {
-			idleWanderClock.restart();
+		if (idleWanderClock > 1.0f) {
+			idleWanderClock = 0.0f;
 
 			targetPos = {
-				/*getRandomInt(avg.first - range, avg.first + range),
-				getRandomInt(avg.second - range, avg.second + range)*/
-				avg.first,
-				avg.second
+				getRandomInt(avg.first - range, avg.first + range),
+				getRandomInt(avg.second - range, avg.second + range)
+				//avg.first,
+				//avg.second
 			};
 		}
 
-		if (attackScanClock.getElapsedTime().asSeconds() > 2.0f) {
-			attackScanClock.restart();
+		if (attackScanClock > 2.0f) {
+			attackScanClock = 0.0f;
 
-			Creature* c = findClosestCreatureType<Villager>(
+			/*Creature* c = findClosestCreatureType<Villager>(
 				avg.first,
 				avg.second,
 				64
@@ -42,7 +41,7 @@ void Squad::update() {
 			if (c) {
 				state = state::ATTACKING;
 				targetPos = { c->xPos, c->yPos };
-			}
+			}*/
 		}
 
 		break;
@@ -50,13 +49,13 @@ void Squad::update() {
 
 	case ATTACKING:
 
-		if (attackScanClock.getElapsedTime().asSeconds() > 0.5f) {
-			attackScanClock.restart();
+		if (attackScanClock > 0.5f) {
+			attackScanClock = 0.0f;
 			
 			Creature* c = findClosestCreatureType<Villager>(
 				getAvgPos().first,
 				getAvgPos().second,
-				128
+				96
 			);
 
 			if (c) {
@@ -75,7 +74,7 @@ void Squad::update() {
 
 void Squad::followLeader() {
 
-	const int dim = 128;
+	const int dim = 32;
 	const int half = dim / 2;
 
 	auto center = getAvgPos();
@@ -90,7 +89,6 @@ void Squad::followLeader() {
 	if (flow.empty()) {
 		return;
 	}
-	//flow = field;
 
 
 	int startX = targetPos.first - half;

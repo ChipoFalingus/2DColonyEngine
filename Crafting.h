@@ -32,7 +32,7 @@ public:
     void addRecipe(const Recipe& recipe) {
 		std::string key = recipe.result;
         if (recipe.requiredStation != "None") {
-			//key += "_" + recipe.requiredStation;
+			key += "_" + recipe.requiredStation;
         }
 		recipes[key] = recipe;
     }

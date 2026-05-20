@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include <functional>
 
-std::optional<std::pair<int, int>> findClosestTileItem(const Object& item, int xPos, int yPos) {
+std::optional<std::pair<int, int>> findClosestTileItem(const std::string name, int xPos, int yPos) {
 
 	int maxRadius = 100;
 
@@ -27,7 +27,7 @@ std::optional<std::pair<int, int>> findClosestTileItem(const Object& item, int x
             continue;
 
         Tile& tile = getTileRef(current.first, current.second);
-        if (tile.containsItem(item.name)) {
+        if (tile.containsItem(name)) {
             //tile.claimed = true;
             return current;
         }

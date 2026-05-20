@@ -352,13 +352,13 @@ void build(int left, int right, int top, int bottom) {
     std::string itemName = item->name;
 
     if (mainWorld.placementMode == PlacementMode::SINGLE) {
-        JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, mouseTileX, mouseTileY));
+        JobManager::JobList.push_back(new Build(nullptr, nullptr, SkillType::Building, itemName, mouseTileX, mouseTileY));
     }
 
     else if (mainWorld.placementMode == PlacementMode::LINE) {
         auto line = bresenham(top, left, bottom, right);
         for (auto& i : line) {
-            JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, i.first, i.second));
+            JobManager::JobList.push_back(new Build(nullptr, nullptr, SkillType::Building, itemName, i.first, i.second));
         }
 	}
 
@@ -366,7 +366,7 @@ void build(int left, int right, int top, int bottom) {
         for (int x = left; x <= right; x++) {
             for (int y = top; y <= bottom; y++) {
                 if (x == left || x == right || y == top || y == bottom) {
-                    JobManager::JobList.push_back(new Build(nullptr, nullptr, JobType::Builder, itemName, x, y));
+                    JobManager::JobList.push_back(new Build(nullptr, nullptr, SkillType::Building, itemName, x, y));
                 }
             }
         }
@@ -397,21 +397,21 @@ void harvest(int left, int right, int top, int bottom) {
                     tile.anim.type = animType::RED_X;
                     if (rule->toolRequired == "None") {
 
-                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, rule->jobType, tile.items[0].get()->name, x, y));
+                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, SkillType::Woodcutting, tile.items[0].get()->name, x, y));
                     }
                     else {
 						auto toolInRegistry = ObjectRegistry::getInstance().get(rule->toolRequired);
 						Tool* tool = dynamic_cast<Tool*>(toolInRegistry.get());
                         if (tool) {
 							//std::cout << "Adding harvest job for " << tile.items[0]->name << " at (" << x << ", " << y << ") with tool " << tool->name << std::endl;
-                            Job* harvestJob = new HarvestTile(nullptr, tool, rule->jobType, tile.items[0].get()->name, x, y);
+                            Job* harvestJob = new HarvestTile(nullptr, tool, SkillType::Woodcutting, tile.items[0].get()->name, x, y);
                             harvestJob->priority = 50;
                             JobManager::JobList.push_back(harvestJob);
                         }
                     }
                 }
                 else {
-                    if (tile.items[0]->type == Type::Item) {
+                    if (tile.items[0]->type == Type::Item || tile.items[0]->type == Type::Tool) {
                         mainWorld.addItemToMove(tile.items[0], x, y);
                     }
                 }
@@ -423,7 +423,7 @@ void harvest(int left, int right, int top, int bottom) {
 void plant(int left, int right, int top, int bottom) {
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
-            JobManager::JobList.push_back(new Plant(nullptr, nullptr, JobType::Farmer, "Wheat", x, y));
+            JobManager::JobList.push_back(new Plant(nullptr, nullptr, SkillType::Farming, "Wheat", x, y));
         }
     }
 }

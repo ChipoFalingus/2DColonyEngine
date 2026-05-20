@@ -142,7 +142,7 @@ public:
     }
 
 
-    // This should update a global light map, it can be a static array because the world size cant change
+    // This should update a global light map
     std::vector<float> BFSLight() {
 
         int dim = calculateMapSize();

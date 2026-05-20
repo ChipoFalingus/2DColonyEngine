@@ -318,11 +318,11 @@ void Tile::getTile(int x, int y) {
                 }
                 else if (r < 0.11f) {
                     items.clear();
-                    addObject("Stick");
+                   // addObject("Stick");
                 }
                 else if (r < 0.13f) {
                     items.clear();
-                    addObject("Pebble");
+                   // addObject("Pebble");
                 }
             }
             if (spruceNoise > 0.3f) {
@@ -332,11 +332,11 @@ void Tile::getTile(int x, int y) {
                 }
                 else if (r < 0.11f) {
                     items.clear();
-                    addObject("Stick");
+                   //addObject("Stick");
                 }
                 else if (r < 0.13f) {
                     items.clear();
-                    addObject("Pebble");
+                    //addObject("Pebble");
                 }
             }
         }
@@ -370,7 +370,7 @@ void Tile::getTile(int x, int y) {
 
         float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
 
-        /*if (x == 20 && y == 20) {
+        /*if (outposts < 0.00001f) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Outpost");
             auto spawner = static_cast<Spawner*>(item.get());
@@ -481,17 +481,22 @@ void Tile::getTile(int x, int y) {
         auto item = ObjectRegistry::getInstance().get("Stone Table");
         addObject(item);
         mainWorld.addItemToMove(item, x, y);
-    }
+    }*/
 
-    if (x > -2 && x < 2 && y > -2 + 28 && y < 2 + 28) {
+    if (x > -1 && x < 1 && y > -1 + 5 && y < 1 + 5) {
         items.clear();
-        auto item = ObjectRegistry::getInstance().get("Wooden Chair");
+        auto item = ObjectRegistry::getInstance().get("Axe");
+        auto axe = static_cast<Tool*>(item.get());
         addObject(item);
-        mainWorld.addItemToMove(item, x, y);
+        //mainWorld.addItemToMove(item, x, y);
     }
-    if (x > -2 && x < 2 && y > -2 + 32 && y < 2 + 32) {
+    if (x == 0 && y == 0) {
+		addObject("Carpentry Bench");
+    }
+    /*if (x > -2 && x < 2 && y > -2 + 32 && y < 2 + 32) {
         items.clear();
-        auto item = ObjectRegistry::getInstance().get("Wooden Table");
+        auto item = ObjectRegistry::getInstance().get("Pickaxe");
+        auto pickaxe = static_cast<Tool*>(item.get());
         addObject(item);
         mainWorld.addItemToMove(item, x, y);
     }*/

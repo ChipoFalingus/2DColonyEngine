@@ -13,7 +13,7 @@ class Item;
 
 
 // Finds certain item
-std::optional<std::pair<int, int>> findClosestTileItem(const Object& item, int xPos, int yPos);
+std::optional<std::pair<int, int>> findClosestTileItem(const std::string item, int xPos, int yPos);
 
 bool isAtItem(const Object& item, int x, int y);
 

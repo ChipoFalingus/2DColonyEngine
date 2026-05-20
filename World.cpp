@@ -32,8 +32,8 @@ void World::renderWorld() {
 
         for (int y = -mapDim; y < mapDim; y++) {
             for (int x = -mapDim; x < mapDim; x++) {
-                    Tile& tile = getTileRef(x, y);
-                    tile.getTile(x, y);
+                Tile& tile = getTileRef(x, y);
+                tile.getTile(x, y);
             }
         }
 }
@@ -118,19 +118,19 @@ void World::addCreatures() {
     auto axe = ObjectRegistry::getInstance().get("Axe");
     auto pickaxe = ObjectRegistry::getInstance().get("Pickaxe");
 
-	int LUMBERJACKS = 1;
-	int MINERS = 1;
-    int FARMERS = 1;
-    int BUILDERS = 1;
-	int CARPENTERS = 1;
-    int BLACKSMITHS = 1;
+	int LUMBERJACKS = 6;
+	int MINERS = 0;
+    int FARMERS = 0;
+    int BUILDERS = 0;
+	int CARPENTERS = 0;
+    int BLACKSMITHS = 0;
 
     auto gun = ObjectRegistry::getInstance().get("Minigun");
 
     for (int i = 0; i < LUMBERJACKS; i++) {
         auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
         v->setJob(JobType::Lumberjack);
-        v->toolInHand = std::dynamic_pointer_cast<Tool>(axe);
+        //v->toolInHand = std::dynamic_pointer_cast<Tool>(axe);
         allCreatures.push_back(std::move(v));
     }
 

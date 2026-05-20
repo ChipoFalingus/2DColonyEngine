@@ -31,25 +31,18 @@ void JobManager::findBestColonistForJob(Job& job) {
 
 	for (auto* v : mainWorld.getAllVillagers()) {
 
+
+		if (v->getCurrentJob()) continue;
+
 		int score = 0;
-
-		if (job.preferredTool) {
-			if (!toolsMatch(job.preferredToolName, v->toolInHand.get())) {
-				continue;
-			}
-		}
-
-		if (job.type != JobType::None) {
-			if (v->getJob() != job.type) {
-				continue;
-			}
-
-		}
 		
+		int skill = v->skills[job.type];
+		score -= skill * 25;
+
+
 		int dx = std::abs(v->xPos - job.x);
 		int dy = std::abs(v->yPos - job.y);
 		score += (dx + dy);
-		score += v->getJobQueueSize() * 100;
 
 		if (score < bestScore) {
 			bestScore = score;
@@ -59,59 +52,162 @@ void JobManager::findBestColonistForJob(Job& job) {
 
 	if (bestVillager) {
 		job.villager = bestVillager;
-		bestVillager->addToJobQueue(&job);
-
-		JobManager::removeJob(&job);
+		bestVillager->setCurrentJob(&job);
 	}
 }
 
-//void JobManager::findJobForColonist(Villager& v) {
-//
-//	Job* bestJob = nullptr;
-//	int bestScore = std::numeric_limits<int>::max();
-//
-//	for (auto& job : JobManager::JobList) {
-//
-//		if (job->taken) continue;
-//
-//		int score = 0;
-//
-//		if (job->preferredTool && (!v.toolInHand ||
-//			v.toolInHand->name != job->preferredTool->name))
-//		{
-//			continue;
-//		}
-//		
-//		if (job->preferredJob != JobType::None && v.getJob() != job->preferredJob) {
-//			continue;
-//		}
-//		
-//		int dx = std::abs(v.xPos - job->x);
-//		int dy = std::abs(v.yPos - job->y);
-//
-//		score = dx + dy;
-//
-//		//score += v.getJobQueueSize() * 10000;
-//
-//		if (score < bestScore) {
-//			bestScore = score;
-//			bestJob = job;
-//		}
-//	}
-//	if (!bestJob) {
-//		return;
-//	}
-//	std::cout << "Assigned job to " << v.firstname << " " << v.lastname << " with score " << bestScore << std::endl;
-//	bestJob->villager = &v;
-//	v.addToJobQueue(bestJob);
-//	JobManager::removeJob(bestJob);
-//}
+void JobManager::findJobForColonist(Villager& v) {
+
+	Job* bestJob = nullptr;
+	int bestScore = std::numeric_limits<int>::max();
+
+	for (auto& job : JobManager::JobList) {
+
+		if (job->villager) continue;
+
+		int score = 0;
+
+		if (job->preferredTool && (!v.inventory.has(job->preferredTool->name)))
+		{
+			score += 1000;
+		}
+		
+		int dx = std::abs(v.xPos - job->x);
+		int dy = std::abs(v.yPos - job->y);
+
+		score += dx + dy;
+		score -= v.skills[job->type] * 500000;
+
+		score += v.tiredness * 5;
+
+		if (score < bestScore) {
+			bestScore = score;
+			bestJob = job;
+		}
+	}
+	if (!bestJob) {
+		return;
+	}
+	std::cout << "Assigned job to " << v.firstname << " " << v.lastname << " with score " << bestScore << std::endl;
+	bestJob->villager = &v;
+	v.setCurrentJob(bestJob);
+	//JobManager::removeJob(bestJob);
+}
+
+struct Bid {
+	Job* job;
+	Villager* villager;
+	int score;
+};;
+
+void JobManager::assignJobs() {
+	
+	std::vector<Bid> bids;
+
+	for (Villager* v : mainWorld.getAllVillagers())
+	{
+		if (!v) continue;
+
+		for (Job* job : JobList)
+		{
+			if (!job)
+				continue;
+
+			if (job->state != JobState::Queued)
+				continue;
+
+			int score = 0;
+
+			int dx = std::abs(v->xPos - job->x);
+			int dy = std::abs(v->yPos - job->y);
+
+			score += dx + dy;
+			score -= v->skills[job->type] * 5000;
+
+			score += v->tiredness * 5;
+
+			if (v->getCurrentJob()) score += 1000;
+
+			bids.push_back({ job, v, score });
+		}
+	}
+
+	std::sort(bids.begin(), bids.end(), [](const Bid& a, const Bid& b) {
+		return a.score < b.score;
+		});
+
+	std::unordered_set<Job*> assignedJobs;
+	std::unordered_set<Villager*> assignedVillagers;
+
+	for (auto& bid : bids)
+	{
+		/*if (assignedVillagers.count(bid.villager))
+			continue;*/
+
+		if (assignedJobs.count(bid.job))
+			continue;
+
+
+		assignedJobs.insert(bid.job);
+		//std::cout << "Bid winner: " << bid.score << " for villager " << bid.villager->firstname << " " << bid.villager->lastname << " and job at (" << bid.job->x << ", " << bid.job->y << ")" << std::endl;
+		if (bid.villager->getCurrentJob())
+			continue;
+
+		std::cout << "Assigned job to " << bid.villager->firstname << " " << bid.villager->lastname << " with score " << bid.score << std::endl;
+
+		bid.villager->setCurrentJob(bid.job);
+
+		bid.job->villager = bid.villager;
+		bid.job->state = JobState::Active;
+
+		assignedVillagers.insert(bid.villager);
+	}
+}
+
+void JobManager::update() {
+	for (Job* job : JobList) {
+		if (!job) continue;
+		if (job->state == JobState::Waiting) {
+			job->waitingUpdate();
+		}
+	}
+
+	assignJobs();
+
+	for (size_t i = 0; i < JobList.size(); )
+	{
+		Job* job = JobList[i];
+
+		if (!job)
+		{
+			i++;
+			continue;
+		}
+
+		if (job->state == JobState::Completed ||
+			job->state == JobState::Failed)
+		{
+			if (job->villager &&
+				job->villager->getCurrentJob() == job)
+			{
+				job->villager->setCurrentJob(nullptr);
+			}
+
+			delete job;
+			JobList.erase(JobList.begin() + i);
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
 
 
 void Harvest::update() {
 	std::optional<std::pair<int, int>> itemLocation;
 	if (!itemFound) {
-		itemLocation = findClosestTileItem(*item.get(), villager->xPos, villager->yPos);
+		itemLocation = findClosestTileItem(item->name, villager->xPos, villager->yPos);
 
 		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, x, y);
 
@@ -129,42 +225,63 @@ void Harvest::update() {
 }
 
 void HarvestTile::update() {
-	Rule* rule = HarvestRuleRegistry::getInstance().get(item);
 	Tile& tile = getTileRef(locX, locY);
+	
+	if (!villager) {
+		state = JobState::Waiting;
+		return;
+	}
 
 	// Check for required tool
-	if (!toolsMatch(preferredToolName, villager->toolInHand.get())) {
-		std::cout << "Tool requirement not met for harvesting " << item << std::endl;
-		state = JobState::Completed;
-		return;
+	//if (!toolsMatch(preferredToolName, villager->toolInHand.get()) && !addedGetToolJob) {
+	if (!villager->inventory.has(rule->toolRequired) && rule->toolRequired != "None") {
+		addedGetToolJob = true;
+		//harvestState = HarvestTile::GrabbingTool;
 	}
 
-	if (!rule) {
-		std::cout << "No harvest rule found for item: " << item << std::endl;
-		state = JobState::Completed;
-		return;
-	}
 
-	villager->activity_state = ActivityState::Working;
-
-	x = locX;
-	y = locY;
-
-	std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, x, y);
-
-	x = closestAdj.first;
-	y = closestAdj.second;
-
-	bool adjacent = isAtTile(villager->xPos, villager->yPos, locX, locY);
-
-	if (adjacent) {
-
-		if (!isHarvesting) {
-			isHarvesting = true;
-			villager->clock = 0.0f;
+	switch (harvestState)
+	{
+	case HarvestTile::GrabbingTool: {
+		auto itemLocation = findClosestItemType(villager->xPos, villager->yPos, 50, [&](const Object& item, int x, int y) {
+			return item.name == rule->toolRequired && !item.claimed;
+			});
+		if (!itemLocation) {
+			state = JobState::Waiting;
+			//villager->removeJob(this);
+			villager->setCurrentJob(nullptr);
+			return;
 		}
 
-		if (villager->clock > villager->harvestTime) {
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, itemLocation->x, itemLocation->y);
+		x = closestAdj.first;
+		y = closestAdj.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, itemLocation->x, itemLocation->y)) {
+			villager->pickUpItem(itemLocation->item.lock(), itemLocation->x, itemLocation->y);
+			harvestState = HarvestTile::MovingToTile;
+		}
+
+		break;
+	}
+	case HarvestTile::MovingToTile: {
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, locX, locY);
+
+		x = closestAdj.first;
+		y = closestAdj.second;
+
+		bool adjacent = isAtTile(villager->xPos, villager->yPos, locX, locY);
+
+		if (adjacent) {
+			villager->clock = 0.0f;
+			harvestState = HarvestTile::Harvesting;
+		}
+
+		break;
+	}
+	case HarvestTile::Harvesting:
+
+		if (villager->clock > villager->harvestTime/* * (10.0f / skill)*/) {
 
 			auto targetItem = ObjectRegistry::getInstance().get(rule->target);
 			tile.removeItem(targetItem, locX, locY);
@@ -174,22 +291,65 @@ void HarvestTile::update() {
 				tile.addObject(droppedItem);
 				mainWorld.addItemToMove(droppedItem, locX, locY);
 			}
-			
+
 			villager->clock = 0.0f;
-			villager->tiredness += 5;
+			//villager->tiredness += 5;
+
+			//auto i = static_cast<Tool*>(villager->inventory.get(rule->toolRequired).get());
+			//i->durability--;
+
+			/*if (i->durability <= 0) {
+				std::cout << "Tool broke: " << i->name << std::endl;
+				villager->inventory.remove(rule->toolRequired);
+			}*/
 
 			getTileRef(locX, locY).markedForHarvest = false;
 			state = JobState::Completed;
 		}
-	}
-	else {
-		isHarvesting = false;
+
+		break;
+	default:
+		break;
 	}
 	
 }
 
-// Should check if all items are in stockpile instead of grabbing one by one
-// Nice job team!
+void HarvestTile::waitingUpdate() {
+
+	// If no tool is required, make the job available for assignment.
+	if (rule->toolRequired == "None" || rule->toolRequired.empty()) {
+		harvestState = HarvestTile::MovingToTile;
+		state = JobState::Queued;
+		return;
+	}
+
+	// If any villager already has the required tool in their inventory, make the job available for assignment.
+	for (auto* v : mainWorld.getAllVillagers()) {
+		if (!v) continue;
+		if (v->inventory.has(rule->toolRequired)) {
+			state = JobState::Queued;
+			return;
+		}
+	}
+
+	// Periodic global search for an unclaimed tool on the ground near the harvest location.
+	searchTimer += Clock::deltaTime;
+	if (searchTimer < 3.0f) {
+		return;
+	}
+	searchTimer = 0.0f;
+
+	auto itemLocation = findClosestItemType(locX, locY, 50, [&](const Object& item, int x, int y) {
+		return item.name == rule->toolRequired/* && !item.claimed*/;
+		});
+
+	if (itemLocation) {
+		// Make this job available for assignment so a villager can be chosen to fetch/use the tool.
+		state = JobState::Queued;
+		std::cout << "Tool found for harvest job, making job available for assignment." << std::endl;
+	}
+}
+
 void Build::update() {
 
 
@@ -449,6 +609,8 @@ void Retreat::update() {
 			score += 0.5f;
 		}
 
+		score += (villager->xPos + villager->yPos) / 10.0f;
+
 		if (score < bestScore) {
 			bestScore = score;
 			bestMove = i;
@@ -470,8 +632,7 @@ void Retreat::update() {
 		villager->moveClock = 0.0f;
 	}
 
-	if (distance > 15) {
-		villager->threat = nullptr;
+	if (!threat || threat->dead) {
 		//std::cout << "Retreated" << std::endl;
 		state = JobState::Completed;
 	}
@@ -513,7 +674,7 @@ void Craft::update() {
 
 	if (recipe->requiredStation != "None") {
 		auto stationItem = ObjectRegistry::getInstance().get(recipe->requiredStation);
-		if (!findClosestTileItem(*stationItem, villager->xPos, villager->yPos)) {
+		if (!findClosestTileItem(stationItem->name, villager->xPos, villager->yPos)) {
 			std::cout << "Required station not found: " << stationItem->name << std::endl;
 			state = JobState::Completed;
 			return;
@@ -552,7 +713,7 @@ void Craft::update() {
 		}
 	} else {
 		auto item = ObjectRegistry::getInstance().get(recipe->requiredStation);
-		auto loc = findClosestTileItem(*item, villager->xPos, villager->yPos);
+		auto loc = findClosestTileItem(item->name, villager->xPos, villager->yPos);
 
 		auto adjLoc = findClosestAdjTile(villager->xPos, villager->yPos, loc->first, loc->second);
 
@@ -561,8 +722,6 @@ void Craft::update() {
 
 		if (isAtTile(villager->xPos, villager->yPos, loc->first, loc->second)) {
 
-			if (item->name == "Carpentry Bench") {
-			}
 			for (int i = 0; i < recipe->quantity; i++) {
 				auto item = ObjectRegistry::getInstance().get(recipe->result);
 				if (!item) {

@@ -22,8 +22,8 @@ private:
 
 	std::vector<std::vector<std::pair<int, int>>> flow;
 
-	sf::Clock idleWanderClock;
-	sf::Clock attackScanClock;
+	float idleWanderClock;
+	float attackScanClock;
 public:
 
 	enum state { IDLE, MOVING, ATTACKING } state = IDLE;
@@ -37,4 +37,8 @@ public:
 	void removeDeadMembers();
 
 	std::pair<int, int> getAvgPos();
+
+	int memberCount() {
+		return members.size();
+	}
 };

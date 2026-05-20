@@ -1,6 +1,7 @@
 ﻿#include "UI.h"
 #include "World.h"
 #include "Game.h"
+#include "JobType.h"
 
 #include <thread>
 
@@ -390,7 +391,10 @@ CarpentryBenchUI getCarpentryBenchFrame() {
 
     int num = 0;
     for (auto& i : RecipeRegistry::getInstance().getRecipeTable()) {
+
         if (i.second.requiredStation != "Carpentry Bench") continue;
+
+        std::cout << "Adding recipe button for " << i.first << std::endl;
 
         auto button = &createButton(*frame,
             ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
@@ -399,7 +403,7 @@ CarpentryBenchUI getCarpentryBenchFrame() {
         std::string recipeName = i.first;
 
         button->setClickFunction([recipeName] {
-            JobManager::addJob(new Craft(nullptr, nullptr, JobType::Carpenter, recipeName));
+            JobManager::addJob(new Craft(nullptr, nullptr, SkillType::Carpentry, recipeName));
             });
 
         button->setHoverFunction([ui, recipeName] {
@@ -455,7 +459,7 @@ AnvilUI getAnvilFrame() {
         std::string recipeName = i.first;
 
         button->setClickFunction([recipeName] {
-            JobManager::addJob(new Craft(nullptr, nullptr, JobType::Blacksmith, recipeName));
+            JobManager::addJob(new Craft(nullptr, nullptr, SkillType::Blacksmithing, recipeName));
             //Game::getInstance().setBuildItem(recipeName);
             std::cout << "Selected: " << recipeName << std::endl;
             });
@@ -494,7 +498,7 @@ GunBenchUI getGunBenchFrame() {
 
 
         button->setClickFunction([recipeName] {
-            JobManager::addJob(new Craft(nullptr, nullptr, JobType::None, recipeName));
+            JobManager::addJob(new Craft(nullptr, nullptr, SkillType::Gunsmithing, recipeName));
             });
 
 
