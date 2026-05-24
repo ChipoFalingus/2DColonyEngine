@@ -18,7 +18,7 @@ MainMenuUI getMainMenuFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.new_game = &createButton(*frame, 0, 0, L"             Start            ", Anchor::CENTER);
+    ui.new_game = &createButton(*frame, 0, 0, L"           New Game           ", Anchor::CENTER);
 
     // Swaps to the InGameFrame and does some setup to make sure the world is ready
     ui.new_game->setClickFunction([]() {
@@ -136,6 +136,7 @@ InGameUI getInGameFrame() {
         uiManager.remove(UI::Structure);
         uiManager.remove(UI::Production);
         uiManager.addOrRemoveFrame(UI::Build);
+        uiManager.remove(UI::Info);
         });
 
     ui.harvestButton = &createButton(*frame, 20, 46, L"    /♣ Harvest    ", Anchor::TOP_CENTER);
@@ -187,6 +188,8 @@ BuildUI getBuildFrame() {
         auto& uiManager = Game::getInstance().getUIManager();
         uiManager.addOrRemoveFrame(UI::Structure);
 
+        uiManager.remove(UI::Furniture);
+        uiManager.remove(UI::Production);
         });
 
 
@@ -199,6 +202,9 @@ BuildUI getBuildFrame() {
 
         auto& uiManager = Game::getInstance().getUIManager();
         uiManager.addOrRemoveFrame(UI::Furniture);
+
+        uiManager.remove(UI::Structure);
+        uiManager.remove(UI::Production);
 		});
 
     ui.productionButton = &createButton(*frame, 0, 37, L"Production ", Anchor::TOP_CENTER);
@@ -208,6 +214,8 @@ BuildUI getBuildFrame() {
         auto& uiManager = Game::getInstance().getUIManager();
         uiManager.addOrRemoveFrame(UI::Production);
 
+        uiManager.remove(UI::Structure);
+        uiManager.remove(UI::Furniture);
         });
 
     ui.securityButton = &createButton(*frame, 0, 40, L" Security  ", Anchor::TOP_CENTER);
@@ -279,11 +287,11 @@ StructureUI getStructureFrame() {
     frame->setType(ui.type);
 
 
-    ui.wood_wall = &createButton(*frame, 16, 31, L" Wooden Wall ", Anchor::TOP_CENTER);
-    ui.stone_wall = &createButton(*frame, 16, 34, L" Stone Wall ", Anchor::TOP_CENTER);
-    ui.wood_fence = &createButton(*frame, 16, 37, L" Wooden Floor ", Anchor::TOP_CENTER);
-    ui.stone_fence = &createButton(*frame, 16, 40, L" Stone Floor ", Anchor::TOP_CENTER);
-    ui.wood_floor = &createButton(*frame, 16, 43, L" ? ", Anchor::TOP_CENTER);
+    ui.wood_wall = &createButton(*frame, 15, 31, L" Wooden Wall ", Anchor::TOP_CENTER);
+    ui.stone_wall = &createButton(*frame, 15, 34, L" Stone Wall ", Anchor::TOP_CENTER);
+    ui.wood_fence = &createButton(*frame, 15, 37, L" Wooden Floor ", Anchor::TOP_CENTER);
+    ui.stone_fence = &createButton(*frame, 15, 40, L" Stone Floor ", Anchor::TOP_CENTER);
+    ui.wood_floor = &createButton(*frame, 15, 43, L" ? ", Anchor::TOP_CENTER);
 
     ui.wood_wall->setClickFunction([&]() {
         setMode(Mode::BUILD);
@@ -322,7 +330,7 @@ FurnitureUI getFurnitureFrame() {
         std::string j = f + " x" + std::to_string(num);
 
         auto button = &createButton(*frame,
-            16, 49 + offset * 3,
+            15, 49 + offset * 3,
             std::wstring(j.begin(), j.end()), Anchor::TOP_CENTER);
 
         ui.buttons.push_back(button);

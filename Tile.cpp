@@ -383,7 +383,7 @@ void Tile::getTile(int x, int y) {
 
         if (x == 10 && y == 10) {
            items.clear();
-           auto item = ObjectRegistry::getInstance().get("Apple Tree");
+           auto item = ObjectRegistry::getInstance().get("Berry Bush");
            auto spawner = static_cast<FoliageCrop*>(item.get());
            spawner->x = x;
            spawner->y = y;
@@ -469,19 +469,16 @@ void Tile::getTile(int x, int y) {
 
     }
 
-
-    /*if (x > -2 && x < 2 && y > -2 + 20 && y < 2 + 20) {
+    if (x > 3 && x < 5 && y > 5 && y < 9) {
         items.clear();
-        auto item = ObjectRegistry::getInstance().get("Stone Chair");
-		addObject(item);
-		mainWorld.addItemToMove(item, x, y);
-    }
-    if (x > -2 && x < 2 && y > -2 + 24 && y < 2 + 24) {
-        items.clear();
-        auto item = ObjectRegistry::getInstance().get("Stone Table");
+        auto item = ObjectRegistry::getInstance().get("Wooden Chair");
         addObject(item);
-        mainWorld.addItemToMove(item, x, y);
-    }*/
+	}
+    if (x > 2 && x < 4 && y > 5 && y < 9) {
+        items.clear();
+        auto item = ObjectRegistry::getInstance().get("Wooden Table");
+        addObject(item);
+    }
 
     if (x > -1 && x < 1 && y > -1 + 5 && y < 1 + 5) {
         items.clear();
@@ -493,12 +490,21 @@ void Tile::getTile(int x, int y) {
     if (x == 0 && y == 0) {
 		addObject("Carpentry Bench");
     }
-    /*if (x > -2 && x < 2 && y > -2 + 32 && y < 2 + 32) {
-        items.clear();
-        auto item = ObjectRegistry::getInstance().get("Pickaxe");
-        auto pickaxe = static_cast<Tool*>(item.get());
-        addObject(item);
-        mainWorld.addItemToMove(item, x, y);
+
+    /*if (x > -2 && x < 2 && y > -2 && y < 2) {
+		int num = getRandomInt(0, 1);
+        if (num == 0) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Wooden Chair");
+            addObject(item);
+            mainWorld.addItemToMove(item, x, y);
+        }
+        else {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Wooden Table");
+            addObject(item);
+            mainWorld.addItemToMove(item, x, y);
+        }
     }*/
 
 

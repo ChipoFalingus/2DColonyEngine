@@ -118,7 +118,7 @@ void World::addCreatures() {
     auto axe = ObjectRegistry::getInstance().get("Axe");
     auto pickaxe = ObjectRegistry::getInstance().get("Pickaxe");
 
-	int LUMBERJACKS = 6;
+	int LUMBERJACKS = 3;
 	int MINERS = 0;
     int FARMERS = 0;
     int BUILDERS = 0;
@@ -133,43 +133,6 @@ void World::addCreatures() {
         //v->toolInHand = std::dynamic_pointer_cast<Tool>(axe);
         allCreatures.push_back(std::move(v));
     }
-
-    for (int i = 0; i < MINERS; i++) {
-        auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::Miner);
-        v->toolInHand = std::dynamic_pointer_cast<Tool>(pickaxe);
-        v->itemInHand = std::dynamic_pointer_cast<Gun>(gun);
-        allCreatures.push_back(std::move(v));
-    }
-
-    for (int i = 0; i < FARMERS; i++) {
-        auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::Farmer);
-        //v->itemInHand = &PEPPER_GUN;
-        allCreatures.push_back(std::move(v));
-    }
-
-    for (int i = 0; i < BUILDERS; i++) {
-        auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::Builder);
-        //v->itemInHand = &PEPPER_GUN;
-        allCreatures.push_back(std::move(v));
-    }
-
-    for (int i = 0; i < CARPENTERS; i++) {
-        auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::Carpenter);
-        //v->itemInHand = &PEPPER_GUN;
-        allCreatures.push_back(std::move(v));
-    }
-
-    for (int i = 0; i < BLACKSMITHS; i++) {
-        auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::Blacksmith);
-        //v->itemInHand = &PEPPER_GUN;
-        allCreatures.push_back(std::move(v));
-    }
-
 
 
     for (int i = 0; i < 0; i++) {
@@ -208,6 +171,8 @@ void World::generateWorld() {
 
         renderWorld();
         addCreatures();
+
+        updateMiniMap();
 
         initLightMap();
 

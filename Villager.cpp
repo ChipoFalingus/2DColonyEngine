@@ -234,105 +234,117 @@ void Villager::sense() {
 void Villager::idle() {
 
 	// Fallback idling stuff here
-	//int rand = getRandomInt(1, 50);
+	int rand = getRandomInt(1, 50);
 
-	//if (rand == 0) {
-	//	auto obj = ObjectRegistry::getInstance().get("Chair");
-	//	auto chair = findClosestItemType(xPos, yPos, 50, [](const Object& item, int x, int y) {
-	//		return item.name == "Chair" && !item.claimed;
-	//		});
+	if (rand == 1) {
+		auto chair = findClosestItemType(xPos, yPos, 50, [](const Object& item, int x, int y) {
+			return item.name == "Wooden Chair" && !item.claimed;
+			});
 
-	//	if (chair) {
-	//		chair->item.lock()->claimed = true;
-	//		object_in_use = chair->item.lock().get();
-	//		jobQueue.push_back(new Sit(this, nullptr, SkillType::None, chair->x, chair->y));
-	//	}
-	//}
-	//else {
-	//	//if (activity_state != ActivityState::Wandering) {
-	//		activity_state = ActivityState::Wandering;
-	//		//jobQueue.push_back(new Wander(this, nullptr, JobType::None));
-	//	//}
-	//}
+		if (chair) {
+			chair->item.lock()->claimed = true;
+			object_in_use = chair->item.lock().get();
+			currentJob = new Sit(this, nullptr, SkillType::None, chair->x, chair->y);
+		}
+	}
+	else {
+		if (activity_state != ActivityState::Wandering) {
+			activity_state = ActivityState::Wandering;
+			currentJob = new Wander(this, nullptr, SkillType::None);
+		}
+	}
 
 	
 }
 
 void Villager::decide() {
-	//if (threat) {
-	//	if (itemInHand) {
-	//		activity_state = ActivityState::None;
-	//		Job* job = new Attack(this, nullptr, SkillType::None, threat);
-	//		job->priority = 9999;
-	//		addToJobQueue(job);
-	//	}
-	//	else {
-	//		currentPath.clear();
-	//		activity_state = ActivityState::None;
-	//		Job* job = new Retreat(this, nullptr, SkillType::None, threat);
-	//		job->priority = 9999;
-	//		addToJobQueue(job);
-	//	}
-	//}
 
-	//if (tirednessClock > 2.0f && !sleeping) {
-	//	tiredness++;
-	//	tirednessClock = 0.0f;
-	//}
+	std::vector<Score> possibleJobs;
 
-	//if (tiredness >= 100) {
-	//	if (findBedClock > 1.0f) {
-	//		findBedClock = 0.0f;
-	//		claimBed();
-	//	}
-	//	activity_state = ActivityState::Sleeping;
-	//	auto* sleepJob = new Sleep(this, nullptr, SkillType::None);
-	//	sleepJob->priority = 1000;
-	//	jobQueue.push_back(sleepJob);
-	//	tiredness = 0;
-	//}
 
-	//if (hungerClock > 1.f) {
-	//	hungerClock = 0.0f;
-	//	hunger--;
-	//}
+	if (threat) {
+		if (itemInHand) {
+			activity_state = ActivityState::None;
+			Job* job = new Attack(this, nullptr, SkillType::None, threat);
+			job->priority = 9999;
 
-	//if (hunger <= 10 && !isHungry) {
-	//	isHungry = true;
-	//}
+			interrupted.push_back(currentJob);
+			currentJob = job;
+		}
+		else {
+			currentPath.clear();
+			activity_state = ActivityState::None;
+			Job* job = new Retreat(this, nullptr, SkillType::None, threat);
+			job->priority = 9999;
 
-	//
-	//if (isHungry && findFoodClock > 2.0f && activity_state != ActivityState::Eating) {
-	//	findFoodClock = 0.0f;
+			interrupted.push_back(currentJob);
+			currentJob = job;
+		}
+	}
 
-	//	auto foodLocation = findClosestItemType(xPos, yPos, 100, [](const Object& item, int x, int y) {
-	//		return item.type == Type::Food && !item.claimed;
-	//		//return true;
-	//		});
-	//	if (foodLocation) {
-	//		std::cout << "Found food at " << foodLocation->x << ", " << foodLocation->y << std::endl;
+	if (tirednessClock > 2.0f && !sleeping) {
+		tiredness++;
+		tirednessClock = 0.0f;
+	}
 
-	//		auto food = std::dynamic_pointer_cast<Food>(foodLocation->item.lock());
-	//		if (!food) {
-	//			return;
-	//		}
-	//		food->claimed = true;
-	//		activity_state = ActivityState::Eating;
-	//		Job* eat = new FindFood(this, nullptr, SkillType::None, foodLocation->x, foodLocation->y, food);
-	//		eat->priority = 1000;
-	//		jobQueue.push_back(eat);
-	//	}
-	//}
+	if (tiredness >= 100) {
+		if (findBedClock > 1.0f) {
+			findBedClock = 0.0f;
+			claimBed();
+		}
+		activity_state = ActivityState::Sleeping;
+		auto* sleepJob = new Sleep(this, nullptr, SkillType::None);
+		sleepJob->priority = 1000;
 
-	/*if (!currentJob) {
-		JobManager::findJobForColonist(*this);
-	}*/
+		interrupted.push_back(currentJob);
 
+		currentJob = sleepJob;
+		tiredness = 0;
+	}
+
+	if (hungerClock > 1.f) {
+		hungerClock = 0.0f;
+		hunger--;
+	}
+
+	if (hunger <= 10 && !isHungry) {
+		isHungry = true;
+	}
+
+	
+	if (isHungry && findFoodClock > 2.0f && activity_state != ActivityState::Eating) {
+		findFoodClock = 0.0f;
+
+		auto foodLocation = findClosestItemType(xPos, yPos, 100, [](const Object& item, int x, int y) {
+			return item.type == Type::Food && !item.claimed;
+			//return true;
+			});
+		if (foodLocation) {
+			std::cout << "Found food at " << foodLocation->x << ", " << foodLocation->y << std::endl;
+
+			auto food = std::dynamic_pointer_cast<Food>(foodLocation->item.lock());
+			if (!food) {
+				return;
+			}
+			food->claimed = true;
+			activity_state = ActivityState::Eating;
+			Job* eat = new FindFood(this, nullptr, SkillType::None, foodLocation->x, foodLocation->y, food);
+			eat->priority = 1000;
+
+			interrupted.push_back(currentJob);
+			currentJob = eat;
+		}
+	}
 
 	if (currentJob) {
 		currentJob->state = JobState::Active;
 	} else {
-		idle();
+		if (!interrupted.empty()) {
+			currentJob = interrupted.back();
+			interrupted.pop_back();
+		} else {
+			idle();
+		}
 	}
 }
 
@@ -348,13 +360,6 @@ void Villager::move() {
 		}
 
 		if (currentJob->state == JobState::Completed) {
-			/*for (int i = 0; i < jobQueue.size(); i++) {
-				if (jobQueue[i] == currentJob) {
-					jobQueue[i] = jobQueue.back();
-					jobQueue.pop_back();
-					break;
-				}
-			}*/
 			currentJob = nullptr;
 		}
 	}

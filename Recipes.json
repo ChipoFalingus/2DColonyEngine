@@ -71,7 +71,7 @@
             "result": "Stone Floor",
             "quantity": 1,
             "ingredients": {
-                "Stone": 1
+                "Rock": 1
             },
             "required_bench": "None"
         },

@@ -14,6 +14,8 @@ std::string fps;
 
 float moveClock = 0.0f;
 
+bool spacePressed = false;
+
 Villager* viewing;
 /*
 
@@ -248,12 +250,12 @@ void processInput(GLFWwindow* window) {
         for (auto& item : tile.items) {
             itemStr += item->name;
 
-            if (Crop* crop = dynamic_cast<Crop*>(item.get())) {
+            if (item->type == Type::Crop) {
+                Crop* crop = static_cast<Crop*>(item.get());
                 float growth = static_cast<float>(crop->growStage + 1) / static_cast<float>(crop->stages.size());
+				//float growth = ((float)(crop->growStage + 1)) / ((float)crop->stages.size());
 
-                // Clamping
-                if (growth > 1.0f) growth = 1.0f;
-                if (growth < 0.0f) growth = 0.0f;
+				growth = std::clamp(growth, 0.0f, 1.0f);
 
                 int percent = static_cast<int>(growth * 100.0f);
                 itemStr += " (" + std::to_string(percent) + "% Grown)";
@@ -270,16 +272,6 @@ void processInput(GLFWwindow* window) {
         ui.tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
         std::string type = typeToString(tile.type);
         ui.tileType->changeText(std::wstring(type.begin(), type.end()));
-
-        glm::vec3 light = Game::getInstance()
-            .getLightManager()
-            .calculateLightLevel(mouseTileX, mouseTileY);
-
-        float brightness = 0.2126f * light.r +
-            0.7152f * light.g +
-            0.0722f * light.b;
-
-        int percent = static_cast<int>(brightness * 100.0f);
 
         std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(mouseTileX, mouseTileY).altitude));
 
@@ -352,7 +344,19 @@ void build(int left, int right, int top, int bottom) {
     std::string itemName = item->name;
 
     if (mainWorld.placementMode == PlacementMode::SINGLE) {
-        JobManager::JobList.push_back(new Build(nullptr, nullptr, SkillType::Building, itemName, mouseTileX, mouseTileY));
+        std::cout << "Adding build job for " << itemName << " at (" << mouseTileX << ", " << mouseTileY << ")" << std::endl;
+        if (item->type == Type::Furniture) {
+            auto loc = mainWorld.findUnclaimedItemInAllStockpile(itemName);
+            if (!loc) {
+                placing = false;
+                return;
+            }
+			loc->second->claimed = true;
+            JobManager::JobList.push_back(new BuildFurniture(nullptr, nullptr, SkillType::None, item, loc->first.first, loc->first.second, mouseTileX, mouseTileY));
+        }
+        else {
+            JobManager::JobList.push_back(new Build(nullptr, nullptr, SkillType::Building, itemName, mouseTileX, mouseTileY));
+        }
     }
 
     else if (mainWorld.placementMode == PlacementMode::LINE) {

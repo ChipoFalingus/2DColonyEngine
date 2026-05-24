@@ -139,17 +139,14 @@ void JobManager::assignJobs() {
 	std::unordered_set<Job*> assignedJobs;
 	std::unordered_set<Villager*> assignedVillagers;
 
-	for (auto& bid : bids)
-	{
-		/*if (assignedVillagers.count(bid.villager))
-			continue;*/
-
+	for (auto& bid : bids) {
+		// Skip job if its already assigned
 		if (assignedJobs.count(bid.job))
 			continue;
 
 
 		assignedJobs.insert(bid.job);
-		//std::cout << "Bid winner: " << bid.score << " for villager " << bid.villager->firstname << " " << bid.villager->lastname << " and job at (" << bid.job->x << ", " << bid.job->y << ")" << std::endl;
+
 		if (bid.villager->getCurrentJob())
 			continue;
 
@@ -279,9 +276,9 @@ void HarvestTile::update() {
 
 		break;
 	}
-	case HarvestTile::Harvesting:
-
-		if (villager->clock > villager->harvestTime/* * (10.0f / skill)*/) {
+	case HarvestTile::Harvesting: {
+		int skill = villager->skills[type];
+		if (villager->clock > villager->harvestTime * (10.0f / skill)) {
 
 			auto targetItem = ObjectRegistry::getInstance().get(rule->target);
 			tile.removeItem(targetItem, locX, locY);
@@ -306,9 +303,9 @@ void HarvestTile::update() {
 			getTileRef(locX, locY).markedForHarvest = false;
 			state = JobState::Completed;
 		}
-
+	}
 		break;
-	default:
+	default: 
 		break;
 	}
 	
@@ -316,14 +313,12 @@ void HarvestTile::update() {
 
 void HarvestTile::waitingUpdate() {
 
-	// If no tool is required, make the job available for assignment.
 	if (rule->toolRequired == "None" || rule->toolRequired.empty()) {
 		harvestState = HarvestTile::MovingToTile;
 		state = JobState::Queued;
 		return;
 	}
 
-	// If any villager already has the required tool in their inventory, make the job available for assignment.
 	for (auto* v : mainWorld.getAllVillagers()) {
 		if (!v) continue;
 		if (v->inventory.has(rule->toolRequired)) {
@@ -332,7 +327,6 @@ void HarvestTile::waitingUpdate() {
 		}
 	}
 
-	// Periodic global search for an unclaimed tool on the ground near the harvest location.
 	searchTimer += Clock::deltaTime;
 	if (searchTimer < 3.0f) {
 		return;
@@ -344,15 +338,12 @@ void HarvestTile::waitingUpdate() {
 		});
 
 	if (itemLocation) {
-		// Make this job available for assignment so a villager can be chosen to fetch/use the tool.
 		state = JobState::Queued;
 		std::cout << "Tool found for harvest job, making job available for assignment." << std::endl;
 	}
 }
 
 void Build::update() {
-
-
 	if (!init) {
 		reserve = findIngredientsForJob(ingredients);
 		init = true;
@@ -401,6 +392,40 @@ void Build::update() {
 
 			state = JobState::Completed;
 		}
+	}
+}
+
+void BuildFurniture::update() {
+
+	switch (jobState)
+	{
+	case BuildFurniture::Getting: {
+
+		auto closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, fX, fY);
+		x = closestAdj.first;
+		y = closestAdj.second;
+
+		if (isAtTile(villager->xPos, villager->yPos, fX, fY)) {
+			villager->pickUpItem(itemName.lock(), fX, fY);
+			jobState = BuildFurniture::Placing;
+		}
+		break;
+	}
+
+	case BuildFurniture::Placing: {
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, tX, tY);
+		x = closestAdj.first;
+		y = closestAdj.second;
+		if (isAtTile(villager->xPos, villager->yPos, tX, tY)) {
+			villager->dropItem(itemName.lock(), tX, tY);
+			state = JobState::Completed;
+
+			break;
+
+		}
+	}
+	default:
+		break;
 	}
 }
 
@@ -789,6 +814,7 @@ void MoveItem::update() {
 		x = closestAdj.first;
 		y = closestAdj.second;
 		if (villager->xPos == x && villager->yPos == y) {
+
 			villager->pickUpItem(itemToMove, fromX, fromY);
 			itemPickedUp = true;
 		}
@@ -838,11 +864,8 @@ void FindFood::update() {
 				state = JobState::Completed;
 				return;
 			}
-			//auto obj = ObjectRegistry::getInstance().get(food->name);
 
-			//villager->pickUpItem(obj, tX, tY);
 			getTileRef(tX, tY).removeItem(food, tX, tY);
-			//mainWorld.removeItemToMove(food, tX, tY);
 
 
 			foodState = State::Find;
@@ -854,10 +877,12 @@ void FindFood::update() {
 
 	case State::Find:
 	{
-		place = findClosestItemType(villager->xPos, villager->yPos, 50, [](const Object& obj, int x, int y) {
-			if ((obj.name != "Wooden Chair" && obj.name != "Stone Chair") || obj.claimed)
+		std::cout << "Finding place to eat" << std::endl;
+		place = findClosestItemType(villager->xPos, villager->yPos, 200, [](const Object& obj, int x, int y) {
+			if ((obj.name != "Wooden Chair") || obj.claimed)
 				return false;
 
+			std::cout << "Found an unclaimed chair at " << x << "," << y << std::endl;
 			static const std::pair<int, int> dirs[4] = {
 				{0,1},{0,-1},{1,0},{-1,0}
 			};
@@ -869,16 +894,23 @@ void FindFood::update() {
 				const Tile& t = getTileRef(nx, ny);
 
 				for (auto& item : t.items) {
-					if (item->name == "Wooden Table" || item->name == "Stone Table")
+					if (item->name == "Wooden Table") {
+						std::cout << "Found a table at " << nx << "," << ny << std::endl;
 						return true;
+					}
 				}
 			}
 
+			std::cout << "No table found adjacent to chair at " << x << "," << y << std::endl;
 			return false;
 
 			});
 		if (place.has_value()) {
 			place->item.lock()->claimed = true;
+			std::cout << "Place to eat found at " << place->x << "," << place->y << std::endl;
+		}
+		else {
+			std::cout << "No place to eat found, eating on the ground." << std::endl;
 		}
 		foodState = State::Eat;
 		std::cout << "Find: " << food->getNutrition() << std::endl;
@@ -999,7 +1031,7 @@ findIngredientsForJob(const std::unordered_map<std::string, int>& ingredients) {
 	bool success = true;
 
 	for (const auto& [name, quantity] : ingredients) {
-
+		std::cout << "Finding ingredient: " << name << " x" << quantity << std::endl;
 		for (int i = 0; i < quantity; i++) {
 			auto itemLocation = mainWorld.findUnclaimedItemInAllStockpile(name);
 			if (!itemLocation) {

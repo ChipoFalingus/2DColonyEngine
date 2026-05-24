@@ -152,14 +152,33 @@ public:
 		x = locX;
 		y = locY;
 		recipe = RecipeRegistry::getInstance().get(item);
+		ingredients = recipe->ingredients;
+	}
 
-		if (recipe->requiredStation != "None") {
-			ingredients.clear();
-			ingredients.insert({ recipe->result, 1 });
-		}
-		else {
-			ingredients = recipe->ingredients;
-		}
+	void update();
+};
+
+class BuildFurniture : public Job {
+public:
+
+	enum State {
+		Getting,
+		Placing
+	};
+
+	std::weak_ptr<Object> itemName;
+	int fX, fY;
+	int tX, tY;
+	bool grabbedItem = false;
+	bool init = false;
+
+	State jobState = State::Getting;
+
+	BuildFurniture(Villager* v, Tool* tool, SkillType skillType, std::weak_ptr<Object> item, int fX, int fY, int tX, int tY)
+		: Job(v, tool, skillType), itemName(item), fX(fX), fY(fY), tX(tX), tY(tY)
+	{
+		x = fX;
+		y = fY;
 	}
 
 	void update();

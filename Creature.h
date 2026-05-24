@@ -32,7 +32,7 @@ class Creature {
 		wchar_t displayChar;
 		glm::vec3 displayColor;
 
-		int hunger = 100;
+		int hunger = 50;
 
 		float speed;
 

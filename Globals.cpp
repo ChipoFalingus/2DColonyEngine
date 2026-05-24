@@ -47,3 +47,5 @@ Squad squad1;
 std::vector<std::vector<std::pair<int, int>>> field;
 int fieldX;
 int fieldY;
+
+int speed = 1;

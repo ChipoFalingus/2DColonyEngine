@@ -773,7 +773,7 @@ int main() {
         float dt = currentTime - lastTime;
         lastTime = currentTime;
 
-        Clock::update(dt);
+        Clock::update(dt * speed);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);

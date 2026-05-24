@@ -71,9 +71,7 @@ std::string activityStateToString(ActivityState state);
 
 class Villager : public Creature {
 private:
-	// replace with vector
-	//std::priority_queue<Job*, std::vector<Job*>, JobCompare> jobQueue;
-	//std::vector<Job*> jobQueue;
+	std::vector<Job*> interrupted;
 	JobType jobType;
 	Job* currentJob;
 
@@ -123,6 +121,8 @@ public:
 
 	bool retreating = false;
 	Creature* threat;
+
+	std::string action_log[10];
 
 	Villager(int x, int y)
 		: Creature(x, y, L'☺',
@@ -187,16 +187,13 @@ public:
 
 	}
 
-
-	/*std::vector<Job*>& getJobQueue() { return jobQueue; }
-	const std::vector<Job*>& getJobQueue() const { return jobQueue; }
-
-	void addToJobQueue(Job* job) {
-		if (job) {
-			job->villager = this;
+	void log(const std::string& action) {
+		for (int i = 9; i > 0; i--) {
+			action_log[i] = action_log[i - 1];
 		}
-		jobQueue.push_back(job);
-	}*/
+		action_log[0] = action;
+	}
+
 	Job* getCurrentJob() {
 		return currentJob;
 	}
@@ -208,14 +205,6 @@ public:
 	void setCurrentJob(Job* job) {
 		currentJob = job;
 	}
-
-	/*void removeJob(Job* job) {
-		jobQueue.erase(std::remove(jobQueue.begin(), jobQueue.end(), job), jobQueue.end());
-	}
-
-	int getJobQueueSize() {
-		return jobQueue.size();
-	}*/
 
 	JobType getJob() {
 		return jobType;

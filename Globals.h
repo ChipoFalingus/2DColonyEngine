@@ -59,3 +59,5 @@ extern Squad squad1;
 extern std::vector<std::vector<std::pair<int, int>>> field;
 extern int fieldX;
 extern int fieldY;
+
+extern int speed;
