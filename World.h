@@ -18,14 +18,6 @@ class Creature;
 class Colony;
 class Villager;
 
-/*
-Stockpiles need filters for what items they accept
-Add the ability to add to a supply chain, where villagers are tasked to keep them full
-Courier villagers to move between stockpiles
-
-
-*/
-
 enum struct PlacementMode {
     SINGLE,
     LINE,
@@ -217,7 +209,7 @@ public:
                 it = itemsToMove.erase(it);
             }
             else {
-                ++it;
+                it++;
             }
         }
     }

@@ -200,6 +200,8 @@
     <ClInclude Include="Pair.h" />
     <ClInclude Include="CreatureUtils.h" />
     <ClInclude Include="Pig.h" />
+    <ClInclude Include="Save.h" />
+    <ClInclude Include="Seed.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="Squad.h" />

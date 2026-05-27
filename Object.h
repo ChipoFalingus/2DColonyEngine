@@ -21,6 +21,7 @@ enum struct Type {
 	Structure,
 	Furniture,
 	Spawner,
+	Seed,
 	COUNT
 };
 

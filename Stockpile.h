@@ -49,6 +49,18 @@ public:
 
 	std::unordered_map<Type, bool> getFilter() const { return filter; }
 
+    std::unordered_map<std::string, int> getFilteredItemCounts(Type type) {
+        std::unordered_map<std::string, int> result;
+        for (auto& [loc, f] : tileItems) {
+            for (auto& item : f) {
+                if (item && item->type == type) {
+                    result[item->name]++;
+                }
+            }
+        }
+		return result;
+    }
+
 	std::unordered_map<std::string, int> getItemCounts() { 
         std::unordered_map<std::string, int> result;
         for (auto& [loc, f] : tileItems) {

@@ -10,16 +10,7 @@ struct MainMenuUI {
     Button* settingsButton;
     Button* exit;
 
-    void layout(int screenW, int screenH) {
-        new_game->setAnchorPosition(screenW, screenH);
-        load->setAnchorPosition(screenW, screenH);
-        settingsButton->setAnchorPosition(screenW, screenH);
-        exit->setAnchorPosition(screenW, screenH);
-
-        std::cout << "New Game Button at " << 
-            new_game->getAnchorPosition(screenW, screenH).first << " " << 
-            new_game->getAnchorPosition(screenW, screenH).second << std::endl;
-    }
+    Text* text;
 };
 
 MainMenuUI getMainMenuFrame();
@@ -54,6 +45,8 @@ struct LoadingUI {
     Text* text;
     Text* chunks;
 	Text* animation;
+
+
 };
 
 LoadingUI getLoadingFrame();
@@ -76,6 +69,13 @@ struct InGameUI {
     Button* harvestButton;
     Button* plantButton;
     Button* stockpileButton;
+
+    void resize(int screenW, int screenH) {
+        buildButton->setAnchorPosition(screenW, screenH);
+        harvestButton->setAnchorPosition(screenW, screenH);
+        plantButton->setAnchorPosition(screenW, screenH);
+        stockpileButton->setAnchorPosition(screenW, screenH);
+	}
 };
 
 InGameUI getInGameFrame();
@@ -126,6 +126,7 @@ struct FurnitureUI {
     UI type = UI::Furniture;
 
     Panel* panel;
+    Text* text;
     std::vector<Button*> buttons;
 
     void configureFurnitureFrame();
@@ -211,6 +212,17 @@ struct HarvestUI {
 };
 
 HarvestUI getHarvestFrame();
+
+struct PlantUI {
+    UI type = UI::Plant;
+    Panel* infoPanel;
+    Text* text;
+    std::vector<Button*> seeds;
+
+	void configurePlantFrame();
+};
+
+PlantUI getPlantFrame();
 
 struct InfoUI {
     UI type = UI::Info;

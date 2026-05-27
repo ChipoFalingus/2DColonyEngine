@@ -29,6 +29,7 @@ private:
     StockpileUI stockpileUI;
     VillagerInfoUI villagerInfoUI;
 	HarvestUI harvestUI;
+	PlantUI plantUI;
 	InfoUI infoUI;
 
     LightManager lightManager;
@@ -38,6 +39,9 @@ private:
     Object* selectedCraftItem;
 
 public:
+
+    std::string selectedPlantItem;
+
     static Game& getInstance() {
         static Game instance;
         return instance;
@@ -65,6 +69,7 @@ public:
         villagerInfoUI = getVillagerInfoFrame();
         infoUI = getInfoFrame();
 		harvestUI = getHarvestFrame();
+		plantUI = getPlantFrame();
     }
 
     MainMenuUI& getMainMenuUI() {
@@ -130,6 +135,10 @@ public:
     HarvestUI& getHarvestUI() {
         return harvestUI;
 	}
+
+    PlantUI& getPlantUI() {
+        return plantUI;
+    }
 
     InfoUI& getInfoUI() {
         return infoUI;

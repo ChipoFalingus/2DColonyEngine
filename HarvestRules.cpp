@@ -23,13 +23,13 @@ void loadHarvestRules() {
         }
 
         std::string toolRequired = i.at("tool_required").get<std::string>();
-        JobType jobType = stringToJobType(i.at("job_required").get<std::string>());
+        SkillType skillType = stringToSkillType(i.at("job_required").get<std::string>());
 
         for (auto& j : i.at("target")) {
 
             std::string target = j;
 
-            Rule rule(target, outputs, amount, toolRequired, jobType);
+            Rule rule(target, outputs, amount, toolRequired, skillType);
             HarvestRuleRegistry::getInstance().addRule(rule);
         }
     }

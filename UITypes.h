@@ -17,5 +17,6 @@ enum class UI {
     Stockpile,
     Villager,
     Harvest,
+    Plant,
     Info
 };

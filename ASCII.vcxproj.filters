@@ -305,6 +305,12 @@
     <ClInclude Include="SquadManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Save.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Seed.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Menu.txt">

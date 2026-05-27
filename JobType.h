@@ -105,3 +105,17 @@ inline std::string skillTypeToString(SkillType type) {
     default:                     return "Unknown";
     }
 }
+
+inline SkillType stringToSkillType(const std::string& type) {
+    if (type == "Farming")      return SkillType::Farming;
+    if (type == "Mining")       return SkillType::Mining;
+    if (type == "Woodcutting")  return SkillType::Woodcutting;
+    if (type == "Carpentry")    return SkillType::Carpentry;
+    if (type == "Blacksmithing")return SkillType::Blacksmithing;
+    if (type == "Gunsmithing")  return SkillType::Gunsmithing;
+    if (type == "Cooking")      return SkillType::Cooking;
+    if (type == "Building")     return SkillType::Building;
+    if (type == "Melee Combat") return SkillType::Melee;
+    if (type == "Shooting")     return SkillType::Shooting;
+    return SkillType::None;
+}

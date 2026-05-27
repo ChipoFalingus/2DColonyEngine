@@ -23,6 +23,10 @@ public:
         return masterUI;
     }
 
+    std::unordered_map<UI, std::unique_ptr<Frame>>& getAllFrames() {
+        return allFrames;
+	}
+
     Frame* getFrame(const UI& name) {
         auto it = allFrames.find(name);
         if (it != allFrames.end())
@@ -48,12 +52,6 @@ public:
     }
 
     void update(int mouseX, int mouseY, bool mouseDown) {
-        // Only top frame gets input with this code
-        /*if (!frameStack.empty()) {
-            frameStack.back()->update(mouseX, mouseY, mouseDown);
-        }*/
-
-        // All active frames recieve input, should maybe add a smart system that disables input for frames below should it be necessary
         for (auto& frame : frameStack) {
             auto i = getFrame(frame);
             if (!i) continue;

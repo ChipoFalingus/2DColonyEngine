@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "UI.h"
 #include "Furnace.h"
+#include "Save.h"
 
 double lastTime = glfwGetTime();
 int nbFrames = 0;
@@ -48,7 +49,7 @@ void processInput(GLFWwindow* window) {
     moveClock += Clock::deltaTime;
 
     if (moveClock > 0.01f) {
-        moveClock = 0.0f;
+        moveClock -= 0.01f;
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
         }
@@ -139,7 +140,7 @@ void processInput(GLFWwindow* window) {
         else if (viewHeightMap) viewHeightMap = false;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+    /*if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
         yTextSpacing++;
         yFrustum = scrHeight / yTextSpacing;
     }
@@ -154,7 +155,7 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
         if (xTextSpacing > 1) xTextSpacing--;
         xFrustum = scrWidth / xTextSpacing;
-    }
+    }*/
 
     bool pressed = false;
     if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !pressed) {
@@ -175,6 +176,10 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
         mainWorld.updateMiniMap();
         
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+        save();
     }
 
     auto& ui = Game::getInstance().getInGameUI();
@@ -203,6 +208,7 @@ void processInput(GLFWwindow* window) {
 
 		ui.placingDims->changeText(std::wstring(dim.begin(), dim.end()));
 		ui.placingDims->setPosition(uiX - (dim.size() >> 1), uiY - 1);
+        ui.placingDims->setAnchorPosition(xFrustum, yFrustum);
     }
     else {
         ui.placingDims->changeText(L"");
@@ -265,7 +271,9 @@ void processInput(GLFWwindow* window) {
                 itemStr += " (" + materialToString(tool->material) + ")";
             }
 
-            itemStr += " " + item->claimed;
+
+			itemStr += " " + std::to_string(item->claimed);
+
             itemStr += "|";
         }
 
@@ -396,19 +404,20 @@ void harvest(int left, int right, int top, int bottom) {
 
                 // Retrieves harvest information based on item name
                 Rule* rule = HarvestRuleRegistry::getInstance().get(tile.items[0]->name);
+				SkillType skill = rule ? rule->skillType : SkillType::None;
                 if (rule) {
 
                     tile.anim.type = animType::RED_X;
                     if (rule->toolRequired == "None") {
 
-                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, SkillType::Woodcutting, tile.items[0].get()->name, x, y));
+                        JobManager::JobList.push_back(new HarvestTile(nullptr, nullptr, skill, tile.items[0].get()->name, x, y));
                     }
                     else {
 						auto toolInRegistry = ObjectRegistry::getInstance().get(rule->toolRequired);
 						Tool* tool = dynamic_cast<Tool*>(toolInRegistry.get());
                         if (tool) {
 							//std::cout << "Adding harvest job for " << tile.items[0]->name << " at (" << x << ", " << y << ") with tool " << tool->name << std::endl;
-                            Job* harvestJob = new HarvestTile(nullptr, tool, SkillType::Woodcutting, tile.items[0].get()->name, x, y);
+                            Job* harvestJob = new HarvestTile(nullptr, tool, skill, tile.items[0].get()->name, x, y);
                             harvestJob->priority = 50;
                             JobManager::JobList.push_back(harvestJob);
                         }
@@ -427,7 +436,12 @@ void harvest(int left, int right, int top, int bottom) {
 void plant(int left, int right, int top, int bottom) {
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
-            JobManager::JobList.push_back(new Plant(nullptr, nullptr, SkillType::Farming, "Wheat", x, y));
+            if (!mainWorld.atStockpile(x, y)) {
+			    JobManager::JobList.push_back(new Plant(nullptr, nullptr, SkillType::Farming, Game::getInstance().selectedPlantItem, x, y));
+            }
+            else {
+				std::cout << "Selected item is not a crop. Cannot plant at (" << x << ", " << y << ").\n";
+            }
         }
     }
 }

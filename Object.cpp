@@ -4,6 +4,7 @@
 #include "Food.h"
 #include "Furnace.h"
 #include "Spawner.h"
+#include "Seed.h"
 
 std::vector<Type> getAllTypes() {
 	std::vector<Type> types;
@@ -174,7 +175,16 @@ void loadObjects() {
 
 				return obj;
 				});
-				}
+		}
+		else if (type == "seed") {
+			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
+				auto obj = std::make_unique<Seed>();
+				obj->name = name;
+				obj->type = Type::Seed;
+				obj->cropType = i.at("grows_into").get<std::string>();
+				return obj;
+				});
+		}
 		else {
 			std::cout << "Unknown object type: " << type << std::endl;
 		}

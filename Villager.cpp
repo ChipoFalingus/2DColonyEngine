@@ -236,7 +236,7 @@ void Villager::idle() {
 	// Fallback idling stuff here
 	int rand = getRandomInt(1, 50);
 
-	if (rand == 1) {
+	/*if (rand == 1) {
 		auto chair = findClosestItemType(xPos, yPos, 50, [](const Object& item, int x, int y) {
 			return item.name == "Wooden Chair" && !item.claimed;
 			});
@@ -252,15 +252,95 @@ void Villager::idle() {
 			activity_state = ActivityState::Wandering;
 			currentJob = new Wander(this, nullptr, SkillType::None);
 		}
-	}
+	}*/
 
 	
 }
 
+enum UtilityType {
+	ATTACK,
+	RETREAT,
+	SLEEP,
+	EAT,
+
+};
+
+struct Score {
+	UtilityType type;
+	float score;
+};
+
+//void Villager::decide() {
+//
+//	std::vector<Score> possibleJobs;
+//
+//	if (threat) {
+//		possibleJobs.push_back({ ATTACK, 9990 });
+//		if (!itemInHand) {
+//			possibleJobs.push_back({ RETREAT, 9999 });
+//		}
+//	}
+//
+//
+//	if (tirednessClock > 2.0f && !sleeping) {
+//		tiredness++;
+//		tirednessClock = 0.0f;
+//
+//		claimBed();
+//	}
+//
+//	possibleJobs.push_back({ SLEEP, tiredness * 1.0f});
+//
+//
+//	if (hungerClock > 1.f) {
+//		hungerClock = 0.0f;
+//		hunger--;
+//	}
+//
+//	if (hunger < 80 && findFoodClock > 2.0f) {
+//		findFoodClock = 0.0f;
+//
+//		auto foodLocation = findClosestItemType(xPos, yPos, 50, [](const Object& obj, int x, int y) {
+//			return obj.type == Type::Food && !obj.claimed;
+//			});
+//
+//		if (foodLocation) {
+//			foodLocation->item.lock()->claimed = true;
+//			possibleJobs.push_back({ EAT, (100 - hunger) * 10.0f });
+//		}
+//	}
+//
+//	std::sort(possibleJobs.begin(), possibleJobs.end(), [](const Score& a, const Score& b) {
+//		return a.score > b.score;
+//		});
+//
+//	if (currentJob) {
+//		currentJob->state = JobState::Active;
+//	} else {
+//		if (!interrupted.empty()) {
+//			currentJob = interrupted.back();
+//			interrupted.pop_back();
+//		} else {
+//			auto best = possibleJobs.front();
+//			switch (best.type)
+//			{
+//			case ATTACK:
+//				currentJob = new Attack(this, nullptr, SkillType::None, threat);
+//				break;
+//
+//			case RETREAT:
+//				currentJob = new Retreat(this, nullptr, SkillType::None, threat);
+//				break;
+//
+//			case SLEEP:
+//				currentJob = new Sleep(this, nullptr, SkillType::None);
+//				break;
+//			}
+//		}
+//	}
+//}
+
 void Villager::decide() {
-
-	std::vector<Score> possibleJobs;
-
 
 	if (threat) {
 		if (itemInHand) {
@@ -311,7 +391,7 @@ void Villager::decide() {
 		isHungry = true;
 	}
 
-	
+
 	if (isHungry && findFoodClock > 2.0f && activity_state != ActivityState::Eating) {
 		findFoodClock = 0.0f;
 
@@ -338,11 +418,14 @@ void Villager::decide() {
 
 	if (currentJob) {
 		currentJob->state = JobState::Active;
-	} else {
+	}
+	else {
+		idle();
 		if (!interrupted.empty()) {
 			currentJob = interrupted.back();
 			interrupted.pop_back();
-		} else {
+		}
+		else {
 			idle();
 		}
 	}
@@ -368,8 +451,14 @@ void Villager::move() {
 		if (moveClock > speed) {
 			auto nextStep = currentPath.front();
 			currentPath.erase(currentPath.begin());
-			xPos = nextStep.first;
-			yPos = nextStep.second;
+			if (!getTileRef(nextStep.first, nextStep.second).walkable) {
+				currentPath = findPath(xPos, yPos, { currentJob->x, currentJob->y });
+				return;
+			}
+			else {
+				xPos = nextStep.first;
+				yPos = nextStep.second;
+			}
 			moveClock = 0.0f;
 		}
 	}
@@ -392,11 +481,6 @@ void Villager::doWork() {
 	else {
 		harvestTime = 1.0f;
 	}
-
-	/*std::sort(jobQueue.begin(), jobQueue.end(),
-		[](Job* a, Job* b) {
-			return a->priority > b->priority;
-		});*/
 
 	sense();
 	decide();

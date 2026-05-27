@@ -41,7 +41,7 @@ void World::renderWorld() {
 
 void addPaths() {
 	int mapDim = calculateMapSize();
-    auto points = createVoronoiMap(100, -mapDim, mapDim, -mapDim, mapDim);
+    auto points = createVoronoiMap(10, -mapDim, mapDim, -mapDim, mapDim);
 
     for (int i = 0; i < points.size(); i++) {
         auto& point1 = points[getRandomInt(0, points.size() - 1)];

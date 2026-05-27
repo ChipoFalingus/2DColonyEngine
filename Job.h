@@ -122,11 +122,19 @@ public:
 
 class Plant : public Job {
 public:
-	int locX, locY;
-	std::string name;
 
-	Plant(Villager* v, Tool* tool, SkillType skillType, std::string name, int locX, int locY)
-		: Job(v, tool, skillType), name(name), locX(locX), locY(locY)
+	enum State {
+		GettingSeed,
+		Planting
+	};
+
+	int locX, locY;
+	std::string seed;
+
+	State plantState = State::GettingSeed;
+
+	Plant(Villager* v, Tool* tool, SkillType skillType, std::string seed, int locX, int locY)
+		: Job(v, tool, skillType), seed(seed), locX(locX), locY(locY)
 	{
 		x = locX;
 		y = locY;

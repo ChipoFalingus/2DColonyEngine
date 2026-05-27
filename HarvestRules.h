@@ -9,10 +9,10 @@ public:
 	std::vector<std::string> produces;
 	int amount;
 	std::string toolRequired;
-	JobType jobType;
+	SkillType skillType;
 
-	Rule(std::string target, std::vector<std::string> produces, int amount, std::string toolRequired, JobType jobType)
-		: target(target), produces(produces), amount(amount), toolRequired(toolRequired), jobType(jobType) {
+	Rule(std::string target, std::vector<std::string> produces, int amount, std::string toolRequired, SkillType skillType)
+		: target(target), produces(produces), amount(amount), toolRequired(toolRequired), skillType(skillType) {
 	}
 };
 

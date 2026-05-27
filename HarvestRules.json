@@ -9,7 +9,7 @@
                 }
             ],
             "tool_required": "Axe",
-            "job_required": "Lumberjack"
+            "job_required": "Woodcutting"
         },
         {
             "target": [ "Rock" ],
@@ -20,7 +20,7 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Raw Iron" ],
@@ -31,7 +31,7 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Copper" ],
@@ -42,7 +42,7 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Gold" ],
@@ -53,7 +53,7 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Emerald" ],
@@ -64,7 +64,7 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Diamond" ],
@@ -75,7 +75,7 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Coal" ],
@@ -86,16 +86,37 @@
                 }
             ],
             "tool_required": "Pickaxe",
-            "job_required": "Miner"
+            "job_required": "Mining"
         },
         {
             "target": [ "Wheat" ],
             "produces": [
-                { "item": "Bundled Wheat", "amount": 1 },
-                { "item": "Wheat Seed", "amount": 1 }
+                {
+                    "item": "Bundled Wheat",
+                    "amount": 1
+                },
+                {
+                    "item": "Wheat Seeds",
+                    "amount": 1
+                }
             ],
             "tool_required": "None",
-            "job_required": "Farmer"
+            "job_required": "Farming"
+        },
+        {
+            "target": [ "Carrot Plant" ],
+            "produces": [
+                {
+                    "item": "Carrot",
+                    "amount": 1
+                },
+                {
+                    "item": "Carrot Seeds",
+                    "amount": 1
+                }
+            ],
+            "tool_required": "None",
+            "job_required": "Farming"
         }
     ]
 }

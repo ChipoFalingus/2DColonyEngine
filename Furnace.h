@@ -26,7 +26,7 @@ public:
 
     void addInput(std::shared_ptr<Object> item) {
         input = item;
-        currentRecipe = RecipeRegistry::getInstance().get("Iron Bar");
+        currentRecipe = RecipeRegistry::getInstance().get("Iron Bar_Furnace");
         clock = 0.0f;
         addLight();
 	}

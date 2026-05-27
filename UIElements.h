@@ -12,18 +12,6 @@
 
 #define BLANK_CHAR L'@'
 
-//enum Anchor {
-//	TOP_LEFT,
-//	TOP_CENTER,
-//	TOP_RIGHT,
-//	CENTER_LEFT,
-//	CENTER,
-//	CENTER_RIGHT,
-//	BOTTOM_LEFT,
-//	BOTTOM_CENTER,
-//	BOTTOM_RIGHT
-//};
-
 enum Anchor {
 	TOP_LEFT,
 	TOP_CENTER,
@@ -92,8 +80,8 @@ public:
 	Anchor getAlignment() const { return anchor; }
 
 	std::pair<int, int> getAnchorPosition(int scrLength, int scrHeight) const {
-		int x = xOffset;
-		int y = yOffset;
+		int x = 0;
+		int y = 0;
 
 		switch (anchor)
 		{
@@ -137,13 +125,16 @@ public:
 			break;
 		}
 
+		x += xOffset;
+		y += yOffset;
+
 		return { x, y };
 	}
 
 	void setAnchorPosition(int l, int h) {
 		auto pair = getAnchorPosition(l, h);
-		xPos = pair.first + xOffset;
-		yPos = pair.second + yOffset;
+		xPos = pair.first;
+		yPos = pair.second;
 	}
 };
 
@@ -157,6 +148,12 @@ public:
 	T& addElement(Args&&... args) {
 		elements.push_back(std::make_unique<T>(std::forward<Args>(args)...));
 		return *static_cast<T*>(elements.back().get());
+	}
+
+	void removeElement(UIElement* element) {
+		elements.erase(std::remove_if(elements.begin(), elements.end(),
+			[element](const std::unique_ptr<UIElement>& ptr) { return ptr.get() == element; }),
+			elements.end());
 	}
 
 	UI getName() const {
@@ -177,6 +174,12 @@ public:
 		if (elements.empty()) return;
 		for (auto& element : elements) {
 			element->update(mouseX, mouseY, mouseDown);
+		}
+	}
+
+	void resize(int scrLength, int scrHeight) {
+		for (auto& element : elements) {
+			element->setAnchorPosition(scrLength, scrHeight);
 		}
 	}
 };
@@ -200,6 +203,7 @@ public:
 			element->getXOffset() + xOffset,
 			element->getYOffset() + yOffset
 		);
+		element->setAnchorPosition(lengthX, lengthY);
 
 		elements.push_back(std::move(element));
 		return *static_cast<T*>(elements.back().get());
@@ -215,7 +219,7 @@ public:
 				if (yOffset + i < UI.size() && xOffset + j < UI[0].size()) {
 					UI[yOffset + i][xOffset + j] = L' ';
 
-					//Edges
+					// Edges
 					if (i == 0 || i == lengthY - 1) UI[yOffset + i][xOffset + j] = L'─';
 					if (j == 0 || j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'│';
 
@@ -230,7 +234,6 @@ public:
 		
 		
 		for (auto& element : elements) {
-			
 			element->draw(UI);
 		}
 	}
@@ -312,6 +315,19 @@ public:
 	{
 		this->anchor = anchor;
 		setPosition(xOffset, yOffset);
+		calculateSize();
+	}
+
+	void calculateSize() {
+		int maxLineLength = 0;
+		int lineCount = 1;
+		for (wchar_t ch : label) {
+			if (ch == L'|') {
+				lineCount++;
+				maxLineLength = std::max(maxLineLength, static_cast<int>(label.size()));
+			}
+		}
+		setSize(maxLineLength, lineCount);
 	}
 
 	void draw(std::vector<std::vector<wchar_t>>& UI) override {
@@ -329,8 +345,8 @@ public:
 				continue;
 			}
 
-			int drawY = yOffset + line;
-			int drawX = xOffset + column;
+			int drawY = yPos + line;
+			int drawX = xPos + column;
 
 			if (drawY < 0 || drawY >= static_cast<int>(UI.size())) {
 				continue;
@@ -379,8 +395,10 @@ public:
 	};
 
 	bool checkHover(int mouseX, int mouseY) { 
-		return (mouseX >= xOffset && mouseX < xOffset + staticButton[0].size()
-			&& mouseY >= yOffset && mouseY < yOffset + staticButton.size());
+		/*return (mouseX >= xOffset && mouseX < xOffset + staticButton[0].size()
+			&& mouseY >= yOffset && mouseY < yOffset + staticButton.size());*/
+		return (mouseX >= xPos && mouseX < xPos + staticButton[0].size()
+			&& mouseY >= yPos && mouseY < yPos + staticButton.size());
 		
 	}
 
@@ -399,8 +417,8 @@ public:
 
 		for (int i = 0; i < button->size(); i++) {
 			for (int j = 0; j < (*button)[i].size(); j++) {
-				int drawX = xOffset + j;
-				int drawY = yOffset + i;
+				int drawX = xPos + j;
+				int drawY = yPos + i;
 
 				if (drawY >= 0 && drawY < UI.size() &&
 					drawX >= 0 && drawX < UI[drawY].size()) {
@@ -459,6 +477,14 @@ public:
 		this->anchor = anchor;
 		setPosition(xOffset, yOffset);
 		setSize(1, 1);
+	}
+
+	bool getChecked() const {
+		return isChecked;
+	}
+
+	void setChecked(bool checked) {
+		isChecked = checked;
 	}
 
 	bool checkHover(int mouseX, int mouseY) {

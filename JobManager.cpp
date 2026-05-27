@@ -7,6 +7,7 @@
 #include "HarvestRules.h"
 #include "Game.h"
 #include "Food.h"
+#include "Seed.h"
 
 #include <limits>
 #include "World.h"
@@ -417,6 +418,7 @@ void BuildFurniture::update() {
 		x = closestAdj.first;
 		y = closestAdj.second;
 		if (isAtTile(villager->xPos, villager->yPos, tX, tY)) {
+			itemName.lock()->claimed = false;
 			villager->dropItem(itemName.lock(), tX, tY);
 			state = JobState::Completed;
 
@@ -479,21 +481,56 @@ void Plant::update() {
 		return;
 	}
 
-	std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, locX, locY);
-
-	x = closestAdj.first;
-	y = closestAdj.second;
-
-	if (tile.containsItem("Soil")) {
-		needsSoil = false;
-	}
-
-	if (villager->xPos == x && villager->yPos == y) {
-		if (needsSoil) {
-			tile.addObject("Soil");
+	switch (plantState)
+	{
+	case Plant::GettingSeed: {
+		auto itemLocation = findClosestItemType(villager->xPos, villager->yPos, 50, [&](const Object& item, int x, int y) {
+			return item.name == seed && !item.claimed;
+			});
+		if (!itemLocation) {
+			state = JobState::Completed;
+			villager->setCurrentJob(nullptr);
+			return;
 		}
-		tile.addObject(name);
-		state = JobState::Completed;
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, itemLocation->x, itemLocation->y);
+		x = closestAdj.first;
+		y = closestAdj.second;
+		if (isAtTile(villager->xPos, villager->yPos, itemLocation->x, itemLocation->y)) {
+			villager->pickUpItem(itemLocation->item.lock(), itemLocation->x, itemLocation->y);
+			plantState = Plant::Planting;
+		}
+		break;
+	}
+	case Plant::Planting: {
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, locX, locY);
+
+		x = closestAdj.first;
+		y = closestAdj.second;
+
+		if (tile.containsItem("Soil")) {
+			needsSoil = false;
+		}
+
+		if (villager->xPos == x && villager->yPos == y) {
+			if (needsSoil) {
+				tile.addObject("Soil");
+			}
+			auto c = ObjectRegistry::getInstance().get(seed);
+			if (c->type != Type::Seed) {
+				state = JobState::Completed;
+				return;
+			}
+			auto s = static_cast<Seed*>(c.get());
+			villager->inventory.remove(seed);
+			tile.addObject(s->cropType);
+			state = JobState::Completed;
+		}
+
+		break;
+
+	}
+	default:
+		break;
 	}
 }
 
@@ -851,8 +888,7 @@ void FindFood::update() {
 
 	switch (foodState) {
 
-	case State::Grab:
-	{
+	case State::Grab: {
 		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, tX, tY);
 		x = closestAdj.first;
 		y = closestAdj.second;
@@ -867,7 +903,6 @@ void FindFood::update() {
 
 			getTileRef(tX, tY).removeItem(food, tX, tY);
 
-
 			foodState = State::Find;
 		}
 
@@ -875,14 +910,12 @@ void FindFood::update() {
 	}
 		
 
-	case State::Find:
-	{
-		std::cout << "Finding place to eat" << std::endl;
+	case State::Find: {
 		place = findClosestItemType(villager->xPos, villager->yPos, 200, [](const Object& obj, int x, int y) {
-			if ((obj.name != "Wooden Chair") || obj.claimed)
+			if ((obj.name != "Wooden Chair") || obj.claimed) {
 				return false;
+			}
 
-			std::cout << "Found an unclaimed chair at " << x << "," << y << std::endl;
 			static const std::pair<int, int> dirs[4] = {
 				{0,1},{0,-1},{1,0},{-1,0}
 			};
@@ -895,30 +928,23 @@ void FindFood::update() {
 
 				for (auto& item : t.items) {
 					if (item->name == "Wooden Table") {
-						std::cout << "Found a table at " << nx << "," << ny << std::endl;
 						return true;
 					}
 				}
 			}
 
-			std::cout << "No table found adjacent to chair at " << x << "," << y << std::endl;
 			return false;
 
 			});
 		if (place.has_value()) {
 			place->item.lock()->claimed = true;
-			std::cout << "Place to eat found at " << place->x << "," << place->y << std::endl;
-		}
-		else {
-			std::cout << "No place to eat found, eating on the ground." << std::endl;
 		}
 		foodState = State::Eat;
 		std::cout << "Find: " << food->getNutrition() << std::endl;
 		break;
 	}
 
-	case State::Eat:
-	{
+	case State::Eat: {
 		if (place.has_value()) {
 			x = place->x;
 			y = place->y;

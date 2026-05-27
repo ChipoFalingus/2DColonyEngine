@@ -91,14 +91,6 @@
             }
         },
         {
-            "name": "Wheat",
-            "type": "object",
-            "visual": {
-                "character": "W",
-                "color": [ 255, 229, 153 ]
-            }
-        },
-        {
             "name": "Stick",
             "type": "object",
             "visual": {
@@ -417,12 +409,13 @@
             ]
         },
         {
-            "name": "Wheat Seed",
-            "type": "object",
+            "name": "Wheat Seeds",
+            "type": "seed",
             "visual": {
                 "character": ".",
                 "color": [ 56, 118, 29 ]
-            }
+            },
+            "grows_into": "Wheat"
         },
         {
             "name": "Bundled Wheat",
@@ -434,7 +427,7 @@
         },
 
         {
-            "name": "Carrot",
+            "name": "Carrot Plant",
             "type": "crop",
             "visual": {
                 "character": ".",
@@ -459,6 +452,24 @@
                     "color": [ 255, 145, 0 ]
                 }
             ]
+        },
+        {
+            "name": "Carrot Seeds",
+            "type": "seed",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grows_into": "Carrot Plant"
+        },
+        {
+            "name": "Carrot",
+            "type": "food",
+            "visual": {
+                "character": "V",
+                "color": [ 255, 145, 0 ]
+            },
+            "nutrition": 60
         },
         {
             "name": "Berry Bush",
@@ -486,7 +497,7 @@
                 "character": "o",
                 "color": [ 153, 15, 75 ]
             },
-            "nutrition": 30
+            "nutrition": 200
         },
         {
             "name": "Bread",
@@ -573,7 +584,7 @@
 
         },
         {
-            "name": "Ghost",
+            "name": "Blueprint",
             "type": "object",
             "visual": {
                 "character": "%",

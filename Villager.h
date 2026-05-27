@@ -138,20 +138,16 @@ public:
 
 	void initTraits() {
 
-		int skillListSize = getAllSkillTypes().size();
-		int rand = getRandomInt(0, skillListSize - 1);
+		auto skillList = getAllSkillTypes();
+		int rand = getRandomInt(0, skillList.size() - 1);
 
-		for (int i = 0; i < skillListSize; i++) {
-			SkillType skillType = static_cast<SkillType>(i);
-			if (skillType == SkillType::None) {
-				continue;
-			}
+		for (int i = 0; i < skillList.size(); i++) {
 			if (i == rand) {
 				// One random high skill
-				skills[skillType] = getRandomInt(10, 13);
+				skills[skillList[i]] = getRandomInt(10, 13);
 			}
 			else {
-				skills[skillType] = getRandomInt(1, 3);
+				skills[skillList[i]] = getRandomInt(1, 3);
 			}
 		}
 

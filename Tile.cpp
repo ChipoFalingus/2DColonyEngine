@@ -403,7 +403,7 @@ void Tile::getTile(int x, int y) {
         /*if (scrapNoise < 0.005f) {
             items.clear();
             addObject("Scrap Metal");
-        }
+        }*/
 
         int range = 10;
 
@@ -465,11 +465,11 @@ void Tile::getTile(int x, int y) {
         if (x == 1 && y == 0) {
             items.clear();
             addObject("Anvil");
-        }*/
+        }
 
     }
 
-    if (x > 3 && x < 5 && y > 5 && y < 9) {
+    /*if (x > 3 && x < 5 && y > 5 && y < 9) {
         items.clear();
         auto item = ObjectRegistry::getInstance().get("Wooden Chair");
         addObject(item);
@@ -478,18 +478,18 @@ void Tile::getTile(int x, int y) {
         items.clear();
         auto item = ObjectRegistry::getInstance().get("Wooden Table");
         addObject(item);
-    }
+    }*/
 
-    if (x > -1 && x < 1 && y > -1 + 5 && y < 1 + 5) {
+    if (x > -2 && x < 2 && y > -2 + 10 && y < 2 + 10) {
         items.clear();
-        auto item = ObjectRegistry::getInstance().get("Axe");
-        auto axe = static_cast<Tool*>(item.get());
+        auto item = ObjectRegistry::getInstance().get("Wheat Seeds");
+        //auto axe = static_cast<Tool*>(item.get());
         addObject(item);
-        //mainWorld.addItemToMove(item, x, y);
+        mainWorld.addItemToMove(item, x, y);
     }
-    if (x == 0 && y == 0) {
+   /* if (x == 0 && y == 0) {
 		addObject("Carpentry Bench");
-    }
+    }*/
 
     /*if (x > -2 && x < 2 && y > -2 && y < 2) {
 		int num = getRandomInt(0, 1);

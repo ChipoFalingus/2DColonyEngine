@@ -2,6 +2,7 @@
 #include "World.h"
 #include "Game.h"
 #include "JobType.h"
+#include "Seed.h"
 
 #include <thread>
 
@@ -20,7 +21,6 @@ MainMenuUI getMainMenuFrame() {
 
     ui.new_game = &createButton(*frame, 0, 0, L"           New Game           ", Anchor::CENTER);
 
-    // Swaps to the InGameFrame and does some setup to make sure the world is ready
     ui.new_game->setClickFunction([]() {
         auto& uiManager = Game::getInstance().getUIManager();
         uiManager.swapFrame(UI::Main, UI::WorldSettings);
@@ -36,6 +36,8 @@ MainMenuUI getMainMenuFrame() {
 
     ui.exit = &createButton(*frame, 0, 9, L"             Exit             ", Anchor::CENTER);
 
+	ui.text = &frame->addElement<Text>(0, 0, L"Created by Fling's Studio", Anchor::BOTTOM_LEFT);
+
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
@@ -44,8 +46,8 @@ SettingsUI getSettingsFrame() {
     SettingsUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
-    ui.text = &frame->addElement<Text>(50, 0, L"Settings Menu", Anchor::TOP_CENTER);
-	ui.back = &createButton(*frame, 0, 0, L" < Back ", Anchor::TOP_CENTER);
+    ui.text = &frame->addElement<Text>(0, 1, L"Settings Menu", Anchor::TOP_CENTER);
+	ui.back = &createButton(*frame, 0, 0, L" < Back ", Anchor::TOP_LEFT);
 
     ui.back->setClickFunction([]() {
         auto& uiManager = Game::getInstance().getUIManager();
@@ -61,9 +63,9 @@ WorldSettingsUI getWorldSettingsFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.text = &frame->addElement<Text>(50, 1, L"World Settings Menu", Anchor::TOP_CENTER);
+    ui.text = &frame->addElement<Text>(0, 1, L"World Settings Menu", Anchor::TOP_CENTER);
 
-    ui.back = &createButton(*frame, 0, 0, L" < Back ", Anchor::TOP_CENTER);
+    ui.back = &createButton(*frame, 0, 0, L" < Back ", Anchor::TOP_LEFT);
 
     ui.back->setClickFunction([]() {
         auto& uiManager = Game::getInstance().getUIManager();
@@ -74,7 +76,7 @@ WorldSettingsUI getWorldSettingsFrame() {
 
     ui.waterLevel = &frame->addElement<Slider>(3, 6, -50, 50, 0, 20, false, Anchor::TOP_CENTER);
 
-    ui.begin = &createButton(*frame, xFrustum - 11, yFrustum - 4, L" Begin! ", Anchor::TOP_CENTER);
+    ui.begin = &createButton(*frame, -1, -1, L" Begin! ", Anchor::BOTTOM_RIGHT);
 
     ui.begin->setClickFunction([]() {
         auto& uiManager = Game::getInstance().getUIManager();
@@ -95,12 +97,12 @@ LoadingUI getLoadingFrame() {
     frame->setType(ui.type);
     ui.panel = &frame->addElement<Panel>(0, 0, xFrustum, yFrustum, Anchor::TOP_CENTER);
 
-    ui.text = &frame->addElement<Text>(1, yFrustum / 2 - 3, L"Loading...", Anchor::TOP_CENTER);
+    ui.text = &frame->addElement<Text>(1, -2, L"Loading...", Anchor::CENTER_LEFT);
 
     int numChunks = (calculateMapSize() * calculateMapSize()) / (chunkDim * chunkDim);
-    ui.chunks = &frame->addElement<Text>(1, yFrustum / 2 - 2, L"0/" + std::to_wstring(numChunks), Anchor::TOP_CENTER);
+    ui.chunks = &frame->addElement<Text>(1, -1, L"0/" + std::to_wstring(numChunks), Anchor::CENTER_LEFT);
 
-    ui.animation = &frame->addElement<Text>(1, yFrustum / 2, L"", Anchor::TOP_CENTER);
+    ui.animation = &frame->addElement<Text>(1, 0, L"", Anchor::CENTER_LEFT);
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -116,19 +118,19 @@ InGameUI getInGameFrame() {
     Panel& infoPanel = frame->addElement<Panel>(0, 0, 30, 6, Anchor::TOP_CENTER);
     Panel& tileInfoPanel = frame->addElement<Panel>(30, 0, 30, 5, Anchor::TOP_CENTER);
 
-    ui.playerPos = &infoPanel.addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
-    ui.FPS = &infoPanel.addElement<Text>(1, 2, L"", Anchor::TOP_CENTER);
-    ui.population = &infoPanel.addElement<Text>(1, 3, L"", Anchor::TOP_CENTER);
-    ui.waterLevel = &infoPanel.addElement<Text>(1, 4, L"", Anchor::TOP_CENTER);
+    ui.playerPos = &infoPanel.addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
+    ui.FPS = &infoPanel.addElement<Text>(1, 2, L"", Anchor::TOP_LEFT);
+    ui.population = &infoPanel.addElement<Text>(1, 3, L"", Anchor::TOP_LEFT);
+    ui.waterLevel = &infoPanel.addElement<Text>(1, 4, L"", Anchor::TOP_LEFT);
 
-    ui.tileType = &tileInfoPanel.addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
-    ui.tileItems = &tileInfoPanel.addElement<Text>(1, 2, L"", Anchor::TOP_CENTER);
+    ui.tileType = &tileInfoPanel.addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
+    ui.tileItems = &tileInfoPanel.addElement<Text>(1, 2, L"", Anchor::TOP_LEFT);
 
-    ui.placingDims = &frame->addElement<Text>(0, 0, L"", Anchor::TOP_CENTER);
+    ui.placingDims = &frame->addElement<Text>(0, 0, L"", Anchor::TOP_LEFT);
     ui.villagerName = &frame->addElement<Text>(0, 0, L"", Anchor::TOP_CENTER);
 
 
-    ui.buildButton = &createButton(*frame, 0, 46, L"     ─█ Build     ", Anchor::TOP_CENTER);
+    ui.buildButton = &createButton(*frame, 0, 0, L"     ─█ Build     ", Anchor::BOTTOM_LEFT);
 
     ui.buildButton->setClickFunction([]() {
         setMode(Mode::NONE);
@@ -139,20 +141,23 @@ InGameUI getInGameFrame() {
         uiManager.remove(UI::Info);
         });
 
-    ui.harvestButton = &createButton(*frame, 20, 46, L"    /♣ Harvest    ", Anchor::TOP_CENTER);
+    ui.harvestButton = &createButton(*frame, 20, 0, L"    /♣ Harvest    ", Anchor::BOTTOM_LEFT);
 
     ui.harvestButton->setClickFunction([]() {
         mainWorld.placementMode = PlacementMode::SQUARE;
         setMode(Mode::HARVEST);
         });
 
-    ui.plantButton = &createButton(*frame, 40, 46, L"     W. Plant     ", Anchor::TOP_CENTER);
+    ui.plantButton = &createButton(*frame, 40, 0, L"     W. Plant     ", Anchor::BOTTOM_LEFT);
 
     ui.plantButton->setClickFunction([]() {
-        setMode(Mode::PLANT);
+        setMode(Mode::NONE);
+        auto& uiManager = Game::getInstance().getUIManager();
+		Game::getInstance().getPlantUI().configurePlantFrame();
+		uiManager.addOrRemoveFrame(UI::Plant);
         });
 
-    ui.stockpileButton = &createButton(*frame, 60, 46, L"   == Stockpile   ", Anchor::TOP_CENTER);
+    ui.stockpileButton = &createButton(*frame, 60, 0, L"   == Stockpile   ", Anchor::BOTTOM_LEFT);
 
     ui.stockpileButton->setClickFunction([]() {
         mainWorld.placementMode = PlacementMode::SQUARE;
@@ -168,8 +173,8 @@ MiniMapUI getMiniMapFrame() {
     auto frame = std::make_unique<Frame>();
 
     frame->setType(ui.type);
-    ui.text = &frame->addElement<Text>(0, 0, L"Mini Map Mode", Anchor::TOP_CENTER);
-    ui.seed = &frame->addElement<Text>(0, 1, L"Seed: " + std::to_wstring(seed), Anchor::TOP_CENTER);
+    ui.text = &frame->addElement<Text>(0, 0, L"Mini Map Mode", Anchor::TOP_LEFT);
+    ui.seed = &frame->addElement<Text>(0, 1, L"Seed: " + std::to_wstring(seed), Anchor::TOP_LEFT);
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -182,7 +187,7 @@ BuildUI getBuildFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.structureButton = &createButton(*frame, 0, 31, L" Structure ", Anchor::TOP_CENTER);
+    ui.structureButton = &createButton(*frame, 0, -14, L" Structure ", Anchor::BOTTOM_LEFT);
 
     ui.structureButton->setClickFunction([&]() {
         auto& uiManager = Game::getInstance().getUIManager();
@@ -193,7 +198,7 @@ BuildUI getBuildFrame() {
         });
 
 
-    ui.furnitureButton = &createButton(*frame, 0, 34, L" Furniture ", Anchor::TOP_CENTER);
+    ui.furnitureButton = &createButton(*frame, 0, -11, L" Furniture ", Anchor::BOTTOM_LEFT);
 
     ui.furnitureButton->setClickFunction([&]() {
 
@@ -207,7 +212,7 @@ BuildUI getBuildFrame() {
         uiManager.remove(UI::Production);
 		});
 
-    ui.productionButton = &createButton(*frame, 0, 37, L"Production ", Anchor::TOP_CENTER);
+    ui.productionButton = &createButton(*frame, 0, -8, L"Production ", Anchor::BOTTOM_LEFT);
 
     ui.productionButton->setClickFunction([&]() {
         mainWorld.placementMode = PlacementMode::SINGLE;
@@ -218,7 +223,7 @@ BuildUI getBuildFrame() {
         uiManager.remove(UI::Furniture);
         });
 
-    ui.securityButton = &createButton(*frame, 0, 40, L" Security  ", Anchor::TOP_CENTER);
+    ui.securityButton = &createButton(*frame, 0, -5, L" Security  ", Anchor::BOTTOM_LEFT);
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -230,10 +235,10 @@ ProductionUI getProductionFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.carpentry_bench = &createButton(*frame, 15, 31, L" Carpentry Bench ", Anchor::TOP_CENTER);
-	ui.stone_cutter = &createButton(*frame, 15, 34, L" Stone Cutter ", Anchor::TOP_CENTER);
-	ui.furnace = &createButton(*frame, 15, 37, L" Furnace ", Anchor::TOP_CENTER);
-    ui.anvil = &createButton(*frame, 15, 40, L" Anvil ", Anchor::TOP_CENTER);
+    ui.carpentry_bench = &createButton(*frame, 14, -14, L" Carpentry Bench ", Anchor::BOTTOM_LEFT);
+	ui.stone_cutter = &createButton(*frame, 14, -11, L" Stone Cutter ", Anchor::BOTTOM_LEFT);
+	ui.furnace = &createButton(*frame, 14, -8, L" Furnace ", Anchor::BOTTOM_LEFT);
+    ui.anvil = &createButton(*frame, 14, -5, L" Anvil ", Anchor::BOTTOM_LEFT);
 
     ui.carpentry_bench->setClickFunction([&]() {
         setMode(Mode::BUILD);
@@ -287,12 +292,11 @@ StructureUI getStructureFrame() {
     frame->setType(ui.type);
 
 
-    ui.wood_wall = &createButton(*frame, 15, 31, L" Wooden Wall ", Anchor::TOP_CENTER);
-    ui.stone_wall = &createButton(*frame, 15, 34, L" Stone Wall ", Anchor::TOP_CENTER);
-    ui.wood_fence = &createButton(*frame, 15, 37, L" Wooden Floor ", Anchor::TOP_CENTER);
-    ui.stone_fence = &createButton(*frame, 15, 40, L" Stone Floor ", Anchor::TOP_CENTER);
-    ui.wood_floor = &createButton(*frame, 15, 43, L" ? ", Anchor::TOP_CENTER);
-
+    ui.wood_wall = &createButton(*frame, 14, -17, L" Wooden Wall ", Anchor::BOTTOM_LEFT);
+    ui.stone_wall = &createButton(*frame, 14, -14, L" Stone Wall ", Anchor::BOTTOM_LEFT);
+    ui.wood_fence = &createButton(*frame, 14, -11, L" Wooden Floor ", Anchor::BOTTOM_LEFT);
+    ui.stone_fence = &createButton(*frame, 14, -8, L" Stone Floor ", Anchor::BOTTOM_LEFT);
+    ui.wood_floor = &createButton(*frame, 14, -5, L" ? ", Anchor::BOTTOM_LEFT);
     ui.wood_wall->setClickFunction([&]() {
         setMode(Mode::BUILD);
         mainWorld.placementMode = PlacementMode::SQUARE;
@@ -323,6 +327,7 @@ FurnitureUI getFurnitureFrame() {
     FurnitureUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
+	ui.text = &frame->addElement<Text>(15, -5, L"Select furniture to place:", Anchor::BOTTOM_LEFT);
 
     int offset = 0;
     for (auto& [f, num] : getFurnitureList()) {
@@ -342,9 +347,21 @@ FurnitureUI getFurnitureFrame() {
 }
 
 void FurnitureUI::configureFurnitureFrame() {
+    for (auto& button : buttons) {
+        Game::getInstance().getUIManager().getFrame(UI::Furniture)->removeElement(button);
+	}
+
     buttons.clear();
 
     auto i = getFurnitureList();
+
+    if (i.empty()) {
+		text->changeText(L"No furniture to place");
+    }
+    else {
+		text->changeText(L"");
+    }
+
     int offset = 0;
     for (auto& [string, num] : i) {
         std::string j = string + " x" + std::to_string(num);
@@ -394,8 +411,8 @@ CarpentryBenchUI getCarpentryBenchFrame() {
 
     ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_CENTER);
 
-    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_CENTER);
-	ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_CENTER);
+    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_LEFT);
+	ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_LEFT);
 
     int num = 0;
     for (auto& i : RecipeRegistry::getInstance().getRecipeTable()) {
@@ -406,7 +423,7 @@ CarpentryBenchUI getCarpentryBenchFrame() {
 
         auto button = &createButton(*frame,
             ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
-            std::wstring(i.second.result.begin(), i.second.result.end()), Anchor::TOP_CENTER);
+            std::wstring(i.second.result.begin(), i.second.result.end()), Anchor::TOP_LEFT);
 
         std::string recipeName = i.first;
 
@@ -428,11 +445,13 @@ CarpentryBenchUI getCarpentryBenchFrame() {
 			ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
 			});
 
+		button->setAnchorPosition(xFrustum, yFrustum);
+
         ui.craftable_items.push_back(button);
         num++;
     }
 
-	ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 31, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_CENTER);
+	ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 31, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_LEFT);
 
 
     ui.closeButton->setClickFunction([]() {
@@ -544,17 +563,19 @@ StockpileUI getStockpileFrame() {
     StockpileUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
-    ui.infoPanel = &frame->addElement<Panel>(0, 14, 6, 7, Anchor::TOP_CENTER);
-    ui.text = &ui.infoPanel->addElement<Text>(20, 1, L"Filters:", Anchor::TOP_CENTER);
-    ui.capacity = &ui.infoPanel->addElement<Text>(40, 2, L"", Anchor::TOP_CENTER);
-    ui.contents = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
+    ui.infoPanel = &frame->addElement<Panel>(0, 14, 6, 7, Anchor::TOP_LEFT );
+    ui.text = &ui.infoPanel->addElement<Text>(20, 1, L"Filters:", Anchor::TOP_LEFT);
+    ui.capacity = &ui.infoPanel->addElement<Text>(40, 2, L"", Anchor::TOP_LEFT);
+    ui.contents = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
 
     int num = ui.infoPanel->getYOffset() + 2;
     for (int i = 0; i < getAllTypes().size(); i++) {
 		std::string type = itemTypeToString(getAllTypes()[i]);
 		std::wstring typeName = std::wstring(type.begin(), type.end());
-		frame->addElement<Checkbox>(20, num, Anchor::TOP_CENTER);
-		frame->addElement<Text>(23, num, typeName, Anchor::TOP_CENTER);
+		
+		ui.typeFilters.push_back(&frame->addElement<Checkbox>(20, num, Anchor::TOP_LEFT));
+
+		frame->addElement<Text>(23, num, typeName, Anchor::TOP_LEFT);
         num++;
 	}
 
@@ -563,6 +584,9 @@ StockpileUI getStockpileFrame() {
 }
 
 void StockpileUI::updateStockpileUI(Stockpile& stockpile) {
+    for (auto& checkbox : typeFilters) {
+        Game::getInstance().getUIManager().getFrame(UI::Stockpile)->removeElement(checkbox);
+	}
     typeFilters.clear();
     //std::wstring capacityStr = L"Capacity: " + std::to_wstring(stockpile.getHeight() * stockpile.getWidth());
 
@@ -575,10 +599,17 @@ void StockpileUI::updateStockpileUI(Stockpile& stockpile) {
         contentsStr += std::wstring(name.begin(), name.end()) + L": x" + std::to_wstring(count) + L"|";
 	}
 
-    int num = 1;
-    for (auto& [type, enabled] : stockpile.getFilter()) {
-        //typeFilters.push_back(new Checkbox(1, num, Anchor::TOP_CENTER));
-        
+    int num = infoPanel->getYOffset() + 2;
+    for (int i = 0; i < getAllTypes().size(); i++) {
+        std::string type = itemTypeToString(getAllTypes()[i]);
+        std::wstring typeName = std::wstring(type.begin(), type.end());
+
+		auto frame = Game::getInstance().getUIManager().getFrame(UI::Stockpile);
+		auto checkbox = &frame->addElement<Checkbox>(20, num, Anchor::TOP_CENTER);
+		//checkbox->setChecked(stockpile.getFilter().at(getAllTypes()[i]));
+        typeFilters.push_back(checkbox);
+
+        //frame->addElement<Text>(23, num, typeName, Anchor::TOP_CENTER);
         num++;
     }
 
@@ -593,16 +624,15 @@ VillagerInfoUI getVillagerInfoFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.infoPanel = &frame->addElement<Panel>(0, 10, 6, 17, Anchor::TOP_CENTER);
+    ui.infoPanel = &frame->addElement<Panel>(0, 10, 6, 17, Anchor::TOP_LEFT);
 
-    ui.text = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
-	ui.job = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_CENTER);
-    ui.inventory = &ui.infoPanel->addElement<Text>(1, 3, L"", Anchor::TOP_CENTER);
+    ui.text = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
+	ui.job = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_LEFT);
+    ui.inventory = &ui.infoPanel->addElement<Text>(1, 3, L"", Anchor::TOP_LEFT);
+    ui.health = &ui.infoPanel->addElement<Text>(1, 4, L"", Anchor::TOP_LEFT);
+    ui.hunger = &ui.infoPanel->addElement<Text>(1, 5, L"", Anchor::TOP_LEFT);
 
-    ui.health = &ui.infoPanel->addElement<Text>(1, 4, L"", Anchor::TOP_CENTER);
-    ui.hunger = &ui.infoPanel->addElement<Text>(1, 5, L"", Anchor::TOP_CENTER);
-
-	ui.skills = &ui.infoPanel->addElement<Text>(1, 6, L"", Anchor::TOP_CENTER);
+	ui.skills = &ui.infoPanel->addElement<Text>(1, 6, L"", Anchor::TOP_LEFT);
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -624,13 +654,64 @@ HarvestUI getHarvestFrame() {
     return ui;
 }
 
+PlantUI getPlantFrame() {
+    PlantUI ui;
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+    ui.infoPanel = &frame->addElement<Panel>(0, 10, 25, 6, Anchor::TOP_LEFT);
+    std::wstring infoText = L"Select what to plant:";
+    ui.text = &ui.infoPanel->addElement<Text>(1, 1, infoText, Anchor::TOP_LEFT);
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
+void PlantUI::configurePlantFrame() {
+    for (auto& i : seeds) {
+        Game::getInstance().getUIManager().getFrame(UI::Plant)->removeElement(i);
+    }
+    seeds.clear();
+
+	std::unordered_map<std::string, int> result;
+    auto& stockpiles = mainWorld.getStockpiles();
+    for (auto& s : stockpiles) {
+        const auto& list = s.getItems();
+        for (auto& [loc, f] : list) {
+            for (auto& item : f) {
+                if (item->type == Type::Seed && !item->claimed) {
+                    result[item->name]++;
+                }
+            }
+        }
+    }
+
+    int offset = 0;
+
+    for (auto& [name, count] : result) {
+        std::string plantStr = name + " x" + std::to_string(count);
+        auto frame = Game::getInstance().getUIManager().getFrame(UI::Plant);
+        auto button = &createButton(*frame,
+            infoPanel->getXPos() + 1, 2 + infoPanel->getYPos() + offset * 3,
+            std::wstring(plantStr.begin(), plantStr.end()), Anchor::TOP_LEFT);
+
+        button->setClickFunction([name] {
+			setMode(Mode::PLANT);
+			Game::getInstance().selectedPlantItem = name;
+            });
+
+		button->setAnchorPosition(xFrustum, yFrustum);
+
+        seeds.push_back(button);
+        offset++;
+    }
+}
+
 InfoUI getInfoFrame() {
     InfoUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
-    ui.infoPanel = &frame->addElement<Panel>(0, 25, 20, 6, Anchor::TOP_CENTER);
-    ui.itemName= &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_CENTER);
-	ui.ingredients = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_CENTER);
+    ui.infoPanel = &frame->addElement<Panel>(0, 25, 20, 6, Anchor::BOTTOM_LEFT);
+    ui.itemName= &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
+	ui.ingredients = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_LEFT);
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
