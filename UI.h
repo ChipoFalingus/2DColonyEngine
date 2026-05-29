@@ -10,6 +10,7 @@ struct MainMenuUI {
     Button* settingsButton;
     Button* exit;
 
+    Text* title;
     Text* text;
 };
 

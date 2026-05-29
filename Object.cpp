@@ -5,6 +5,7 @@
 #include "Furnace.h"
 #include "Spawner.h"
 #include "Seed.h"
+#include "Structure.h"
 
 std::vector<Type> getAllTypes() {
 	std::vector<Type> types;
@@ -160,9 +161,20 @@ void loadObjects() {
 		}
 		else if (type == "structure") {
 			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
-				auto obj = std::make_unique<Object>();
+				auto obj = std::make_unique<Structure>();
 				obj->name = name;
 				obj->type = Type::Structure;
+				obj->health = 100;
+
+				return obj;
+				});
+		}
+		else if (type == "gate") {
+			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
+				auto obj = std::make_unique<Gate>();
+				obj->name = name;
+				obj->type = Type::Gate;
+				obj->health = 100;
 
 				return obj;
 				});

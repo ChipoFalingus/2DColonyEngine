@@ -370,7 +370,7 @@ void Tile::getTile(int x, int y) {
 
         float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
 
-        /*if (outposts < 0.00001f) {
+        if (x == 20 && y == 20) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Outpost");
             auto spawner = static_cast<Spawner*>(item.get());
@@ -379,19 +379,38 @@ void Tile::getTile(int x, int y) {
             addObject(item);
 
 			tiles.push_back({ x, y });
-        }*/
+        }
+
+        if (x == -20 && y == 20) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Outpost");
+            auto spawner = static_cast<Spawner*>(item.get());
+            spawner->x = x;
+            spawner->y = y;
+            addObject(item);
+
+            tiles.push_back({ x, y });
+        }
 
         if (x == 10 && y == 10) {
            items.clear();
-           auto item = ObjectRegistry::getInstance().get("Berry Bush");
+           auto item = ObjectRegistry::getInstance().get("Apple Tree");
            auto spawner = static_cast<FoliageCrop*>(item.get());
            spawner->x = x;
            spawner->y = y;
            addObject(item);
         }
+        if (x == 0 && y == 10) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Orange Tree");
+            auto spawner = static_cast<FoliageCrop*>(item.get());
+            spawner->x = x;
+            spawner->y = y;
+            addObject(item);
+        }
         if (x == -10 && y == 10) {
             items.clear();
-            auto item = ObjectRegistry::getInstance().get("Berry Bush");
+            auto item = ObjectRegistry::getInstance().get("Lemon Tree");
             auto spawner = static_cast<FoliageCrop*>(item.get());
             spawner->x = x;
             spawner->y = y;
@@ -412,7 +431,11 @@ void Tile::getTile(int x, int y) {
             (x >= -5 && x <= 5 && y >= -5 && y <= 5) && x != 0
             ) {
             items.clear();
-            addObject("Wooden Wall");
+            auto item = ObjectRegistry::getInstance().get("Wooden Wall");
+            auto i = static_cast<Structure*>(item.get());
+            i->x = x;
+            i->y = y;
+            addObject(item);
             blocked = true;
         }
 
@@ -480,13 +503,28 @@ void Tile::getTile(int x, int y) {
         addObject(item);
     }*/
 
-    if (x > -2 && x < 2 && y > -2 + 10 && y < 2 + 10) {
-        items.clear();
-        auto item = ObjectRegistry::getInstance().get("Wheat Seeds");
-        //auto axe = static_cast<Tool*>(item.get());
-        addObject(item);
-        mainWorld.addItemToMove(item, x, y);
-    }
+   /* if (x > -3 && x < 3 && y > -3 + 10 && y < 3 + 10) {
+		int num = getRandomInt(0, 2);
+        if (num == 0) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Wheat Seeds");
+            addObject(item);
+            mainWorld.addItemToMove(item, x, y);
+        }
+        else if (num == 1) {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Carrot Seeds");
+            addObject(item);
+            mainWorld.addItemToMove(item, x, y);
+        }
+        else {
+            items.clear();
+            auto item = ObjectRegistry::getInstance().get("Potato Seeds");
+            addObject(item);
+            mainWorld.addItemToMove(item, x, y);
+        }
+        
+    }*/
    /* if (x == 0 && y == 0) {
 		addObject("Carpentry Bench");
     }*/
@@ -598,6 +636,15 @@ void Tile::removeItem(std::shared_ptr<Object> item, int x, int y) {
     }
 }
 
+void Tile::removeItem(std::string item) {
+    for (auto it = items.begin(); it != items.end(); ++it) {
+        if ((*it)->name == item) {
+            items.erase(it);
+            return;
+        }
+    }
+}
+
 tileDisplay getTileDisplay(tileType type) {
 
     wchar_t c;
@@ -645,7 +692,7 @@ bool getTileWalkable(Object* itemOnTile, tileType type) {
         if (itemOnTile->name == "Wooden Wall") {
             return false;
         }
-        else if (itemOnTile->name == "Rock") {
+        else if (itemOnTile->name == "Rck") {
             return false;
         }
         else {

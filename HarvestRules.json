@@ -1,7 +1,7 @@
 {
     "rules": [
         {
-            "target": [ "Oak Tree", "Pine Tree", "Birch Tree", "Dead Tree", "Apple Tree" ],
+            "target": [ "Oak Tree", "Pine Tree", "Birch Tree", "Dead Tree", "Apple Tree", "Orange Tree", "Lemon Tree" ],
             "produces": [
                 {
                     "item": "Wood",
@@ -112,6 +112,21 @@
                 },
                 {
                     "item": "Carrot Seeds",
+                    "amount": 1
+                }
+            ],
+            "tool_required": "None",
+            "job_required": "Farming"
+        },
+        {
+            "target": [ "Potato Plant" ],
+            "produces": [
+                {
+                    "item": "Potato",
+                    "amount": 1
+                },
+                {
+                    "item": "Potato Seeds",
                     "amount": 1
                 }
             ],

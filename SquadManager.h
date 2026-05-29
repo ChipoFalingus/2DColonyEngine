@@ -29,4 +29,11 @@ public:
 	void removeSquad(Squad& squad) {
 		squads.erase(std::remove(squads.begin(), squads.end(), squad), squads.end());
 	}
+
+	void mergeSquads(Squad& squadA, Squad& squadB) {
+		for (Creature* member : squadB.getMembers()) {
+			squadA.addMember(member);
+		}
+		removeSquad(squadB);
+	}
 };

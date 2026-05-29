@@ -19,6 +19,7 @@ enum struct Type {
 	Gun,
 	Bench,
 	Structure,
+	Gate,
 	Furniture,
 	Spawner,
 	Seed,

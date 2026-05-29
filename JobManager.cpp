@@ -472,8 +472,6 @@ void Plant::update() {
 
 	bool needsSoil = true;
 
-	// Update this to only allow planting on fertile land
-
 	Tile& tile = getTileRef(locX, locY);
 
 	if (!tile.walkable) {
@@ -489,7 +487,6 @@ void Plant::update() {
 			});
 		if (!itemLocation) {
 			state = JobState::Completed;
-			villager->setCurrentJob(nullptr);
 			return;
 		}
 		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, itemLocation->x, itemLocation->y);

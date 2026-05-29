@@ -19,6 +19,10 @@ MainMenuUI getMainMenuFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
+	ui.title = &frame->addElement<Text>(0, -10, L"Fling's Colony", Anchor::CENTER);
+
+	std::cout << ui.title->getAnchorPosition(xFrustum, yFrustum).first << ", " << ui.title->getAnchorPosition(xFrustum, yFrustum).second << std::endl;
+
     ui.new_game = &createButton(*frame, 0, 0, L"           New Game           ", Anchor::CENTER);
 
     ui.new_game->setClickFunction([]() {
@@ -471,9 +475,9 @@ AnvilUI getAnvilFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_CENTER);
+    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_LEFT);
 
-    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_CENTER);
+    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_LEFT);
 
     int num = 0;
     for (auto& i : RecipeRegistry::getInstance().getRecipeTable()) {
@@ -481,7 +485,7 @@ AnvilUI getAnvilFrame() {
 
         auto button = &createButton(*frame,
             ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
-            std::wstring(i.first.begin(), i.first.end()), Anchor::TOP_CENTER);
+            std::wstring(i.first.begin(), i.first.end()), Anchor::TOP_LEFT);
 
         std::string recipeName = i.first;
 
@@ -495,7 +499,7 @@ AnvilUI getAnvilFrame() {
         num++;
     }
 
-    ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 30, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_CENTER);
+    ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 30, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_LEFT);
 
     ui.closeButton->setClickFunction([]() {
         auto& uiManager = Game::getInstance().getUIManager();

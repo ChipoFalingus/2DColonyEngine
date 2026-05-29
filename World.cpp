@@ -102,15 +102,15 @@ void createRegions() {
 
 // Adds creatures to the world
 void World::addCreatures() {
-    for (int i = 0; i < 0; i++) {
-        int x = getRandomInt(-10, 10);
-        int y = getRandomInt(-10, 10);
+   /* for (int i = 0; i < 10000; i++) {
+        int x = getRandomInt(-100, 100);
+        int y = getRandomInt(-100, 100);
         if (getTileRef(x, y).walkable) {
             auto v = std::make_unique<Zombie>(x, y);
             squad1.addMember(v.get());
             allCreatures.push_back(std::move(v));
         }
-    }
+    }*/
 
     int range = 2;
 

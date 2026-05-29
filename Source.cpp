@@ -849,6 +849,8 @@ int main() {
 
         if (mainWorld.isRendered()) {
 
+            squad1.update();
+
             // All dynamic tiles need to be added to this list
             for (auto& tile : tiles) {
                 auto i = getTileRef(tile.first, tile.second).items[0];
@@ -858,22 +860,7 @@ int main() {
                 }
             }
 
-            // Move this to the Colony class later
-            //std::vector<Villager*> shuffled = mainWorld.getAllVillagers();
-            //std::shuffle(shuffled.begin(), shuffled.end(), rng);
-
-			//std::cout << JobManager::JobList.size() << " jobs in queue and " << JobManager::WaitingJobList.size() << " waiting jobs." << std::endl;
-
-            // Assign jobs
-            /*for (auto& j : JobManager::JobList) {
-                if (!j) continue;
-                if (j->villager) continue;
-                JobManager::findBestColonistForJob(*j);
-            }*/
-
             JobManager::update();
-			//std::cout << JobManager::JobList.size() << " jobs in queue" << std::endl;
-
 
             // Stockpile item moving
 

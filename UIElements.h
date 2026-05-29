@@ -320,13 +320,21 @@ public:
 
 	void calculateSize() {
 		int maxLineLength = 0;
+		int num = 0;
 		int lineCount = 1;
+
 		for (wchar_t ch : label) {
 			if (ch == L'|') {
+				maxLineLength = std::max(maxLineLength, num);
+				num = 0;
 				lineCount++;
-				maxLineLength = std::max(maxLineLength, static_cast<int>(label.size()));
+			}
+			else {
+				num++;
 			}
 		}
+
+		maxLineLength = std::max(maxLineLength, num);
 		setSize(maxLineLength, lineCount);
 	}
 
@@ -356,7 +364,7 @@ public:
 			}
 
 			UI[drawY][drawX] = ch;
-			++column;
+			column++;
 		}
 	}
 

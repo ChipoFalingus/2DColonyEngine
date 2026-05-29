@@ -84,7 +84,7 @@ public:
     void addObject(std::string itemName);
 	void addObject(std::shared_ptr<Object> item);
     void removeItem(std::shared_ptr<Object> item, int x, int y);
-    
+    void removeItem(std::string item);
 };
 
 std::string typeToString(tileType type);

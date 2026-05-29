@@ -372,16 +372,6 @@
         },
 
         {
-            "name": "Apple Tree",
-            "type": "foliage_crop",
-            "visual": {
-                "character": 9827,
-                "color": [ 0, 255, 0 ]
-            },
-            "produce": "Apple"
-        },
-
-        {
             "name": "Wheat",
             "type": "crop",
             "visual": {
@@ -471,6 +461,86 @@
             },
             "nutrition": 60
         },
+
+
+
+        {
+            "name": "Potato Plant",
+            "type": "crop",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grow_time": 2.0,
+            "stages": [
+                {
+                    "char": ",",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "|",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "M",
+                    "color": [ 56, 118, 29 ]
+                },
+                {
+                    "char": "o",
+                    "color": [ 183, 146, 104 ]
+                }
+            ]
+        },
+        {
+            "name": "Potato Seeds",
+            "type": "seed",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grows_into": "Potato Plant"
+        },
+        {
+            "name": "Potato",
+            "type": "food",
+            "visual": {
+                "character": "o",
+                "color": [ 183, 146, 104 ]
+            },
+            "nutrition": 140
+        },
+
+
+
+
+        {
+            "name": "Apple Tree",
+            "type": "foliage_crop",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "produce": "Apple"
+        },
+        {
+            "name": "Orange Tree",
+            "type": "foliage_crop",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "produce": "Orange"
+        },
+        {
+            "name": "Lemon Tree",
+            "type": "foliage_crop",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "produce": "Lemon"
+        },
+
         {
             "name": "Berry Bush",
             "type": "foliage_crop",
@@ -487,6 +557,24 @@
             "visual": {
                 "character": "Q",
                 "color": [ 255, 0, 0 ]
+            },
+            "nutrition": 52
+        },
+        {
+            "name": "Orange",
+            "type": "food",
+            "visual": {
+                "character": "O",
+                "color": [ 250, 112, 0 ]
+            },
+            "nutrition": 52
+        },
+        {
+            "name": "Lemon",
+            "type": "food",
+            "visual": {
+                "character": "0",
+                "color": [ 250, 250, 0 ]
             },
             "nutrition": 52
         },

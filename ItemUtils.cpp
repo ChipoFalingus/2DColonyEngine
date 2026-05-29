@@ -36,3 +36,21 @@ std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, 
 
     return std::nullopt;
 }
+
+std::optional<std::vector<ItemLocation>> findAllItemInRange(int xPos, int yPos, int radius, std::function<bool(const Object&, int, int)> filter) {
+    std::vector<ItemLocation> foundItems;
+    for (int x = xPos - radius; x <= xPos + radius; x++) {
+        for (int y = yPos - radius; y <= yPos + radius; y++) {
+            Tile& tile = getTileRef(x, y);
+            for (const auto& item : tile.items) {
+                if (filter(*item, x, y)) {
+                    foundItems.push_back(ItemLocation(x, y, item));
+                }
+            }
+        }
+    }
+    if (foundItems.empty()) {
+        return std::nullopt;
+    }
+    return foundItems;
+}

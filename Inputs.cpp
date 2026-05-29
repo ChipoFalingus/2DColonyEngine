@@ -271,6 +271,10 @@ void processInput(GLFWwindow* window) {
                 itemStr += " (" + materialToString(tool->material) + ")";
             }
 
+            if (item->type == Type::Structure) {
+                Structure* structure = static_cast<Structure*>(item.get());
+                itemStr += " " + std::to_string(structure->health);
+            }
 
 			itemStr += " " + std::to_string(item->claimed);
 
