@@ -1,5 +1,8 @@
 #pragma once
 
+/*
+
+i forgot about these
 
 enum class Emotion {
 	Joy,
@@ -45,6 +48,7 @@ enum class Trait {
 	Leader,
 	Creative
 };
+*/
 
 class Brain {
 

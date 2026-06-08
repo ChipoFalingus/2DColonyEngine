@@ -2,6 +2,13 @@
 
 #include "Object.h"
 #include "Tile.h"
+#include "Villager.h"
+
+enum Walkability {
+	Open,
+	Filtered,
+	Blocked
+};
 
 class Structure : public Object {
 public:
@@ -10,13 +17,13 @@ public:
 
 	int x, y;
 
-	//Structure(int maxHealth) : Object(), health(maxHealth), maxHealth(maxHealth) {}
+	Walkability walkabilityStatus;
+	std::function<bool(Creature*)> filter;
 
 	void takeDamage(int damage) {
 		if (health <= 0) return;
 
 		health -= damage;
-		std::cout << "Structure took " << damage << " damage. Health: " << health << std::endl;
 
 		if (health <= 0) {
 			getTileRef(x, y).removeItem(name);
@@ -24,21 +31,33 @@ public:
 			std::cout << "Broken" << std::endl;
 		}
 	}
+
+	virtual bool getWalkability(Creature* c) {
+		switch (walkabilityStatus) {
+		case Walkability::Open:    return true;
+		case Walkability::Blocked:   return false;
+		case Walkability::Filtered:  return false;
+		}
+		return false;
+	};
 };
 
-
-class Gate : public Object {
+class Gate : public Structure {
 public:
-	int health = 100;
-	int maxHealth;
+	Gate() { walkabilityStatus = Walkability::Filtered; }
 
-	int x, y;
-
-	bool getWalkability(Creature* c) {
-		if (dynamic_cast<Villager*>(c)) {
+	bool getWalkability(Creature* c) override {
+		switch (walkabilityStatus) {
+		case Open: {
 			return true;
 		}
-
-		return false;
+		case Blocked: {
+			return false;
+		}
+		case Filtered: {
+			if (filter) return filter(c);
+			else return false;
+		}
+		}
 	}
 };

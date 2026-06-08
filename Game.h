@@ -19,11 +19,13 @@ private:
 	LoadingUI loadingUI;
     InGameUI inGameUI;
 	MiniMapUI miniMapUI;
+	VillagerListUI villagerListUI;
     BuildUI buildUI;
     ProductionUI productionUI;
 	FurnitureUI furnitureUI;
     StructureUI structureUI;
     CarpentryBenchUI carpentryBenchUI;
+	StoneCutterUI stoneCutterUI;
 	AnvilUI anvilUI;
 	GunBenchUI gunBenchUI;
     StockpileUI stockpileUI;
@@ -58,11 +60,13 @@ public:
 		loadingUI = getLoadingFrame();
         inGameUI = getInGameFrame();
 		miniMapUI = getMiniMapFrame();
+		villagerListUI = getVillagerListFrame();
         buildUI = getBuildFrame();
         productionUI = getProductionFrame();
 		furnitureUI = getFurnitureFrame();
         structureUI = getStructureFrame();
         carpentryBenchUI = getCarpentryBenchFrame();
+		stoneCutterUI = getStoneCutterFrame();
 		anvilUI = getAnvilFrame();
 		gunBenchUI = getGunBenchFrame();
         stockpileUI = getStockpileFrame();
@@ -92,6 +96,10 @@ public:
         return inGameUI;
     }
 
+    VillagerListUI& getVillagerListUI() {
+        return villagerListUI;
+	}
+
     MiniMapUI& getMiniMapUI() {
         return miniMapUI;
     }
@@ -115,6 +123,10 @@ public:
     CarpentryBenchUI& getCarpentryBenchUI() {
         return carpentryBenchUI;
     }
+
+    StoneCutterUI& getStoneCutterUI() {
+        return stoneCutterUI;
+	}
 
     AnvilUI& getAnvilUI() {
         return anvilUI;

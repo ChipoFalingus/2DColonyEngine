@@ -67,6 +67,7 @@ enum class SkillType {
     Mining,
     Woodcutting,
     Carpentry,
+    Masonry,
     Blacksmithing,
     Gunsmithing,
     Cooking,
@@ -81,6 +82,7 @@ inline std::vector<SkillType> getAllSkillTypes() {
         SkillType::Mining,
         SkillType::Woodcutting,
         SkillType::Carpentry,
+        SkillType::Masonry,
         SkillType::Blacksmithing,
         SkillType::Gunsmithing,
         SkillType::Cooking,
@@ -96,6 +98,7 @@ inline std::string skillTypeToString(SkillType type) {
     case SkillType::Mining:       return "Mining";
     case SkillType::Woodcutting:  return "Woodcutting";
     case SkillType::Carpentry:    return "Carpentry";
+	case SkillType::Masonry:      return "Masonry";
     case SkillType::Blacksmithing:return "Blacksmithing";
     case SkillType::Gunsmithing:  return "Gunsmithing";
     case SkillType::Cooking:      return "Cooking";

@@ -17,7 +17,8 @@ public:
 
 	std::vector<std::pair<wchar_t, sf::Color>> stages;
 
-	Crop() : Object(), growStage(0), growTime(1.0f), randomOffset(1.0f), cropName("NULL") {}
+	Crop() : Object(), growStage(0), growTime(1.0f), randomOffset(1.0f), cropName("NULL") {
+	}
 
 	Visual getVisual() const override {
 		const auto& stage = stages[growStage];
@@ -32,7 +33,7 @@ public:
 				growStage++;
 				growClock.restart();
 
-				randomOffset = getRandomFloat(0.0f, 2.0f);
+				randomOffset = getRandomFloat(0.0f, growTime / 4.0f);
 
 				displayChar = stages[growStage].first;
 				displayColor = stages[growStage].second;
@@ -45,7 +46,3 @@ public:
 	}
 
 };
-
-extern Crop wheat;
-extern Crop carrot;
-extern Crop wacky;

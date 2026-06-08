@@ -6,6 +6,11 @@
 #include "Item.h"
 #include "Tool.h"
 
+enum CreatureType {
+	VILLAGER,
+	ZOMBIE
+};
+
 class Creature {
 	protected:
 		std::vector<std::pair<int, int>> currentPath;
@@ -32,7 +37,7 @@ class Creature {
 		wchar_t displayChar;
 		glm::vec3 displayColor;
 
-		int hunger = 50;
+		int hunger = 100;
 
 		float speed;
 
@@ -43,6 +48,8 @@ class Creature {
 		// Creatures can hold one item type and a weapon/tool
 		std::shared_ptr<Object> itemInHand;
 		std::shared_ptr<Tool> toolInHand;
+
+		CreatureType type;
 
 		bool dead = false;
 

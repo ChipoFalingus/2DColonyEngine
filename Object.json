@@ -27,6 +27,14 @@
             }
         },
         {
+            "name": "Tall Grass",
+            "type": "object",
+            "visual": {
+                "character": "|",
+                "color": [ 121, 208, 33 ]
+            }
+        },
+        {
             "name": "Oak Tree",
             "type": "object",
             "visual": {
@@ -72,14 +80,6 @@
             "visual": {
                 "character": "&",
                 "color": [ 100, 65, 23 ]
-            }
-        },
-        {
-            "name": "Soil",
-            "type": "object",
-            "visual": {
-                "character": "=",
-                "color": [ 84, 30, 0 ]
             }
         },
         {
@@ -235,6 +235,14 @@
             }
         },
         {
+            "name": "Wooden Gate",
+            "type": "gate",
+            "visual": {
+                "character": "#",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
             "name": "Wooden Floor",
             "type": "object",
             "visual": {
@@ -378,7 +386,7 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
-            "grow_time": 2.0,
+            "grow_time": 10.0,
             "stages": [
                 {
                     "char": ".",

@@ -7,6 +7,7 @@ Zombie::Zombie(int x, int y)
 	: Monster(x, y, L'Z', glm::vec3(0, 255, 0))
 {
 	speed = 0.2f;
+	type = CreatureType::ZOMBIE;
 }
 
 void Zombie::doWork() {

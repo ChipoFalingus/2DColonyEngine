@@ -26,72 +26,56 @@ RGB HSVtoRGB(float h, float s, float v) {
     return { r + m, g + m, b + m };
 }
 
-sf::Color getColor(Tile& tile) {
-
-	// Animated Colors / Animated Displays (will be added later)
-    sf::Color color;
-
-    auto& display = VisualRegistry::getInstance().get(tile.items[0]->name);
+void applyAnimation(Tile& tile, glm::vec3& currentColor, wchar_t& currentDisplayChar) {
+    if (tile.anim.type == NONE) return;
 
     float time = animationClock.getElapsedTime().asSeconds();
 
     if (tile.anim.type == BREATHE) {
-
-		sf::Color itemColor = display.displayColor;
-
         float min = 0.2f;
         float max = 1.0f;
-
         float intensity = min + (max - min) * ((sin(time + tile.animOffset) + 1.0f) / 2.0f);
 
-        color.r = static_cast<sf::Uint8>(itemColor.r * intensity);
-        color.g = static_cast<sf::Uint8>(itemColor.g * intensity);
-        color.b = static_cast<sf::Uint8>(itemColor.b * intensity);
+        currentColor.r = currentColor.r * intensity;
+        currentColor.g = currentColor.g * intensity;
+        currentColor.b = currentColor.b * intensity;
     }
 
     else if (tile.anim.type == RAINBOW) {
         float hue = fmod((time * 60.0f) + tile.animOffset * 60.0f, 360.0f);
         RGB rgb = HSVtoRGB(hue, 1.0f, 1.0f);
-        color.r = static_cast<sf::Uint8>(rgb.r * 255);
-        color.g = static_cast<sf::Uint8>(rgb.g * 255);
-		color.b = static_cast<sf::Uint8>(rgb.b * 255);
+        currentColor.r = rgb.r;
+        currentColor.g = rgb.g;
+        currentColor.b = rgb.b;
     }
 
     else if (tile.anim.type == RED_X) {
-        tile.anim.isX = fmod(time, 1.0f) > 0.5f;
+        tile.anim.isOtherChar = fmod(time, 1.0f) > 0.5f;
 
-        if (tile.anim.isX) {
-            tile.items[0]->displayChar = L'X';
-            color = sf::Color::Red;
-        }
-        else {
-            tile.items[0]->displayChar = display.displayChar;
-
-            if (tile.items[0]->type == Type::Crop) {
-                color = tile.items[0]->displayColor;
-            }
-            else {
-                color = display.displayColor;
-            }
+        if (tile.anim.isOtherChar) {
+            currentDisplayChar = L'X';
+            currentColor = glm::vec3(1.0f, 0.0f, 0.0f);
         }
     }
 
     else if (tile.anim.type == WHITE_BREATHE) {
-        sf::Color itemColor = display.displayColor;
-
         float speed = 2.0f;
-        float wave = (sin(time * speed + tile.animOffset) + 1.0f) * 0.5f; // 0 → 1
+        float wave = (sin(time * speed + tile.animOffset) + 1.0f) * 0.5f;
 
-        color.r = static_cast<sf::Uint8>(itemColor.r + (255 - itemColor.r) * wave);
-        color.g = static_cast<sf::Uint8>(itemColor.g + (255 - itemColor.g) * wave);
-        color.b = static_cast<sf::Uint8>(itemColor.b + (255 - itemColor.b) * wave);
+        currentColor.r = currentColor.r + (1.0f - currentColor.r) * wave;
+        currentColor.g = currentColor.g + (1.0f - currentColor.g) * wave;
+        currentColor.b = currentColor.b + (1.0f - currentColor.b) * wave;
     }
 
-    return color;
+    else if (tile.anim.type == WATER) {
+        tile.anim.isOtherChar = fmod(time + tile.animOffset * 32.0f, 32.0f) > 28.0f;
+
+        if (tile.anim.isOtherChar) {
+            currentDisplayChar = L'~';
+            currentColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        }
+    }
 }
-
-
-
 
 
 

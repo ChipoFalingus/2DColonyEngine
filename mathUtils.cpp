@@ -8,6 +8,7 @@
 #include "Pair.h"
 #include "Creature.h"
 #include "World.h"
+#include "Structure.h"
 
 const int PERMUTATION_SIZE = 256;
 int p[PERMUTATION_SIZE * 2];
@@ -163,7 +164,7 @@ int heuristic(const std::pair<int, int>& a, const std::pair<int, int>& b) {
     return abs(a.first - b.first) + abs(a.second - b.second);
 }
 
-std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal) {
+std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal, Creature* c) {
 
     if (!getTileRef(goal.first, goal.second).walkable) {
         return {};
@@ -172,14 +173,6 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
     if (getTileRef(startX, startY).region != getTileRef(goal.first, goal.second).region) {
         return {};
     }
-
-    //int radius = 250;
-
-   /* int dx = goal.first - startX;
-    int dy = goal.second - startY;
-
-    if (dx * dx + dy * dy > radius * radius)
-        return {};*/
 
     std::pair<int, int> start = { startX, startY };
 
@@ -224,6 +217,23 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
 
             Tile& neighborTile = getTileRef(neighborX, neighborY);
             if (!neighborTile.walkable) continue;
+            
+            bool isBlockedByGate = false;
+            if (c) {
+                for (auto& i : neighborTile.items) {
+                    if (i->type == Type::Gate) {
+                        auto g = static_cast<Gate*>(i.get());
+                        if (!g->getWalkability(c)) {
+                            isBlockedByGate = true;
+                            break;
+                        }
+                    }
+                }
+
+            }
+
+            if (isBlockedByGate) continue;
+
 
             int tentativeG = gScore[current] + 1;
 
@@ -316,7 +326,7 @@ char getArrow(int dx, int dy) {
     return '.'; // no direction
 }
 
-std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim) {
+std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim, Creature* c) {
 
     int half = dim / 2;
 
@@ -353,8 +363,26 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
             int worldX = targetX + (x - half);
             int worldY = targetY + (y - half);
 
-            if (!getTileRef(worldX + dir.first, worldY + dir.second).walkable)
+            Tile& tile = getTileRef(worldX + dir.first, worldY + dir.second);
+            if (!tile.walkable)
                 continue;
+
+            bool isBlockedByGate = false;
+            if (c) {
+                for (auto& i : tile.items) {
+                    if (i->type == Type::Gate) {
+                        auto g = static_cast<Gate*>(i.get());
+                        if (!g->getWalkability(c)) {
+                            isBlockedByGate = true;
+                            break;
+                        }
+                    }
+                }
+
+            }
+
+            if (isBlockedByGate) continue;
+
 
             if (dist[nx][ny] > dist[x][y] + 1) {
                 dist[nx][ny] = dist[x][y] + 1;

@@ -7,6 +7,7 @@
 
 enum class tileType : uint8_t {
     GRASS,
+    SOIL,
     WATER,
     SAND,
     MOUNTAIN,
@@ -20,11 +21,12 @@ enum animType {
     RAINBOW = 3,
     RED_X = 4,
     WHITE_BREATHE = 5,
+    WATER = 6,
 };
 
 struct Animation {
     animType type;
-    bool isX = false;
+    bool isOtherChar = false;
 };
 
 enum Biome {

@@ -2,7 +2,6 @@
 #include "UIElements.h"
 #include "Item.h"
 #include "Pair.h"
-#include "Squad.h"
 
 // I'll need to get rid of these at some point, globals are super messy and will spiral out of control
 
@@ -54,7 +53,6 @@ enum class Mode {
 extern Mode currentMode;
 
 extern std::vector<std::pair<int, int>> tiles;
-extern Squad squad1;
 
 extern std::vector<std::vector<std::pair<int, int>>> field;
 extern int fieldX;

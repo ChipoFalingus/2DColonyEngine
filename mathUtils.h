@@ -6,6 +6,8 @@
 #include "Vec2.h"
 #include "Dot.h"
 
+class Creature;
+
 extern std::mt19937 rng;
 extern int seed;
 
@@ -27,10 +29,10 @@ std::pair<int, int> findClosestVoronoiDot(std::vector<std::pair<int, int>> dots,
 float hashNoise(int x, int y, int seed);
 
 int heuristic(const std::pair<int, int>& a, const std::pair<int, int>& b);
-std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal);
+std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal, Creature* c = nullptr);
 
 std::vector<std::pair<int, int>> bresenham(int x0, int y0, int x1, int y1);
 bool raycast(int x0, int y0, int x1, int y1);
 
-std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim);
+std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim, Creature* c = nullptr);
 std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim);

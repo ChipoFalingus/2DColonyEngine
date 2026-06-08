@@ -12,6 +12,17 @@
             "job_required": "Woodcutting"
         },
         {
+            "target": [ "Tall Grass" ],
+            "produces": [
+                {
+                    "item": "Wheat Seeds",
+                    "amount": 1
+                }
+            ],
+            "tool_required": "None",
+            "job_required": "Farming"
+        },
+        {
             "target": [ "Rock" ],
             "produces": [
                 {

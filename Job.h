@@ -244,6 +244,7 @@ public:
 class Sleep : public Job {
 public:
 	bool sleeping = false;
+	bool lookedForBed = false;
 
 	Sleep(Villager* v, Tool* tool, SkillType skillType)
 		: Job(v, tool, skillType)
@@ -348,4 +349,26 @@ public:
 
 	void update();
 	void pickNewTarget();
+};
+
+
+class Meditate : public Job {
+public:
+	int tX;
+	int tY;
+	bool hasTarget = false;
+	Meditate(Villager* v, Tool* tool, SkillType skillType)
+		: Job(v, tool, skillType)
+	{}
+	void update();
+	void pickNewTarget();
+};
+
+class Talk : public Job {
+public:
+	Villager* other;
+	Talk(Villager* v, Tool* tool, SkillType skillType, Villager* other)
+		: Job(v, tool, skillType), other(other)
+	{}
+	void update();
 };

@@ -4,10 +4,7 @@
 enum class monsterState { IDLE, WANDERING, ATTACKING };
 
 class Monster : public Creature {
-
 public:
-
-	
 	sf::Color displayColor;
 	sf::String displayChar;
 

@@ -90,6 +90,7 @@ void loadObjects() {
 				crop->type = Type::Crop;
 
 				crop->growTime = i.at("grow_time").get<float>();
+				crop->randomOffset = getRandomFloat(0.0f, crop->growTime / 4.0f);
 
 				std::vector<std::pair<wchar_t, sf::Color>> stages;
 				for (auto& k : i.at("stages")) {
@@ -168,7 +169,7 @@ void loadObjects() {
 
 				return obj;
 				});
-		}
+		} 
 		else if (type == "gate") {
 			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
 				auto obj = std::make_unique<Gate>();
@@ -176,9 +177,16 @@ void loadObjects() {
 				obj->type = Type::Gate;
 				obj->health = 100;
 
+				obj->filter = [](Creature* c) -> bool {
+
+					return c->type == VILLAGER;
+
+					};
+
 				return obj;
 				});
-		}
+				}
+
 		else if (type == "furniture") {
 			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
 				auto obj = std::make_unique<Object>();

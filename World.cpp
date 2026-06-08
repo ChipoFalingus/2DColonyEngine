@@ -130,7 +130,7 @@ void World::addCreatures() {
     for (int i = 0; i < LUMBERJACKS; i++) {
         auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
         v->setJob(JobType::Lumberjack);
-        //v->toolInHand = std::dynamic_pointer_cast<Tool>(axe);
+        v->itemInHand = std::dynamic_pointer_cast<Gun>(gun);
         allCreatures.push_back(std::move(v));
     }
 

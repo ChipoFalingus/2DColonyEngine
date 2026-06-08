@@ -504,13 +504,13 @@ void Plant::update() {
 		x = closestAdj.first;
 		y = closestAdj.second;
 
-		if (tile.containsItem("Soil")) {
+		if (tile.type == tileType::SOIL) {
 			needsSoil = false;
 		}
 
 		if (villager->xPos == x && villager->yPos == y) {
 			if (needsSoil) {
-				tile.addObject("Soil");
+				tile.changeTileType(tileType::SOIL);
 			}
 			auto c = ObjectRegistry::getInstance().get(seed);
 			if (c->type != Type::Seed) {
@@ -520,6 +520,7 @@ void Plant::update() {
 			auto s = static_cast<Seed*>(c.get());
 			villager->inventory.remove(seed);
 			tile.addObject(s->cropType);
+			tiles.push_back({ locX, locY });
 			state = JobState::Completed;
 		}
 
@@ -611,98 +612,180 @@ void Retreat::update() {
 	// Sees if there are safe spaces (basically looking for cover for colonists with no weapon)
 
 	// Sees if there are nearby allies with good weapons and health (tune to make colonists not so clingy, also this is a last last last resort)
-	
-	// Extra stuff:
-		// Could have them search for a weapon to join the fight
 
-	
+	// Extra stuff:
+	// Could have them search for a weapon to join the fight
+
+
 	int safeScore = -1;
 
-	if (!threat || threat->dead) {
+	if (!villager->threat || villager->threat->dead) {
 		state = JobState::Completed;
 		return;
+
 	}
 
-	float dx = villager->xPos - threat->xPos;
-	float dy = villager->yPos - threat->yPos;
+
+
+	float dx = villager->xPos - villager->threat->xPos;
+
+	float dy = villager->yPos - villager->threat->yPos;
+
+
 
 	float distance = sqrt(dx * dx + dy * dy);
 
+
+
 	int dim = 64;
+
+
 
 	auto threatMap = buildThreatMap(villager->xPos, villager->yPos, dim);
 
+
+
 	int startX = villager->xPos - dim / 2;
+
 	int startY = villager->yPos - dim / 2;
 
+
+
 	float bestScore = 99999.0f;
+
 	std::pair<int, int> bestMove = { 0, 0 };
 
+
+
 	std::vector<std::pair<int, int>> dirs = {
-		{1,0}, {0,1}, {-1,0}, {0,-1}
+
+	{1,0}, {0,1}, {-1,0}, {0,-1}
+
 	};
+
+
 
 	std::shuffle(dirs.begin(), dirs.end(), rng);
 
+
+
 	bool foundMove = false;
 
+
+
 	int cx = villager->xPos - startX;
+
 	int cy = villager->yPos - startY;
 
+
+
 	for (auto& i : dirs) {
+
 		int nx = villager->xPos + i.first;
+
 		int ny = villager->yPos + i.second;
 
+
+
 		int fx = nx - startX;
+
 		int fy = ny - startY;
 
+
+
 		if (fx < 0 || fy < 0 || fx >= dim || fy >= dim)
+
 			continue;
 
+
+
 		if (!getTileRef(nx, ny).walkable)
+
 			continue;
+
+
 
 		float score = threatMap[fx][fy];
 
+
+
 		if (villager->lastMove != i) {
+
 			score += 0.5f;
+
 		}
+
+
 
 		score += (villager->xPos + villager->yPos) / 10.0f;
 
+
+
 		if (score < bestScore) {
+
 			bestScore = score;
+
 			bestMove = i;
+
 			foundMove = true;
+
 		}
+
 	}
+
+
 
 	float stayScore = threatMap[cx][cy];
-	
+
+
 	if (stayScore < bestScore) {
+
 		bestMove = { 0,0 };
+
 	}
+
+
 
 	if (foundMove && villager->moveClock > villager->speed) {
+
 		villager->xPos += bestMove.first;
+
 		villager->yPos += bestMove.second;
 
+
+
 		villager->lastMove = bestMove;
+
 		villager->moveClock = 0.0f;
+
 	}
 
-	if (!threat || threat->dead) {
+
+
+	if (!villager->threat || villager->threat->dead) {
+
 		//std::cout << "Retreated" << std::endl;
+
 		state = JobState::Completed;
+
 	}
+
 }
+
+
 
 void Sleep::update() {
 
-	x = villager->bed.first;
-	y = villager->bed.second;
-
-	if (!villager->bed.first && !villager->bed.second) {
+	if (!villager->bed && !lookedForBed) {
+		villager->claimBed();
+		lookedForBed = true;
+	}
+	
+	if (villager->bed) {
+		x = villager->bed->first;
+		y = villager->bed->second;
+	}
+	else {
 		x = villager->xPos;
 		y = villager->yPos;
 	}
@@ -711,8 +794,9 @@ void Sleep::update() {
 		sleeping = true;
 		villager->clock = 0.0f;
 		
-	} else if (sleeping && villager->sleepTime < villager->clock) {
+	} else if (sleeping && mainWorld.dayCycle.getTimePeriod() == TimePeriod::Morning) {
 		sleeping = false;
+		villager->tiredness = 0;
 		state = JobState::Completed;
 	}
 }
@@ -860,11 +944,13 @@ void MoveItem::update() {
 		if (villager->xPos == x && villager->yPos == y) {
 
 			villager->dropItem(itemToMove, toX, toY);
+			itemToMove->claimed = false;
 
 			auto* s = mainWorld.atStockpile(toX, toY);
 			if (s) {
 				s->placeItem(itemToMove, toX, toY);
 			}
+
 
 			state = JobState::Completed;
 		}
@@ -877,11 +963,11 @@ void FindFood::update() {
 		return;
 	}*/
 
-	if (villager->hunger > 10) {
+	/*if (villager->hunger > 10) {
 		food->claimed = false;
 		state = JobState::Completed;
 		return;
-	}
+	}*/
 
 	switch (foodState) {
 
@@ -1044,6 +1130,36 @@ void Wander::pickNewTarget() {
 	}
 
 	hasTarget = false;
+}
+
+void Meditate::update() {
+	if (!hasTarget) {
+		x = villager->xPos;
+		y = villager->yPos;
+		hasTarget = true;
+	}
+	if (villager->xPos == x && villager->yPos == y) {
+		if (villager->clock > 15.0f) {
+			villager->tiredness = std::max(0, villager->tiredness - 20);
+			state = JobState::Completed;
+		}
+	}
+}
+
+void Talk::update() {
+	if (!other) {
+		state = JobState::Completed;
+		return;
+	}
+	x = other->xPos;
+	y = other->yPos;
+	if (isAtTile(villager->xPos, villager->yPos, x, y)) {
+		if (villager->clock > 10.0f) {
+			//villager->friendliness[other] += 10;
+			villager->social = 0;
+			state = JobState::Completed;
+		}
+	}
 }
 
 std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>>

@@ -10,6 +10,7 @@
 #include "Gun.h"
 #include "Light.h"
 #include "Stockpile.h"
+#include "DayCycle.h"
 
 #include "Chunk.h"
 #include "Pair.h"
@@ -54,6 +55,8 @@ private:
 public:
 
 	PlacementMode placementMode = PlacementMode::LINE;
+
+	DayCycle dayCycle;
     
     static World& get();
 

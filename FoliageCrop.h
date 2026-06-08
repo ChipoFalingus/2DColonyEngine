@@ -17,7 +17,7 @@ public:
 	// Determines if dropped items will be added to ItemsToMove
 	Colony* owner;
 
-	FoliageCrop() : Object(), growTime(1.0f), produce(""), x(0), y(0) {}
+	FoliageCrop() : Object(), growTime(1.0f), produce("NULL"), x(0), y(0) {}
 
 	void spawnProduce() {
 		if (growClock.getElapsedTime().asSeconds() < growTime) {
@@ -36,7 +36,7 @@ public:
 			Tile& tile = getTileRef(x + i.first, y + i.second);
 			if (tile.items.empty()) {
 				auto item = ObjectRegistry::getInstance().get(produce);
-				tile.addObject(produce);
+				tile.addObject(item);
 				if (owner) {
 					mainWorld.addItemToMove(item, x + i.first, y + i.second);
 				}

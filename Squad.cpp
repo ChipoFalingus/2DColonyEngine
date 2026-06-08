@@ -14,7 +14,6 @@ void Squad::update() {
 	auto avg = getAvgPos();
 
 	idleWanderClock += Clock::deltaTime;
-	attackScanClock += Clock::deltaTime;
 
 	switch (state) {
 	case IDLE: {
@@ -29,21 +28,6 @@ void Squad::update() {
 				//avg.first,
 				//avg.second
 			};
-		}
-
-		if (attackScanClock > 2.0f) {
-			attackScanClock = 0.0f;
-
-			Creature* c = findClosestCreatureType<Villager>(
-				avg.first,
-				avg.second,
-				64
-			);
-
-			if (c) {
-				state = ATTACKING;
-				//targetPos = { c->xPos, c->yPos };
-			}
 		}
 
 		break;
@@ -78,7 +62,7 @@ void Squad::followLeader() {
 	if (members.empty()) return;
 
 	const int MACRO_DIM = 64;
-	const int MICRO_DIM = 16;
+	const int MICRO_DIM = 64;
 	const int macroHalf = MACRO_DIM / 2;
 	const int microHalf = MICRO_DIM / 2;
 
@@ -87,7 +71,7 @@ void Squad::followLeader() {
 	if (flow.empty() || abs(targetPos.first - lastTargetPos.first) +
 		abs(targetPos.second - lastTargetPos.second) > 2) {
 
-		flow = buildFlowField(targetPos.first, targetPos.second, MACRO_DIM);
+		flow = buildFlowField(targetPos.first, targetPos.second, MACRO_DIM, members.front());
 		lastTargetPos = { targetPos.first, targetPos.second };
 	}
 
@@ -119,9 +103,8 @@ void Squad::followLeader() {
 
 			bool instance = targetCreatureInstance || targetStructureInstance;
 
-			if (instance && !target->flowBuilt) {
-				target->flow = buildFlowField(target->position.first, target->position.second, MICRO_DIM);
-				target->flowBuilt = true;
+			if (instance && (target->flow.empty() || abs(memberTargetPos.first - target->position.first) > 1)) {
+				target->flow = buildFlowField(target->position.first, target->position.second, MICRO_DIM, member);
 			}
 		}
 
@@ -251,9 +234,15 @@ std::pair<int, int> Squad::getAvgPos() {
 }
 
 void Squad::findTargets() {
-	if (state == IDLE || state == ATTACKING) {
+	attackScanClock += Clock::deltaTime;
+
 		if (attackScanClock > 0.5f) {
 			attackScanClock = 0.0f;
+
+			std::pair<int, int> oldTopTargetPos = {0, 0};
+		if (!selectedTargets.empty()) {
+			oldTopTargetPos = selectedTargets.front().position;
+		}
 
 			selectedTargets.clear();
 
@@ -282,6 +271,12 @@ void Squad::findTargets() {
 
 			if (!selectedTargets.empty()) {
 				state = ATTACKING;
+
+				auto& primaryTarget = selectedTargets.front();
+				if (abs(primaryTarget.position.first - oldTopTargetPos.first) +
+					abs(primaryTarget.position.second - oldTopTargetPos.second) > 2) {
+					flow.clear();
+				}
 			}
 			else {
 				if (state == ATTACKING) {
@@ -291,7 +286,6 @@ void Squad::findTargets() {
 				state = IDLE;
 			}
 		}
-	}
 }
 
 SelectedTarget* Squad::chooseTarget(Creature* member, std::vector<int>& targetCounts, bool allowCreatures) {

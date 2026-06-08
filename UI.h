@@ -10,6 +10,8 @@ struct MainMenuUI {
     Button* settingsButton;
     Button* exit;
 
+    Button* backers;
+
     Text* title;
     Text* text;
 };
@@ -32,7 +34,6 @@ struct WorldSettingsUI {
     Button* back;
 
     Panel* panel;
-    Slider* waterLevel;
 
     Button* begin;
 };
@@ -66,10 +67,14 @@ struct InGameUI {
     Text* placingDims;
     Text* villagerName;
 
+    Text* day;
+
     Button* buildButton;
     Button* harvestButton;
     Button* plantButton;
     Button* stockpileButton;
+
+    Button* villagers;
 
     void resize(int screenW, int screenH) {
         buildButton->setAnchorPosition(screenW, screenH);
@@ -88,6 +93,19 @@ struct MiniMapUI {
 };
 
 MiniMapUI getMiniMapFrame();
+
+struct VillagerListUI {
+    UI type = UI::VillagerList;
+    Panel* panel;
+    Text* text;
+
+
+    std::vector<Panel*> villagers;
+
+	void configureVillagerList();
+};
+
+VillagerListUI getVillagerListFrame();
 
 struct BuildUI {
     UI type = UI::Build;
@@ -148,6 +166,17 @@ struct CarpentryBenchUI {
 };
 
 CarpentryBenchUI getCarpentryBenchFrame();
+
+struct StoneCutterUI {
+    UI type = UI::StoneCutter;
+    Text* text;
+    Text* ingredients;
+    Panel* panel;
+    std::vector<Button*> craftable_items;
+    Button* closeButton;
+};
+
+StoneCutterUI getStoneCutterFrame();
 
 struct AnvilUI {
     UI type = UI::Anvil;

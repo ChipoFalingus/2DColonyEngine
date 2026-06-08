@@ -311,6 +311,9 @@
     <ClInclude Include="Seed.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
+    <ClInclude Include="DayCycle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Menu.txt">

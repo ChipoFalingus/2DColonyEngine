@@ -19,53 +19,75 @@ struct Job;
 #include "JobCompare.h"
 
 extern std::vector<std::string> names;
-
 extern std::vector<std::string> lastnames;
 
+
+// These don't change
 enum class TraitType {
-	// Strength: Affects carrying capacity and melee combat effectiveness
-	Strength,
-
-	// Agility: Influences movement speed
-	Agility,
-
-	// Intelligence: Improves crafting ability
-	Intelligence,
-
-	// Charisma: Affects dealing with other villagers
-	Charisma,
-
-	// Resilience: Determines resistance to injuries
-	Resilience,
-
-	// Metabolism: Affects hunger and thirst rates
-	Metabolism,
-
-	// Bravery: Will affect retreating and engaging in combat
-	Bravery,
-
-	// Curiosity: Affects willingness to explore
-	Curiosity,
-
-	// Sociability: Affects trading
-	Sociability,
-	
+	Extroversion,
 	COUNT
 };
 
 struct Traits {
 	std::array<float, static_cast<size_t>(TraitType::COUNT)> values;
 };
-
 enum class ActivityState {
 	None,
 	Sitting,
 	Sleeping,
 	Eating,
 	Wandering,
-	Working
+	Working,
+	Meditating,
+	Socializing,
+	Attacking,
+	Retreating,
 };
 
+enum class UtilityType { 
+	IDLE, 
+	ATTACK, 
+	RETREAT, 
+	SLEEP, 
+	EAT, 
+	CURRENT,
+	MEDITATE,
+	SIT,
+	WANDER,
+	SOCIALIZE,
+	INTERRUPTED_RESUME, 
+};
+
+struct Evaluation {
+	UtilityType type;
+	float score;
+	std::shared_ptr<Object> targetItem = nullptr;
+	int targetX = 0;
+	int targetY = 0;
+
+	Evaluation(UtilityType t, float s, std::shared_ptr<Object> item = nullptr, int x = 0, int y = 0)
+		: type(t), score(s), targetItem(item), targetX(x), targetY(y) {
+	}
+};
+
+
+struct VillagerStat {
+	std::string name;
+	float value;
+	float maxValue;
+	float driftRate;
+
+	void tick(float deltaTime) {
+		value = std::min(maxValue, value + (driftRate * deltaTime));
+	}
+
+	float getNormalizedDeficiency() const {
+		if (maxValue <= 0.0f) return 0.0f;
+		float ratio = std::clamp(value / maxValue, 0.0f, 1.0f);
+
+		return ratio;
+	}
+};
 
 std::string activityStateToString(ActivityState state);
 
@@ -74,7 +96,6 @@ private:
 	std::vector<Job*> interrupted;
 	JobType jobType;
 	Job* currentJob;
-
 
 public:
 	Traits traits;
@@ -92,6 +113,7 @@ public:
 	float hungerClock;
 	float findBedClock;
 	float findFoodClock;
+	float socialClock;
 
 	int moveSpeed;
 	float harvestTime = 1.0f;
@@ -104,7 +126,7 @@ public:
 	Object* object_in_use;
 
 
-	std::pair<int, int> bed = {0, 0};
+	std::optional<std::pair<int, int>> bed = std::nullopt;
 
 	Inventory inventory;
 
@@ -112,6 +134,8 @@ public:
 
 	int thirst = 100;
 	int tiredness = 0;
+	int happiness = 100;
+	int social = 0;
 
 	ActivityState activity_state;
 
@@ -134,6 +158,8 @@ public:
 
 		//float agility = traits.values[static_cast<size_t>(TraitType::Agility)];
 		speed = 0.1f;
+
+		type = CreatureType::VILLAGER;
 	}
 
 	void initTraits() {
@@ -157,6 +183,13 @@ public:
 		}
 	}
 
+	Evaluation evaluateEating();
+	Evaluation evaluateSleeping();
+	Evaluation evaluateCombat();
+	Evaluation evaluateMeditation();
+	Evaluation evaluateSocializing();
+	Evaluation evaluateSitting();
+
 	void sense();
 	void idle();
 	void decide();
@@ -171,6 +204,10 @@ public:
 	void retreat(Creature* threat);
 
 	void claimBed() {
+
+		if (bed) {
+			return;
+		}
 
 		auto loc = findClosestItemType(xPos, yPos, 50, [&](const Object& obj, int x, int y) {
 			return obj.name == "Bed" && !obj.claimed;
@@ -205,6 +242,8 @@ public:
 	JobType getJob() {
 		return jobType;
 	}
+
+	void printJobQueue() const;
 
 	virtual ~Villager() = default;
 

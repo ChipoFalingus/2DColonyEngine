@@ -176,6 +176,7 @@
     <ClInclude Include="Crafting.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="Crop.h" />
+    <ClInclude Include="DayCycle.h" />
     <ClInclude Include="Dot.h" />
     <ClInclude Include="FoliageCrop.h" />
     <ClInclude Include="Food.h" />

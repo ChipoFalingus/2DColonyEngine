@@ -31,6 +31,8 @@
 #include "UI.h"
 #include "Creature.h"
 #include "TileAnimation.h"
+#include "FoliageCrop.h"
+#include "Furnace.h"
 
 #include "Pig.h"
 #include "Zombie.h"
@@ -167,8 +169,6 @@ std::unordered_map<FT_ULong, CustomGlyph> customGlyphs = {
     {0xA33, {0xA33, 16, 16, 0, 16, 16, checkedboxBitmap}},
 };
 
-sf::Clock day;
-
 void generateFontAtlas(const std::string& fontPath, int fontSize) {
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) { std::cerr << "Could not init FreeType\n"; return; }
@@ -284,7 +284,7 @@ static void FlushBatch(Shader& shader) {
     glm::mat4 projection = glm::ortho(0.0f, (float)scrWidth * zoom, 0.0f, (float)scrHeight * zoom);
     shader.use();
     shader.setMat4("projection", projection);
-    shader.setInt("text", 0);      // ensure sampler unit 0
+    shader.setInt("text", 0);
 
     int width = xFrustum;
     int height = yFrustum;
@@ -308,8 +308,6 @@ static void FlushBatch(Shader& shader) {
 
 
 void RenderText(Shader& shader, const wchar_t& text, float x, float y, float scale, glm::vec3 color) {
-
-    // Build quads into batchVertices
     //for (wchar_t c : text) {
         //if (Characters.find(c) == Characters.end()) continue;
         Character ch = Characters[text];
@@ -364,15 +362,12 @@ sf::Color hsvToRgb(float h, float s, float v) {
 }
 
 sf::Color altitudeToColor(float altitude, float minAlt, float maxAlt) {
-    // Normalize [0,1]
     float t = (altitude - minAlt) / (maxAlt - minAlt);
     if (t < 0.0f) t = 0.0f;
     if (t > 1.0f) t = 1.0f;
 
-    // Map altitude to hue (0–360 degrees)
     float hue = 360.0f * t;
 
-    // Full saturation, full value for vivid rainbow
     return hsvToRgb(hue, 1.0f, 1.0f);
 }
 
@@ -436,9 +431,7 @@ void drawMiniMap(Shader& shader) {
             }
             
             if (!viewHeightMap) {
-                // Convert vector<wchar_t> to wstring(use first character if available)
                 charStr = chunk->dominantDisplay.chars.empty() ? L' ' : chunk->dominantDisplay.chars[0];
-                // Convert vector<sf::Color> to glm::vec3 (use first color if available)
                 color = chunk->dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
                         chunk->dominantDisplay.colors[0].r / 255.0f,
@@ -447,9 +440,7 @@ void drawMiniMap(Shader& shader) {
                     );
             }
             else {
-                // Convert vector<wchar_t> to wstring(use first character if available)
                 charStr = L'■';
-                // Convert vector<sf::Color> to glm::vec3 (use first color if available)
                 color = chunk->dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
                         altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).r / 255.0f,
@@ -517,11 +508,6 @@ void drawMap(Shader& shader)
                 int chunkX = x / chunkDim;
                 int chunkY = y / chunkDim;
                 chunk = mainWorld.getChunk(chunkX, chunkY);
-
-                if (chunk) {
-                    a = &getTileRef(x, y);
-                    a->update();
-                }
             }
 
             wchar_t string;
@@ -570,8 +556,7 @@ void drawMap(Shader& shader)
 
 
                 if (tile.anim.type != animType::NONE) {
-                    sf::Color d = getColor(tile);
-                    color = glm::vec3(d.r / 255.0f, d.g / 255.0f, d.b / 255.0f);
+                    applyAnimation(tile, color, string);
                 }
 
                 string = display.displayChar;
@@ -579,7 +564,9 @@ void drawMap(Shader& shader)
             else {
                 string = tile.character;
                 color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
+
             }
+            applyAnimation(tile, color, string);
         
 
             if (placing) {
@@ -636,21 +623,8 @@ void drawMap(Shader& shader)
                     );
             }
 
-            int size = calculateMapSize();
-            int lx = x + size;
-            int ly = y + size;
+			color *= std::max(mainWorld.dayCycle.getDaylightFactor(), mainWorld.getLightMapIndex(x, y));
 
-            float dayLength = 1200.0f;
-            float pi = 3.14159f;
-
-            float t = day.getElapsedTime().asSeconds();
-            float cycle = t * (2.0f * pi / dayLength);
-
-            float time = 0.5f * sin(cycle - pi / 2.0f) + 0.5f;
-
-            float ambient = std::max(time, 1.0f);
-            //float ambient = 0.2f;
-            color *= std::max(mainWorld.getLightMapIndex(x, y), ambient);
             if (string != L'\0') {
                 RenderText(shader, string, screenX, screenY, fontSize, color);
             }
@@ -658,7 +632,6 @@ void drawMap(Shader& shader)
 				RenderText(shader, L' ', screenX, screenY, fontSize, glm::vec3(1.0f));
             }
         }
-        //RenderText(shader, line, 0.0f, screenY, fontSize, glm::vec3(1.0f), false);
     };
 }
 
@@ -849,14 +822,40 @@ int main() {
 
         if (mainWorld.isRendered()) {
 
-            squad1.update();
+			mainWorld.dayCycle.update();
 
             // All dynamic tiles need to be added to this list
-            for (auto& tile : tiles) {
-                auto i = getTileRef(tile.first, tile.second).items[0];
-                if (i->type == Type::Spawner) {
-                    auto j = static_cast<Spawner*>(i.get());
-                    j->update();
+            auto it = tiles.begin();
+            while (it != tiles.end()) {
+                Tile& tile = getTileRef(it->first, it->second);
+
+                bool hasActiveComponent = false;
+
+                for (auto& i : tile.items) {
+                    if (i->type == Type::Foliage_Crop) {
+                        static_cast<FoliageCrop*>(i.get())->spawnProduce();
+                        hasActiveComponent = true;
+                    }
+                    else if (i->type == Type::Crop) {
+                        static_cast<Crop*>(i.get())->grow();
+                        hasActiveComponent = true;
+                    }
+                    else if (i->type == Type::Spawner) {
+                        static_cast<Spawner*>(i.get())->update();
+                        hasActiveComponent = true;
+                    }
+                    else if (i->type == Type::Furnace) {
+                        static_cast<Furnace*>(i.get())->cook();
+                        hasActiveComponent = true;
+                    }
+                }
+
+                // Auto removal
+                if (!hasActiveComponent) {
+                    it = tiles.erase(it);
+                }
+                else {
+                    ++it;
                 }
             }
 
@@ -878,7 +877,7 @@ int main() {
 
                     Job* job = new MoveItem(nullptr, nullptr, SkillType::None, item, it->second.first, it->second.second, pos.first, pos.second);
 
-                    job->priority = 5;
+                    job->priority = 35;
                     JobManager::addJob(job);
                     it = itemsToMove.erase(it);
                 }

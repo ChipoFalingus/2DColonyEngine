@@ -28,6 +28,8 @@ std::string typeToString(tileType type) {
     switch (type) {
     case(tileType::GRASS): {
         return "Grass";
+    }case(tileType::SOIL): {
+		return "Soil";
     }case(tileType::SAND): {
         return "Sand";
     }case(tileType::MOUNTAIN): {
@@ -277,6 +279,7 @@ Tile assignTileTypes(int x, int y) {
     else if (tile.altitude < waterLevel) {
         tile.type = tileType::WATER;
         tile.water = std::abs(waterLevel - tile.altitude);
+        tile.anim.type = animType::WATER;
     }
     else if (tile.altitude < waterLevel + 5.0f) {
         tile.type = tileType::SAND;
@@ -288,6 +291,7 @@ Tile assignTileTypes(int x, int y) {
 
     return tile;
 }
+
 
 void Tile::getTile(int x, int y) {
     // Item adders
@@ -306,9 +310,18 @@ void Tile::getTile(int x, int y) {
 	float oakNoise = perlin(x * 0.005f + 5000.0f, y * 0.005f + 5000.0f);
     float spruceNoise = perlin(x * 0.005f + 50000.0f, y * 0.005f + 50000.0f);
 
+	float tallGrassNoise = perlin(x * 0.02f + 10000.0f, y * 0.02f + 10000.0f);
+
     if (type == tileType::GRASS) {
 
         float r = hashNoise(x, y, seed);
+
+        if (tallGrassNoise > 0.3f) {
+            if (r < 0.7f) {
+                items.clear();
+                addObject("Tall Grass");
+            }
+		}
 
         if (oakNoise > 0.3f || spruceNoise > 0.3f) {
             if (oakNoise > 0.3f /*&& altitude < waterLevel + 70.0f*/) {
@@ -316,8 +329,14 @@ void Tile::getTile(int x, int y) {
                     items.clear();
                     addObject("Oak Tree");
                 }
-                else if (r < 0.11f) {
+                else if (r < 0.101f) {
                     items.clear();
+                    auto item = ObjectRegistry::getInstance().get("Apple Tree");
+                    auto spawner = static_cast<FoliageCrop*>(item.get());
+                    spawner->x = x;
+                    spawner->y = y;
+                    addObject(item);
+                    tiles.push_back({ x, y });
                    // addObject("Stick");
                 }
                 else if (r < 0.13f) {
@@ -357,6 +376,7 @@ void Tile::getTile(int x, int y) {
                 if (sapphireNoise > oreThreshold) {
                     items.clear();
                     addObject("Coal");
+                    anim.type = NONE;
                 }
             }
         }
@@ -370,7 +390,7 @@ void Tile::getTile(int x, int y) {
 
         float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
 
-        if (x == 20 && y == 20) {
+        /*if (outposts < 0.000005f) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Outpost");
             auto spawner = static_cast<Spawner*>(item.get());
@@ -379,9 +399,9 @@ void Tile::getTile(int x, int y) {
             addObject(item);
 
 			tiles.push_back({ x, y });
-        }
+        }*/
 
-        if (x == -20 && y == 20) {
+        /*if (x == -20 && y == 20) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Outpost");
             auto spawner = static_cast<Spawner*>(item.get());
@@ -390,9 +410,9 @@ void Tile::getTile(int x, int y) {
             addObject(item);
 
             tiles.push_back({ x, y });
-        }
+        }*/
 
-        if (x == 10 && y == 10) {
+        /*if (x == 10 && y == 10) {
            items.clear();
            auto item = ObjectRegistry::getInstance().get("Apple Tree");
            auto spawner = static_cast<FoliageCrop*>(item.get());
@@ -415,7 +435,7 @@ void Tile::getTile(int x, int y) {
             spawner->x = x;
             spawner->y = y;
             addObject(item);
-        }
+        }*/
 
         float scrapNoise = hashNoise(x + 20000.0f, y + 20000.0f, seed);
 
@@ -426,69 +446,81 @@ void Tile::getTile(int x, int y) {
 
         int range = 10;
 
-        if (
-            (x == 5 || x == -5 || y == 5 || y == -5) &&
-            (x >= -5 && x <= 5 && y >= -5 && y <= 5) && x != 0
-            ) {
-            items.clear();
-            auto item = ObjectRegistry::getInstance().get("Wooden Wall");
-            auto i = static_cast<Structure*>(item.get());
-            i->x = x;
-            i->y = y;
-            addObject(item);
-            blocked = true;
-        }
+        //if (
+        //    (x == 5 || x == -5 || y == 5 || y == -5) &&
+        //    (x >= -5 && x <= 5 && y >= -5 && y <= 5) && x != 0
+        //    ) {
+        //    items.clear();
+        //    auto item = ObjectRegistry::getInstance().get("Wooden Wall");
+        //    auto i = static_cast<Structure*>(item.get());
+        //    i->x = x;
+        //    i->y = y;
+        //    addObject(item);
+        //    blocked = true;
+        //}
+        ///*else if (
+        //    (x == 5 || x == -5 || y == 5 || y == -5) &&
+        //    (x >= -5 && x <= 5 && y >= -5 && y <= 5)
+        //    ) {
+        //    items.clear();
+        //    auto item = ObjectRegistry::getInstance().get("Wooden Gate");
+        //    auto i = static_cast<Gate*>(item.get());
+        //    i->x = x;
+        //    i->y = y;
+        //    addObject(item);
+        //    blocked = true;
+        //}*/
 
-        if (
-            (x >= -4 && x <= 4 && y >= -4 && y <= 4)
-            ) {
-            items.clear();
-            addObject("Stone Floor");
-        }
+        //if (
+        //    (x >= -4 && x <= 4 && y >= -4 && y <= 4)
+        //    ) {
+        //    items.clear();
+        //    addObject("Stone Floor");
+        //}
 
-        if ((x == 4 && y == 4) ||
-            (x == -4 && y == 4) ||
-            (x == 4 && y == -4) ||
-            (x == -4 && y == -4)) {
-            items.clear();
-            addObject("Bed");
-        }
-        if ((x == 3 && y == 4) ||
-            (x == -3 && y == 4) ||
-            (x == 3 && y == -4) ||
-            (x == -3 && y == -4)) {
-            items.clear();
-            addObject("Wooden Chair");
-        }
-        if ((x == 4 && y == 3) ||
-            (x == -4 && y == 3) ||
-            (x == 4 && y == -3) ||
-            (x == -4 && y == -3)) {
-            items.clear();
-            addObject("Wooden Chair");
-        }
+        //if ((x == 4 && y == 4) ||
+        //    (x == -4 && y == 4) ||
+        //    (x == 4 && y == -4) ||
+        //    (x == -4 && y == -4)) {
+        //    items.clear();
+        //    addObject("Bed");
+        //}
+        //if ((x == 3 && y == 4) ||
+        //    (x == -3 && y == 4) ||
+        //    (x == 3 && y == -4) ||
+        //    (x == -3 && y == -4)) {
+        //    items.clear();
+        //    addObject("Wooden Chair");
+        //}
+        //if ((x == 4 && y == 3) ||
+        //    (x == -4 && y == 3) ||
+        //    (x == 4 && y == -3) ||
+        //    (x == -4 && y == -3)) {
+        //    items.clear();
+        //    addObject("Wooden Chair");
+        //}
 
-        if (x == 10 && y >= 0 && y <= 5) {
-            items.clear();
-            addObject("Wooden Chair");
-        }
-        if (x == 9 && y >= 0 && y <= 5) {
-            items.clear();
-            addObject("Wooden Table");
-        }
+        //if (x == 10 && y >= 0 && y <= 5) {
+        //    items.clear();
+        //    addObject("Wooden Chair");
+        //}
+        //if (x == 9 && y >= 0 && y <= 5) {
+        //    items.clear();
+        //    addObject("Wooden Table");
+        //}
 
-        if (x == -0 && y == 0) {
-            items.clear();
-            addObject("Furnace");
-        }
-        if (x == -1 && y == 0) {
-            items.clear();
-            addObject("Carpentry Bench");
-        }
-        if (x == 1 && y == 0) {
-            items.clear();
-            addObject("Anvil");
-        }
+        //if (x == -0 && y == 0) {
+        //    items.clear();
+        //    addObject("Furnace");
+        //}
+        //if (x == -1 && y == 0) {
+        //    items.clear();
+        //    addObject("Carpentry Bench");
+        //}
+        //if (x == 1 && y == 0) {
+        //    items.clear();
+        //    addObject("Anvil");
+        //}
 
     }
 
@@ -503,8 +535,8 @@ void Tile::getTile(int x, int y) {
         addObject(item);
     }*/
 
-   /* if (x > -3 && x < 3 && y > -3 + 10 && y < 3 + 10) {
-		int num = getRandomInt(0, 2);
+    /*if (x > -3 && x < 3 && y > -3 + 10 && y < 3 + 10) {
+		int num = getRandomInt(0, 0);
         if (num == 0) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Wheat Seeds");
@@ -529,23 +561,13 @@ void Tile::getTile(int x, int y) {
 		addObject("Carpentry Bench");
     }*/
 
-    /*if (x > -2 && x < 2 && y > -2 && y < 2) {
-		int num = getRandomInt(0, 1);
-        if (num == 0) {
-            items.clear();
-            auto item = ObjectRegistry::getInstance().get("Wooden Chair");
-            addObject(item);
-            mainWorld.addItemToMove(item, x, y);
-        }
-        else {
-            items.clear();
-            auto item = ObjectRegistry::getInstance().get("Wooden Table");
-            addObject(item);
-            mainWorld.addItemToMove(item, x, y);
-        }
-    }*/
-
-
+    if (x > -10 && x < 10 && y > -10 && y < 10) {
+        auto item = ObjectRegistry::getInstance().get("Wheat");
+		//auto c = static_cast<Crop*>(item.get());
+        items.clear();
+		addObject(item);
+		tiles.push_back({ x, y });
+    }
 
     // Sets starting displays, subject to change
     auto display = getTileDisplay(type);
@@ -595,10 +617,8 @@ void Tile::changeTileChar(sf::String string) {
 
 void Tile::changeTileType(tileType newType) {
     type = newType;
-   // charList = getTileDisplay(newType).chars;
-    //colorList = getTileDisplay(newType).colors;
-   // character = charList[0];
-   // color = colorList[0];
+	character = getTileDisplay(type).chars[0];
+	color = getTileDisplay(type).colors[0];
 }
 
 bool Tile::containsItem(const std::string& item) {
@@ -667,6 +687,9 @@ tileDisplay getTileDisplay(tileType type) {
         sf::Color color = colors[getRandomInt(0, colors.size() - 1)];
         return { {c}, {color}};
     }
+    case tileType::SOIL:
+        c = L'=';
+		return { {c}, {sf::Color(84, 30, 0)} };
     case tileType::WATER:
 		return { {L'≈'}, {sf::Color(0, 0, 255)} };
 	case tileType::SAND:
@@ -705,6 +728,8 @@ bool getTileWalkable(Object* itemOnTile, tileType type) {
     case tileType::GRASS:
         return true;
 	case tileType::SAND:
+        return true;
+    case tileType::SOIL:
         return true;
     default:
         return false;

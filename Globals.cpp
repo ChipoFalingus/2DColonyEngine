@@ -42,7 +42,6 @@ int mouseTileY;
 Mode currentMode = Mode::NONE;
 
 std::vector<std::pair<int, int>> tiles;
-Squad squad1;
 
 std::vector<std::vector<std::pair<int, int>>> field;
 int fieldX;
