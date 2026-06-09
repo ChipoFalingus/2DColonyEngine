@@ -496,6 +496,9 @@ void drawMap(Shader& shader)
         }
     }
 
+
+    float dayLight = mainWorld.dayCycle.getDaylightFactor();
+
     for (int y = yPlayer - yFrustum / 2; y < (yPlayer + yFrustum / 2) + 1; y++) {
 
         float screenY = scrHeight - ((y - numY + 1) * yTextSpacing);
@@ -623,8 +626,8 @@ void drawMap(Shader& shader)
                     );
             }
 
-			color *= std::max(mainWorld.dayCycle.getDaylightFactor(), mainWorld.getLightMapIndex(x, y));
-
+			color *= std::max(dayLight, mainWorld.getLightMapIndex(x, y));
+        
             if (string != L'\0') {
                 RenderText(shader, string, screenX, screenY, fontSize, color);
             }
@@ -732,6 +735,7 @@ int main() {
 	glfwSwapInterval(0);
 
     float lightClock = 0.0f;
+	float heatClock = 0.0f;
 	float waitingUpdateTimer = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
@@ -767,6 +771,13 @@ int main() {
 			lightClock = 0.0f;
             std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
             mainWorld.setLightMap(map);
+        }
+
+		heatClock += dt;
+        if (heatClock > .5f) {
+            heatClock = 0.0f;
+            std::vector<float> heatMap = Game::getInstance().getHeatManager().calculateHeatMap(calculateMapSize());
+            mainWorld.setTemperatureMap(heatMap);
         }
 
         // Update creatures

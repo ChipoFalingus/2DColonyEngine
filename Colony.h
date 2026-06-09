@@ -1,13 +1,10 @@
 #pragma once
 #include "Villager.h"
 
-class Villager;
-
 class Colony {
 private:
-	std::vector<Villager> villagers;
-
-
-	std::vector<std::pair<int, int>> stockpiles;
+	std::vector<Villager*> villagers;
+	std::vector<Stockpile> stockpiles;
+	std::vector<std::pair<std::shared_ptr<Object>, std::pair<int, int>>> itemsToMove;
 
 };

@@ -185,6 +185,7 @@
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Gun.h" />
     <ClInclude Include="HarvestRules.h" />
+    <ClInclude Include="Heat.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Inputs.h" />
     <ClInclude Include="Inventory.h" />

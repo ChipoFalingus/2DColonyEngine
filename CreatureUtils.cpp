@@ -57,3 +57,24 @@ bool isAtItem(const Object& item, int x, int y) {
     }
     return false;
 }
+
+std::pair<int, int> findBestTemperatureTile(int x, int y, int radius, float preferredTemp) {
+    std::pair<int, int> bestTile = { x, y };
+    float bestScore = -1.0f;
+    for (int dx = -radius; dx <= radius; dx++) {
+        for (int dy = -radius; dy <= radius; dy++) {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (getTileRef(nx, ny).walkable) {
+                float temp = mainWorld.getTemperatureMapIndex(nx, ny);
+                float score = bellCurve(temp, preferredTemp);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestTile = { nx, ny };
+                }
+            }
+        }
+    }
+
+    return bestTile;
+}

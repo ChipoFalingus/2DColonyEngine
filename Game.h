@@ -2,6 +2,8 @@
 #include "UIManager.h"
 #include "UI.h"
 
+#include "Heat.h"
+
 enum struct Material {
     WOOD,
     STONE,
@@ -35,6 +37,7 @@ private:
 	InfoUI infoUI;
 
     LightManager lightManager;
+	HeatManager heatManager;
 	Material selectedMaterial = Material::WOOD;
 
     std::shared_ptr<Object> selectedBuildItem;
@@ -167,6 +170,10 @@ public:
     LightManager& getLightManager() {
         return lightManager;
     }
+
+    HeatManager& getHeatManager() {
+        return heatManager;
+	}
 
     std::shared_ptr<Object> getBuildItem() {
         return selectedBuildItem;

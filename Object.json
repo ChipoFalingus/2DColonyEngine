@@ -11,6 +11,14 @@
             "radius": 5.0
         },
         {
+            "name": "Fire Pit",
+            "type": "light",
+            "visual": {
+                "character": "o",
+                "color": [ 50, 50, 50 ]
+            }
+        },
+        {
             "name": "Scrap Metal",
             "type": "object",
             "visual": {

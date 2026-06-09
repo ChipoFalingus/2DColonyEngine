@@ -115,6 +115,8 @@ public:
 	float findFoodClock;
 	float socialClock;
 
+	float heatClock;
+
 	int moveSpeed;
 	float harvestTime = 1.0f;
 	float sleepTime = 5.0f;
@@ -135,10 +137,12 @@ public:
 	int thirst = 100;
 	int tiredness = 0;
 	int happiness = 100;
+	int stress = 0;
 	int social = 0;
 
 	ActivityState activity_state;
 
+	int preferredTemp = 70;
 
 	int alertness = 20;
 	std::pair<int, int> lastMove = { 0,0 };

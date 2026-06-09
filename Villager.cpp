@@ -244,14 +244,17 @@ void Villager::sense() {
 
 void Villager::idle() {
 
-	// Fallback idling stuff here
-	int rand = getRandomInt(1, 50);
-	if (activity_state != ActivityState::Wandering) {
-		activity_state = ActivityState::Wandering;
-		//currentJob = new Wander(this, nullptr, SkillType::None);
+	if (0.7f > bellCurve(mainWorld.dayCycle.getTemperatureFactor(), preferredTemp)) {
+		// Find heat source
+
+		heatClock += Clock::deltaTime;
+
+		if (heatClock > 5.0f) {
+			heatClock = 0.0f;
+			currentPath = findPath(xPos, yPos, findBestTemperatureTile(xPos, yPos, 25, preferredTemp));
+		}
 	}
 
-	
 }
 
 Evaluation Villager::evaluateEating() {

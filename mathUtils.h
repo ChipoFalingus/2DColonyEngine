@@ -36,3 +36,5 @@ bool raycast(int x0, int y0, int x1, int y1);
 
 std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim, Creature* c = nullptr);
 std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim);
+
+float bellCurve(float current, float preferred);

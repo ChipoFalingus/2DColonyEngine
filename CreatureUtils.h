@@ -17,6 +17,8 @@ std::optional<std::pair<int, int>> findClosestTileItem(const std::string item, i
 
 bool isAtItem(const Object& item, int x, int y);
 
+std::pair<int, int> findBestTemperatureTile(int x, int y, int radius, float preferredTemp);
+
 template<typename T>
 Creature* findClosestCreatureType(int x, int y, int radius, std::function<bool(T*)> filter = {}) {
     Creature* closest = nullptr;

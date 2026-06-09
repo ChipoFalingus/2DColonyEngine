@@ -45,6 +45,12 @@ public:
         return std::max(0.5f * std::sin(cycle - pi / 2.0f) + 0.55f, 0.1f);
     }
 
+    float getTemperatureFactor() const {
+        float pi = 3.14159265f;
+        float cycle = currentTime * (2.0f * pi / dayLength);
+        return std::max(15.f * std::sin(cycle - pi / 2.0f) + 65.f, 0.1f);
+	}
+
     TimePeriod getTimePeriod() const {
         float progress = currentTime / dayLength;
 

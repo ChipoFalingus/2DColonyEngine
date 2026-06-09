@@ -49,6 +49,7 @@ private:
 
 
     std::vector<float> lightMap;
+	std::vector<float> temperatureMap;
 
     void renderWorld();
     void addCreatures();
@@ -78,6 +79,25 @@ public:
             allCreatures.end()
         );
     }
+
+    void initTemperatureMap() {
+        int size = calculateMapSize() * 2 + 1;
+        temperatureMap.resize(size * size);
+        std::fill(temperatureMap.begin(), temperatureMap.end(), 80.f);
+	}
+
+    void setTemperatureMap(const std::vector<float>& newMap) {
+        temperatureMap = newMap;
+	}
+
+    float getTemperatureMapIndex(int x, int y) {
+        x += calculateMapSize();
+        y += calculateMapSize();
+        int size = calculateMapSize() * 2 + 1;
+        if (x < 0 || x >= size || y < 0 || y >= size)
+            return 0.5f;
+        return temperatureMap[x + y * size];
+	}
 
     void initLightMap() {
         int size = calculateMapSize() * 2 + 1;

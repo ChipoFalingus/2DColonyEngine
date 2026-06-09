@@ -105,6 +105,10 @@ void processInput(GLFWwindow* window) {
                 //Game::getInstance().getLightManager().addLight(glm::vec2(mouseTileX, mouseTileY), glm::vec3(1.0f, 1.0f, 0.0f), 1.0f, 1.0f, -1.0f);
                 //std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
                 //mainWorld.setLightMap(map);
+
+				Game::getInstance().getHeatManager().addHeatSource(mouseTileX, mouseTileY, 35.0f, 10.0f);
+				std::vector<float> heatMap = Game::getInstance().getHeatManager().calculateHeatMap(calculateMapSize());
+				mainWorld.setTemperatureMap(heatMap);
             }
 
 			
@@ -269,7 +273,8 @@ void processInput(GLFWwindow* window) {
                 itemStr += " (" + std::to_string(percent) + "% Grown)";
             }
 
-            if (Tool* tool = dynamic_cast<Tool*>(item.get())) {
+            if (item->type == Type::Tool) {
+                Tool* tool = static_cast<Tool*>(item.get());
                 itemStr += " (" + materialToString(tool->material) + ")";
             }
 
@@ -284,7 +289,7 @@ void processInput(GLFWwindow* window) {
         }
 
         ui.tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
-        std::string type = typeToString(tile.type) + " " + std::to_string(tile.markedForHarvest);
+        std::string type = typeToString(tile.type) + " " + std::to_string(mainWorld.getTemperatureMapIndex(mouseTileX, mouseTileY));
         ui.tileType->changeText(std::wstring(type.begin(), type.end()));
 
         std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(mouseTileX, mouseTileY).altitude));

@@ -118,30 +118,15 @@ void World::addCreatures() {
     auto axe = ObjectRegistry::getInstance().get("Axe");
     auto pickaxe = ObjectRegistry::getInstance().get("Pickaxe");
 
-	int LUMBERJACKS = 3;
-	int MINERS = 0;
-    int FARMERS = 0;
-    int BUILDERS = 0;
-	int CARPENTERS = 0;
-    int BLACKSMITHS = 0;
+	int v = 3;
 
     auto gun = ObjectRegistry::getInstance().get("Minigun");
 
-    for (int i = 0; i < LUMBERJACKS; i++) {
+    for (int i = 0; i < v; i++) {
         auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::Lumberjack);
+        v->setJob(JobType::None);
         v->itemInHand = std::dynamic_pointer_cast<Gun>(gun);
         allCreatures.push_back(std::move(v));
-    }
-
-
-    for (int i = 0; i < 0; i++) {
-		int x = getRandomInt(-100, 100);
-		int y = getRandomInt(-100, 100);
-        if (getTileRef(x, y).walkable) {
-            auto v = std::make_unique<Pig>(x, y);
-            allCreatures.push_back(std::move(v));
-        }
     }
 }
 
@@ -175,6 +160,7 @@ void World::generateWorld() {
         updateMiniMap();
 
         initLightMap();
+        initTemperatureMap();
 
         auto newMap = Game::getInstance()
             .getLightManager()
