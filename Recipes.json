@@ -75,6 +75,15 @@
             },
             "required_bench": "None"
         },
+        {
+            "result": "Fire Pit",
+            "quantity": 1,
+            "ingredients": {
+                "Rock": 4,
+                "Stick" : 4
+            },
+            "required_bench": "None"
+        },
 
         {
             "result": "Wooden Plank",
@@ -185,7 +194,7 @@
             "ingredients": {
                 "Iron": 1
             },
-            "time": 2,
+            "time": 10,
             "required_bench": "Furnace"
         },
         {

@@ -25,6 +25,7 @@ private:
     BuildUI buildUI;
     ProductionUI productionUI;
 	FurnitureUI furnitureUI;
+    TemperatureUI temperatureUI;
     StructureUI structureUI;
     CarpentryBenchUI carpentryBenchUI;
 	StoneCutterUI stoneCutterUI;
@@ -67,6 +68,7 @@ public:
         buildUI = getBuildFrame();
         productionUI = getProductionFrame();
 		furnitureUI = getFurnitureFrame();
+        temperatureUI = getTemperatureFrame();
         structureUI = getStructureFrame();
         carpentryBenchUI = getCarpentryBenchFrame();
 		stoneCutterUI = getStoneCutterFrame();
@@ -118,6 +120,10 @@ public:
     FurnitureUI& getFurnitureUI() {
         return furnitureUI;
 	}
+
+    TemperatureUI& getTemperatureUI() {
+        return temperatureUI;
+    }
 
     StructureUI& getStructureUI() {
         return structureUI;

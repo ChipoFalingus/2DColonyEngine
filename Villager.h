@@ -24,13 +24,14 @@ extern std::vector<std::string> lastnames;
 
 // These don't change
 enum class TraitType {
-	Extroversion,
+	SocialWeight,
+	WorkWeight,
+	BraveryWeight,
+	TemperatureToleranceWeight,
+
 	COUNT
 };
 
-struct Traits {
-	std::array<float, static_cast<size_t>(TraitType::COUNT)> values;
-};
 enum class ActivityState {
 	None,
 	Sitting,
@@ -55,6 +56,7 @@ enum class UtilityType {
 	SIT,
 	WANDER,
 	SOCIALIZE,
+	WARMING_UP,
 	INTERRUPTED_RESUME, 
 };
 
@@ -98,9 +100,8 @@ private:
 	Job* currentJob;
 
 public:
-	Traits traits;
-
 	std::unordered_map<SkillType, int> skills;
+	std::unordered_map<TraitType, float> traits;
 
 	std::string firstname = names[getRandomInt(0, names.size() - 1)];
 	std::string lastname = lastnames[getRandomInt(0, lastnames.size() - 1)];
@@ -117,6 +118,10 @@ public:
 
 	float heatClock;
 
+	float talkClock;
+
+	float findChairClock;
+
 	int moveSpeed;
 	float harvestTime = 1.0f;
 	float sleepTime = 5.0f;
@@ -127,7 +132,6 @@ public:
 
 	Object* object_in_use;
 
-
 	std::optional<std::pair<int, int>> bed = std::nullopt;
 
 	Inventory inventory;
@@ -136,19 +140,21 @@ public:
 
 	int thirst = 100;
 	int tiredness = 0;
-	int happiness = 100;
+	int happiness = 50;
 	int stress = 0;
 	int social = 0;
 
 	ActivityState activity_state;
 
-	int preferredTemp = 70;
+	int preferredTemp = getRandomInt(60, 80);
 
 	int alertness = 20;
 	std::pair<int, int> lastMove = { 0,0 };
 
 	bool retreating = false;
 	Creature* threat;
+
+	Villager* nearby;
 
 	std::string action_log[10];
 
@@ -183,7 +189,7 @@ public:
 
 		for (int i = 0; i < (int)TraitType::COUNT; i++) {
 			TraitType traitType = static_cast<TraitType>(i);
-			traits.values[i] = getRandomFloat(0.0f, 1.0f);
+			traits[traitType] = getRandomFloat(0.0f, 1.0f);
 		}
 	}
 
@@ -193,6 +199,7 @@ public:
 	Evaluation evaluateMeditation();
 	Evaluation evaluateSocializing();
 	Evaluation evaluateSitting();
+	Evaluation evaluateWarmingUp();
 
 	void sense();
 	void idle();

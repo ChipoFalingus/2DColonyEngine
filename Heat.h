@@ -19,6 +19,12 @@ public:
 		heatSources.push_back({ x, y, intensity, radius });
 	}
 
+    void removeHeatSource(int x, int y) {
+        heatSources.erase(std::remove_if(heatSources.begin(), heatSources.end(),
+            [x, y](const HeatSource& source) { return source.x == x && source.y == y; }),
+            heatSources.end());
+	}
+
 	std::vector<float> calculateHeatMap(int mapSize) {
         int gridSize = mapSize * 2 + 1;
         std::vector<float> heatMap(gridSize * gridSize, mainWorld.dayCycle.getTemperatureFactor());

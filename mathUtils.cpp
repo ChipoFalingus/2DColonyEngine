@@ -507,6 +507,6 @@ std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim
     return threat;
 }
 
-float bellCurve(float current, float preferred) {
-    return exp(-pow(current - preferred, 2) / (2 * pow(0.15f, 2)));
+float bellCurve(float current, float preferred, float deviation) {
+    return exp(-pow(current - preferred, 2) / (2 * pow(deviation, 2)));
 }

@@ -63,9 +63,9 @@ void save() {
 		for (int i = 0; i < skills.size(); i++) {
 			vj["skills"].push_back(v->skills[skills[i]]);
 		}
-		for (int i = 0; i < static_cast<int>(TraitType::COUNT); i++) {
-			vj["traits"].push_back(v->traits.values[i]);
-		}
+		/*for (int i = 0; i < v->traits.size(); i++) {
+			vj["traits"].push_back(v->traits[i]);
+		}*/
 		j["villagers"].push_back(vj);
 	}
 

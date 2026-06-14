@@ -188,7 +188,7 @@ class Panel : public UIElement {
 private:
 	std::vector<std::unique_ptr<UIElement>> elements;
 public:
-	Panel(int xOffset, int yOffset, int lengthX, int lengthY, Anchor alignment)
+	Panel(int xOffset, int yOffset, int lengthX, int lengthY, Anchor anchor)
 		: UIElement()
 	{
 		this->anchor = anchor;
@@ -216,18 +216,18 @@ public:
 	void draw(std::vector<std::vector<wchar_t>>& UI) override {
 		for (int i = 0; i < lengthY; i++) {
 			for (int j = 0; j < lengthX; j++) {
-				if (yOffset + i < UI.size() && xOffset + j < UI[0].size()) {
-					UI[yOffset + i][xOffset + j] = L' ';
+				if (yPos + i < UI.size() && xPos + j < UI[0].size()) {
+					UI[yPos + i][xPos + j] = L' ';
 
 					// Edges
-					if (i == 0 || i == lengthY - 1) UI[yOffset + i][xOffset + j] = L'─';
-					if (j == 0 || j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'│';
+					if (i == 0 || i == lengthY - 1) UI[yPos + i][xPos + j] = L'─';
+					if (j == 0 || j == lengthX - 1) UI[yPos + i][xPos + j] = L'│';
 
 					// Corners
-					if (i == 0 && j == 0) UI[yOffset + i][xOffset + j] = L'┌';
-					if (i == lengthY - 1 && j == 0) UI[yOffset + i][xOffset + j] = L'└';
-					if (i == 0 && j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'┐';
-					if (i == lengthY - 1 && j == lengthX - 1) UI[yOffset + i][xOffset + j] = L'┘';
+					if (i == 0 && j == 0) UI[yPos + i][xPos + j] = L'┌';
+					if (i == lengthY - 1 && j == 0) UI[yPos + i][xPos + j] = L'└';
+					if (i == 0 && j == lengthX - 1) UI[yPos + i][xPos + j] = L'┐';
+					if (i == lengthY - 1 && j == lengthX - 1) UI[yPos + i][xPos + j] = L'┘';
 				}
 			}
 		}

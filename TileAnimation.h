@@ -68,10 +68,40 @@ void applyAnimation(Tile& tile, glm::vec3& currentColor, wchar_t& currentDisplay
     }
 
     else if (tile.anim.type == WATER) {
-        tile.anim.isOtherChar = fmod(time + tile.animOffset * 32.0f, 32.0f) > 28.0f;
+        tile.anim.isOtherChar = fmod(time + tile.animOffset * 64.0f, 64.0f) > 60.0f;
 
         if (tile.anim.isOtherChar) {
             currentDisplayChar = L'~';
+            currentColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        }
+    }
+
+    else if (tile.anim.type == FIRE) {
+        float animTime = time + tile.animOffset;
+        float cyclePosition = fmod(animTime, 0.8f);
+
+        if (cyclePosition < 0.2f) {
+            currentDisplayChar = L',';
+            currentColor = glm::vec3(1.0f, 0.7f, 0.0f);
+        }
+        else if (cyclePosition < 0.4f) {
+            currentDisplayChar = L')';
+            currentColor = glm::vec3(1.0f, 0.7f, 0.0f);
+        }
+        else if (cyclePosition < 0.6f) {
+            currentDisplayChar = L'.';
+            currentColor = glm::vec3(1.0f, 0.7f, 0.0f);
+        }
+        else {
+            currentDisplayChar = L'(';
+            currentColor = glm::vec3(1.0f, 0.7f, 0.0f);
+        }
+    }
+    else if (tile.anim.type == SPEECH_BUBBLE) {
+        tile.anim.isOtherChar = fmod(time + tile.animOffset * 2.0f, 2.0f) > 1.0f;
+
+        if (tile.anim.isOtherChar) {
+            currentDisplayChar = L'Q';
             currentColor = glm::vec3(1.0f, 1.0f, 1.0f);
         }
     }

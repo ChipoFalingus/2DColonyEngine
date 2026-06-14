@@ -3,8 +3,8 @@
 #include <SFML/Graphics/Color.hpp>
 
 struct tileDisplay {
-    std::vector<wchar_t> chars;
-    std::vector<sf::Color> colors;
+    wchar_t character;
+    sf::Color color;
 
-	tileDisplay(std::vector<wchar_t> chars, std::vector<sf::Color> colors) : chars(chars), colors(colors) {}
+	tileDisplay(wchar_t character, sf::Color color) : character(character), color(color) {}
 };

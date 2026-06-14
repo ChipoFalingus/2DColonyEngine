@@ -13,6 +13,7 @@
 
 
 class Villager;
+class HeatEmitter;
 
 enum class JobState {
 	Active,
@@ -192,6 +193,27 @@ public:
 	void update();
 };
 
+class Refuel : public Job {
+public:
+	std::weak_ptr<Object> fuel;
+	std::weak_ptr<HeatEmitter> target;
+	int fX, fY;
+
+	enum State {
+		Getting,
+		Fueling
+	};
+
+	State jobState = State::Getting;
+
+	Refuel(Villager* v, Tool* tool, SkillType skillType, std::weak_ptr<Object> fuel, std::weak_ptr<HeatEmitter> target, int fX, int fY)
+		: Job(v, tool, skillType), fuel(fuel), target(target), fX(fX), fY(fY)
+	{
+	}
+
+	void update();
+};
+
 class PlaceItem : public Job {
 public:
 	Object* itemToPlace;
@@ -326,9 +348,13 @@ public:
 class Sit : public Job {
 public:
 	int tX, tY;
+	std::weak_ptr<Object> chair;
 	bool init = false;
-	Sit(Villager* v, Tool* tool, SkillType skillType, int x, int y)
-		: Job(v, tool, skillType), tX(x), tY(y)
+
+	float clock;
+
+	Sit(Villager* v, Tool* tool, SkillType skillType, std::weak_ptr<Object> chair, int x, int y)
+		: Job(v, tool, skillType), chair(chair), tX(x), tY(y)
 	{
 	}
 	~Sit();

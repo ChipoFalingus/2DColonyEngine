@@ -31,7 +31,7 @@ public:
 		filter.insert({ Type::Food, true });
 		filter.insert({ Type::Crop, true });
 		filter.insert({ Type::Foliage_Crop, true });
-		filter.insert({ Type::Furnace, true });
+		filter.insert({ Type::Heat_Emitter, true });
 		filter.insert({ Type::Gun, true });
 		filter.insert({ Type::Bench, true });
 		filter.insert({ Type::Structure, true });

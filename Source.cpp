@@ -32,7 +32,7 @@
 #include "Creature.h"
 #include "TileAnimation.h"
 #include "FoliageCrop.h"
-#include "Furnace.h"
+#include "HeatEmitter.h"
 
 #include "Pig.h"
 #include "Zombie.h"
@@ -431,17 +431,17 @@ void drawMiniMap(Shader& shader) {
             }
             
             if (!viewHeightMap) {
-                charStr = chunk->dominantDisplay.chars.empty() ? L' ' : chunk->dominantDisplay.chars[0];
-                color = chunk->dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                charStr = chunk->dominantDisplay.character == L'\0' ? L' ' : chunk->dominantDisplay.character;
+                color = chunk->dominantDisplay.color == sf::Color::White ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
-                        chunk->dominantDisplay.colors[0].r / 255.0f,
-                        chunk->dominantDisplay.colors[0].g / 255.0f,
-                        chunk->dominantDisplay.colors[0].b / 255.0f
+                        chunk->dominantDisplay.color.r / 255.0f,
+                        chunk->dominantDisplay.color.g / 255.0f,
+                        chunk->dominantDisplay.color.b / 255.0f
                     );
             }
             else {
                 charStr = L'■';
-                color = chunk->dominantDisplay.colors.empty() ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                color = chunk->dominantDisplay.color == sf::Color::White ? glm::vec3(1.0f, 1.0f, 1.0f) :
                     glm::vec3(
                         altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).r / 255.0f,
                         altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).g / 255.0f,
@@ -569,7 +569,9 @@ void drawMap(Shader& shader)
                 color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
 
             }
-            applyAnimation(tile, color, string);
+
+			if (tile.anim.type != animType::NONE) applyAnimation(tile, color, string);
+            
         
 
             if (placing) {
@@ -855,8 +857,24 @@ int main() {
                         static_cast<Spawner*>(i.get())->update();
                         hasActiveComponent = true;
                     }
-                    else if (i->type == Type::Furnace) {
-                        static_cast<Furnace*>(i.get())->cook();
+
+                    else if (i->type == Type::Heat_Emitter) {
+                        std::shared_ptr<HeatEmitter> h = static_pointer_cast<HeatEmitter>(i);
+
+                        if (h->fuelAmount <= 0.0f && !h->addedFuelJob) {
+                            if (auto f = mainWorld.findItemInAllStockpile("Wood")) {
+                                auto fuelItem = f->first->retrieveItem(f->second.first, f->second.second);
+
+                                Job* job = new Refuel(nullptr, nullptr, SkillType::None, fuelItem.value(), h, f->second.first, f->second.second);
+                                job->priority = 40;
+                                JobManager::addJob(job);
+
+                                h->addedFuelJob = true;
+                            }
+                        }
+
+                        h->update();
+
                         hasActiveComponent = true;
                     }
                 }

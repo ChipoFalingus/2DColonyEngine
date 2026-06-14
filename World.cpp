@@ -118,7 +118,7 @@ void World::addCreatures() {
     auto axe = ObjectRegistry::getInstance().get("Axe");
     auto pickaxe = ObjectRegistry::getInstance().get("Pickaxe");
 
-	int v = 3;
+	int v = 4;
 
     auto gun = ObjectRegistry::getInstance().get("Minigun");
 

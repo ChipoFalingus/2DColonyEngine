@@ -11,6 +11,7 @@ enum class UI {
     Build,
     Production,
     Structure,
+    Temperature,
     Furniture,
     Carpentry,
     StoneCutter,

@@ -15,7 +15,7 @@
 #include "Globals.h"
 #include "Game.h"
 #include "FoliageCrop.h"
-#include "Furnace.h"
+#include "HeatEmitter.h"
 #include "Spawner.h"
 #include "Structure.h"
 #include <set>
@@ -412,38 +412,6 @@ void Tile::getTile(int x, int y) {
             tiles.push_back({ x, y });
         }*/
 
-        /*if (x == 10 && y == 10) {
-           items.clear();
-           auto item = ObjectRegistry::getInstance().get("Apple Tree");
-           auto spawner = static_cast<FoliageCrop*>(item.get());
-           spawner->x = x;
-           spawner->y = y;
-           addObject(item);
-        }
-        if (x == 0 && y == 10) {
-            items.clear();
-            auto item = ObjectRegistry::getInstance().get("Orange Tree");
-            auto spawner = static_cast<FoliageCrop*>(item.get());
-            spawner->x = x;
-            spawner->y = y;
-            addObject(item);
-        }
-        if (x == -10 && y == 10) {
-            items.clear();
-            auto item = ObjectRegistry::getInstance().get("Lemon Tree");
-            auto spawner = static_cast<FoliageCrop*>(item.get());
-            spawner->x = x;
-            spawner->y = y;
-            addObject(item);
-        }*/
-
-        float scrapNoise = hashNoise(x + 20000.0f, y + 20000.0f, seed);
-
-        /*if (scrapNoise < 0.005f) {
-            items.clear();
-            addObject("Scrap Metal");
-        }*/
-
         int range = 10;
 
         //if (
@@ -557,24 +525,50 @@ void Tile::getTile(int x, int y) {
         }
         
     }*/
-   /* if (x == 0 && y == 0) {
-		addObject("Carpentry Bench");
-    }*/
-
-    if (x > -10 && x < 10 && y > -10 && y < 10) {
-        auto item = ObjectRegistry::getInstance().get("Wheat");
-		//auto c = static_cast<Crop*>(item.get());
-        items.clear();
-		addObject(item);
-		tiles.push_back({ x, y });
+    if (x == 0 && y == 0) {
+        addObject("Carpentry Bench");
+        tiles.push_back({x,y});
     }
+
+    if (x == 1 && y == 5) {
+        items.clear();
+        addObject("Stone Chair");
+    }
+
+    if (x == -1 && y == 5) {
+        items.clear();
+        addObject("Stone Chair");
+    }
+
+    if (x == 0 && y == 4) {
+        items.clear();
+        addObject("Stone Chair");
+    }
+
+    if (x == 0 && y == 6) {
+        items.clear();
+        addObject("Stone Chair");
+    }
+
+    if (x == 0 && y == 5) {
+        items.clear();
+        addObject("Stone Table");
+    }
+
+  //  if (x > -10 && x < 10 && y > -10 && y < 10) {
+  //      auto item = ObjectRegistry::getInstance().get("Wheat");
+		////auto c = static_cast<Crop*>(item.get());
+  //      items.clear();
+		//addObject(item);
+		//tiles.push_back({ x, y });
+  //  }
 
     // Sets starting displays, subject to change
     auto display = getTileDisplay(type);
 
-    character = display.chars[0];
+    character = display.character;
 
-    color = display.colors[0];
+    color = display.color;
 
     if (items.size() > 0) {
         walkable = getTileWalkable(items[0].get(), type);
@@ -606,8 +600,8 @@ void Tile::update() {
         }
 		
         if (i->type == Type::Furnace) {
-            Furnace* furnacePtr = static_cast<Furnace*>(i.get());
-			furnacePtr->cook();
+            //Furnace* furnacePtr = static_cast<Furnace*>(i.get());
+			//furnacePtr->cook();
         }
     }
 }
@@ -617,8 +611,8 @@ void Tile::changeTileChar(sf::String string) {
 
 void Tile::changeTileType(tileType newType) {
     type = newType;
-	character = getTileDisplay(type).chars[0];
-	color = getTileDisplay(type).colors[0];
+	character = getTileDisplay(type).character;
+	color = getTileDisplay(type).color;
 }
 
 bool Tile::containsItem(const std::string& item) {
@@ -685,25 +679,25 @@ tileDisplay getTileDisplay(tileType type) {
 		c = grass[index];
 
         sf::Color color = colors[getRandomInt(0, colors.size() - 1)];
-        return { {c}, {color}};
+        return { c, color };
     }
     case tileType::SOIL:
         c = L'=';
-		return { {c}, {sf::Color(84, 30, 0)} };
+		return { c, sf::Color(84, 30, 0) };
     case tileType::WATER:
-		return { {L'≈'}, {sf::Color(0, 0, 255)} };
+		return { L'≈', sf::Color(0, 0, 255) };
 	case tileType::SAND:
 		c = L':';
-        return { {c}, {sf::Color(255, 255, 0)}};
+        return { c, sf::Color(255, 255, 0)};
     case tileType::MOUNTAIN:
         c = L'Δ';
-        return { {c}, {sf::Color(128,128,128)}};
+        return { c, sf::Color(128,128,128)};
 	case tileType::MOUNTAIN_PEAK:
 		c = L'▲';
-		return { {c}, {sf::Color(200,200,200)} };
+		return { c, sf::Color(200,200,200) };
     default:
         c = L'?';
-        return { {c}, {sf::Color::Red}};
+        return { c, sf::Color::Red };
     }
 }
 

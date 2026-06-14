@@ -74,6 +74,7 @@ struct InGameUI {
     Button* plantButton;
     Button* stockpileButton;
 
+    Button* colony_info;
     Button* villagers;
 
     void resize(int screenW, int screenH) {
@@ -114,6 +115,7 @@ struct BuildUI {
     Button* furnitureButton;
     Button* productionButton;
     Button* securityButton;
+    Button* temperatureButton;
 };
 
 BuildUI getBuildFrame();
@@ -152,6 +154,14 @@ struct FurnitureUI {
 };
 
 FurnitureUI getFurnitureFrame();
+
+struct TemperatureUI {
+    UI type = UI::Temperature;
+
+    Button* firepit;
+};
+
+TemperatureUI getTemperatureFrame();
 
 struct CarpentryBenchUI {
     UI type = UI::Carpentry;

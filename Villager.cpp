@@ -244,16 +244,16 @@ void Villager::sense() {
 
 void Villager::idle() {
 
-	if (0.7f > bellCurve(mainWorld.dayCycle.getTemperatureFactor(), preferredTemp)) {
-		// Find heat source
+	//heatClock += Clock::deltaTime;
 
-		heatClock += Clock::deltaTime;
+	//if (0.5f > bellCurve(mainWorld.getTemperatureMapIndex(xPos, yPos), preferredTemp, 8)) {
+	//	// Find heat source
 
-		if (heatClock > 5.0f) {
-			heatClock = 0.0f;
-			currentPath = findPath(xPos, yPos, findBestTemperatureTile(xPos, yPos, 25, preferredTemp));
-		}
-	}
+	//	if (heatClock > 5.f) {
+	//		heatClock = 0.0f;
+	//		currentPath = findPath(xPos, yPos, findBestTemperatureTile(xPos, yPos, 25, preferredTemp));
+	//	}
+	//}
 
 }
 
@@ -279,7 +279,7 @@ Evaluation Villager::evaluateSleeping() {
 	//if (tiredness <= 20) return { UtilityType::SLEEP, 0.0f };
 	float score = (tiredness - 50.0f) * 1.0f;
 	if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
-		score += 50.0f;
+		//score += 50.0f;
 	}
 	return { UtilityType::SLEEP, score };
 }
@@ -296,28 +296,84 @@ Evaluation Villager::evaluateCombat() {
 Evaluation Villager::evaluateMeditation() {
 	return { UtilityType::MEDITATE, social * 1.0f };
 }
+
 Evaluation Villager::evaluateSocializing() {
-	return { UtilityType::SOCIALIZE, social * 1.0f };
+	if (social < 25) return { UtilityType::SOCIALIZE, -1.0f };
+
+	Villager* bestTarget = nullptr;
+	float closestDist = 9999.0f;
+
+	for (auto& other : mainWorld.getAllVillagers()) {
+		if (other == this) continue;
+		if (other->activity_state == ActivityState::Sleeping) continue;
+
+		float dist = getDistance(other);
+		if (dist < 15.0f && dist < closestDist) {
+			closestDist = dist;
+			bestTarget = other;
+		}
+	}
+
+	if (!bestTarget) {
+		return { UtilityType::SOCIALIZE, -1.0f };
+	}
+
+	this->nearby = bestTarget;
+
+	float trait = 1.0f + traits.at(TraitType::SocialWeight);
+	float tiredFactor = 1.0f - (tiredness * 0.01f);
+	return { UtilityType::SOCIALIZE, social * trait * tiredFactor };
 }
+
 Evaluation Villager::evaluateSitting() {
-	return { UtilityType::SIT, (tiredness - 50.0f) * 1.0f };
+	if (findChairClock < 5.0f) return { UtilityType::SIT, -1.0f };
+	findChairClock = 0.0f;
+
+	auto loc = findClosestItemType(xPos, yPos, 30, [](const Object& obj, int x, int y) {
+		return (obj.name == "Wooden Chair" || obj.name == "Stone Chair") && !obj.claimed;
+		});
+
+	if (loc) {
+		float score = (tiredness - 50.0f) * 1.0f;
+		if (mainWorld.dayCycle.getTimePeriod() != TimePeriod::Night) {
+			score += 30.0f;
+		}
+		return { UtilityType::SIT, score, loc.value().item.lock(), loc.value().x, loc.value().y};
+	}
+	else {
+		return { UtilityType::SIT, -1.0f};
+	}
+}
+Evaluation Villager::evaluateWarmingUp() {
+	if (heatClock < 5.0f) return { UtilityType::WARMING_UP, -1.0f };
+	heatClock = 0.0f;
+
+	float deviation = bellCurve(mainWorld.getTemperatureMapIndex(xPos, yPos), preferredTemp, 8);
+	if (0.5f > deviation) {
+		return { UtilityType::WARMING_UP, deviation * 10.0f * (traits.at(TraitType::TemperatureToleranceWeight) + 0.5f)};
+	}
+	else {
+		return { UtilityType::WARMING_UP, -1.0f};
+	}
+	
 }
 
 
 void Villager::decide() {
 	if (tirednessClock > 12.0f && !sleeping) { tiredness++; tirednessClock = 0.0f; }
 	if (hungerClock > 10.0f) { hunger--; hungerClock = 0.0f; }
-	//if (socialClock > 5.0f * traits.values[static_cast<size_t>(TraitType::Extroversion)] + 2.0f) { social++; socialClock = 0.0f; }
+	if (socialClock > 12.0f * traits.at(TraitType::SocialWeight) + 1.0f) { 
+		social++; socialClock = 0.0f; }
 
 	
-
 	std::vector<Evaluation> options = {
 		evaluateCombat(),
 		evaluateSleeping(),
 		evaluateEating(),
+		evaluateWarmingUp(),
+		evaluateSocializing(),
+		evaluateSitting(),
 		//evaluateMeditation(),
-		//evaluateSocializing(),
-		//evaluateSitting(),
 	};
 
 	if (currentJob) {
@@ -347,11 +403,10 @@ void Villager::decide() {
 		if (best.type == UtilityType::ATTACK && activity_state == ActivityState::Attacking) { currentJob->state = JobState::Active; return; }
 		if (best.type == UtilityType::RETREAT && activity_state == ActivityState::Retreating) { currentJob->state = JobState::Active; return; }
 		if (best.type == UtilityType::SLEEP && activity_state == ActivityState::Sleeping) { currentJob->state = JobState::Active; return; }
+		if (best.type == UtilityType::SOCIALIZE && activity_state == ActivityState::Socializing) { currentJob->state = JobState::Active; return; }
+		if (best.type == UtilityType::EAT && activity_state == ActivityState::Eating) { currentJob->state = JobState::Active; return; }
+		if (best.type == UtilityType::SIT && activity_state == ActivityState::Sitting) { currentJob->state = JobState::Active; return; }
 
-		if (best.type == UtilityType::EAT && activity_state == ActivityState::Eating) { 
-			currentJob->state = JobState::Active;
-			return; 
-		}
 		if (best.score > (float)currentJob->priority) {
 			interrupted.push_back(currentJob);
 			currentJob = nullptr;
@@ -395,7 +450,10 @@ void Villager::decide() {
 		currentJob = job;
 		break;
 	}
-	
+	case UtilityType::WARMING_UP: 
+		currentPath = findPath(xPos, yPos, findBestTemperatureTile(xPos, yPos, 25, preferredTemp));
+		break;
+
 	case UtilityType::MEDITATE:
 		activity_state = ActivityState::Meditating;
 		job = new Meditate(this, nullptr, SkillType::None);
@@ -403,22 +461,34 @@ void Villager::decide() {
 		currentJob = job;
 		break;
 
+	case UtilityType::SIT:
+		activity_state = ActivityState::Sitting;
+		best.targetItem->claimed = true;
+		job = new Sit(this, nullptr, SkillType::None, best.targetItem, best.targetX, best.targetY);
+		job->priority = best.score;
+		currentJob = job;
+		break;
+
 	case UtilityType::SOCIALIZE: {
 		activity_state = ActivityState::Socializing;
 		
-		Villager* v = nullptr;
-		for (auto& other : mainWorld.getAllVillagers()) {
-			if (other == this) continue;
-			
-			if (getDistance(other) < 5.0f) {
-				v = other;
-				break;
-			}
-		}
-		
-		job = new Talk(this, nullptr, SkillType::None, v);
+		job = new Talk(this, nullptr, SkillType::None, nearby);
 		job->priority = best.score;
 		currentJob = job;
+
+		if (nearby) {
+			nearby->activity_state = ActivityState::Socializing;
+
+			Job* partnerJob = new Talk(nearby, nullptr, SkillType::None, this);
+			partnerJob->priority = best.score;
+
+			if (nearby->getCurrentJob()) {
+				nearby->interrupted.push_back(nearby->getCurrentJob());
+			}
+
+			nearby->currentJob = partnerJob;
+		}
+
 		break;
 	}
 
@@ -454,7 +524,6 @@ void Villager::decide() {
 	case UtilityType::IDLE:
 	default:
 		activity_state = ActivityState::None;
-		idle();
 		break;
 	}
 
@@ -508,6 +577,9 @@ void Villager::doWork() {
 	tirednessClock += Clock::deltaTime;
 	socialClock += Clock::deltaTime;
 
+	heatClock += Clock::deltaTime;
+	findChairClock += Clock::deltaTime;
+
 	if (toolInHand) {
 		harvestTime = toolInHand->efficiency / materialToEfficiency(toolInHand->material);
 	}
@@ -539,9 +611,7 @@ std::string getJobName(const Job* job) {
 	if (dynamic_cast<const Retreat*>(job))   return "Retreat";
 	if (dynamic_cast<const Sleep*>(job))     return "Sleep";
 	if (dynamic_cast<const FindFood*>(job))  return "FindFood";
-
-	// Add your extra production jobs here too!
-	// if (dynamic_cast<const ChopWood*>(job)) return "ChopWood";
+	if (dynamic_cast<const Talk*>(job))  return "Talking";
 
 	return "Unknown Job Type";
 }
@@ -551,7 +621,6 @@ void Villager::printJobQueue() const {
 	std::cout << "   JOB QUEUE MEMORY FOR: Villager (" << this << ")" << std::endl;
 	std::cout << "==================================================" << std::endl;
 
-	// 1. Check the active job running right now
 	if (currentJob) {
 		std::cout << "  [ACTIVE RUNNING] -> Name: " << std::left << std::setw(15) << getJobName(currentJob)
 			<< " | Priority: " << std::fixed << std::setprecision(1) << currentJob->priority << std::endl;
@@ -564,12 +633,10 @@ void Villager::printJobQueue() const {
 	std::cout << "   Paused / Interrupted Stack (Highest to Lowest):" << std::endl;
 	std::cout << "--------------------------------------------------" << std::endl;
 
-	// 2. Check if the memory stack is empty
 	if (interrupted.empty()) {
 		std::cout << "   (No paused jobs in memory bank)" << std::endl;
 	}
 	else {
-		// Loop through the vector and display each job's specifications
 		for (size_t i = 0; i < interrupted.size(); ++i) {
 			std::cout << "   [" << i << "] Paused Job: " << std::left << std::setw(15) << getJobName(interrupted[i])
 				<< " | Priority: " << std::fixed << std::setprecision(1) << interrupted[i]->priority << std::endl;

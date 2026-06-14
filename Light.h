@@ -95,9 +95,13 @@ public:
 		return lights;
     }
 
-    void removeLight(size_t index) {
-        if (index < lights.size()) {
-            lights.erase(lights.begin() + index);
+    void removeLight(int x, int y) {
+        for (int i = lights.size() - 1; i >= 0; i--) {
+            if (lights[i].position.x == x && lights[i].position.y == y) {
+                lights[i] = lights.back();
+                lights.pop_back();
+                break;
+            }
         }
     }
 

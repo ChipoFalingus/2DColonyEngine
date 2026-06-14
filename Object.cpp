@@ -2,7 +2,7 @@
 #include "Tool.h"
 #include "FoliageCrop.h"
 #include "Food.h"
-#include "Furnace.h"
+#include "HeatEmitter.h"
 #include "Spawner.h"
 #include "Seed.h"
 #include "Structure.h"
@@ -22,7 +22,7 @@ std::string itemTypeToString(Type type) {
 	case Type::Food: return "Food";
 	case Type::Crop: return "Crop";
 	case Type::Foliage_Crop: return "Foliage Crop";
-	case Type::Furnace: return "Furnace";
+	case Type::Heat_Emitter: return "Heat Emitter";
 	case Type::Gun: return "Gun";
 	case Type::Bench: return "Bench";
 	case Type::Structure: return "Structure";
@@ -83,6 +83,15 @@ void loadObjects() {
 				return food;
 				});
 		}
+		else if (type == "furniture") {
+			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
+				auto furniture = std::make_unique<Object>();
+				furniture->name = name;
+				furniture->type = Type::Furniture;
+
+				return furniture;
+				});
+		}
 		else if (type == "crop") {
 			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
 				auto crop = std::make_unique<Crop>();
@@ -116,13 +125,12 @@ void loadObjects() {
 				return fcrop;
 				});
 		}
-		else if (type == "furnace") {
-			ObjectRegistry::getInstance().addObject(name, [name]() -> std::unique_ptr<Object> {
-				auto furnace = std::make_unique<Furnace>();
-				furnace->name = name;
-				furnace->type = Type::Furnace;
-
-				return furnace;
+		else if (type == "heat_emitter") {
+			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
+				auto obj = std::make_unique<HeatEmitter>();
+				obj->name = name;
+				obj->type = Type::Heat_Emitter;
+				return obj;
 				});
 		}
 		else if (type == "gun") {
@@ -182,16 +190,6 @@ void loadObjects() {
 					return c->type == VILLAGER;
 
 					};
-
-				return obj;
-				});
-				}
-
-		else if (type == "furniture") {
-			ObjectRegistry::getInstance().addObject(name, [name, i]() -> std::unique_ptr<Object> {
-				auto obj = std::make_unique<Object>();
-				obj->name = name;
-				obj->type = Type::Furniture;
 
 				return obj;
 				});

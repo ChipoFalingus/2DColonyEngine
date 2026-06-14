@@ -180,7 +180,7 @@
     <ClInclude Include="Dot.h" />
     <ClInclude Include="FoliageCrop.h" />
     <ClInclude Include="Food.h" />
-    <ClInclude Include="Furnace.h" />
+    <ClInclude Include="HeatEmitter.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Gun.h" />

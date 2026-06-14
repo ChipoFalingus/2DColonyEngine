@@ -6,7 +6,7 @@
 #include "World.h"
 #include "Game.h"
 #include "UI.h"
-#include "Furnace.h"
+#include "HeatEmitter.h"
 #include "Save.h"
 #include "Structure.h"
 
@@ -106,9 +106,9 @@ void processInput(GLFWwindow* window) {
                 //std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
                 //mainWorld.setLightMap(map);
 
-				Game::getInstance().getHeatManager().addHeatSource(mouseTileX, mouseTileY, 35.0f, 10.0f);
-				std::vector<float> heatMap = Game::getInstance().getHeatManager().calculateHeatMap(calculateMapSize());
-				mainWorld.setTemperatureMap(heatMap);
+				//Game::getInstance().getHeatManager().addHeatSource(mouseTileX, mouseTileY, 35.0f, 10.0f);
+				//std::vector<float> heatMap = Game::getInstance().getHeatManager().calculateHeatMap(calculateMapSize());
+				//mainWorld.setTemperatureMap(heatMap);
             }
 
 			
@@ -234,7 +234,7 @@ void processInput(GLFWwindow* window) {
         i.inventory->changeText(std::wstring(inv.begin(), inv.end()));
 
         std::string health = std::to_string(viewing->health) + " / 100";
-        std::string hunger = "Hunger: " + std::to_string(viewing->hunger);
+        std::string hunger = "Social: " + std::to_string(viewing->social);
         i.health->changeText(std::wstring(health.begin(), health.end()));
         i.hunger->changeText(std::wstring(hunger.begin(), hunger.end()));
 
@@ -334,32 +334,7 @@ void handleClickedItem(int x, int y) {
         uiManager.addOrRemoveFrame(UI::Anvil);
 	}
     else if (getTileRef(x, y).containsItem("Furnace")) {
-        Tile& tile = getTileRef(x, y);
-
-        std::shared_ptr<Object> furnaceObj = nullptr;
-        for (auto& it : tile.items) {
-            if (it && it->type == Type::Furnace) {
-                furnaceObj = it;
-                break;
-            }
-        }
-
-		bool has = false;
-        for (auto& i :  tiles) {
-            if (i.first == x && i.second == y) {
-                has = true;
-				break;
-            }
-		}
-
-        if (!has) {
-            tiles.push_back({ x, y });
-		}
-
-        if (furnaceObj) {
-            auto furnace = std::static_pointer_cast<Furnace>(furnaceObj);
-            furnace->addInput(ObjectRegistry::getInstance().get("Raw Iron"));
-        }
+        // do later
     }
     else if (getTileRef(x, y).containsItem("Gun Bench")) {
         uiManager.addOrRemoveFrame(UI::Gun);

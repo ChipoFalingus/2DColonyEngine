@@ -15,6 +15,7 @@ enum struct Type {
 	Food,
 	Crop,
 	Foliage_Crop,
+	Heat_Emitter,
 	Furnace,
 	Gun,
 	Bench,

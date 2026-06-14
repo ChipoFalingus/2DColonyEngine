@@ -278,7 +278,7 @@
     <ClInclude Include="Spawner.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="Furnace.h">
+    <ClInclude Include="HeatEmitter.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
     <ClInclude Include="FoliageCrop.h">

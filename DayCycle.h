@@ -21,7 +21,7 @@ inline std::string timePeriodToString(TimePeriod period) {
 
 class DayCycle {
 private:
-    float dayLength = 600.0f;
+    float dayLength = 1200.0f;
 
 	// Start at morning
     float currentTime = dayLength * 0.33f;

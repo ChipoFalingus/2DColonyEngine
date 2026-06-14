@@ -22,6 +22,8 @@ enum animType {
     RED_X = 4,
     WHITE_BREATHE = 5,
     WATER = 6,
+    FIRE = 7,
+    SPEECH_BUBBLE = 8
 };
 
 struct Animation {
@@ -57,14 +59,15 @@ public:
     sf::Color color;
 
     uint8_t water;
+
     int16_t altitude;
+    int16_t region = -1;
+
     bool walkable;
-
     bool blocked = false;
-
 	bool markedForHarvest = false;
 
-    //item
+    //replace with global map later
     std::vector<std::shared_ptr<Object>> items;
 
     tileType type;
@@ -74,7 +77,6 @@ public:
     float animOffset = getRandomFloat(0, 2 * 3.1415926);
     
 
-    int region = -1;
 
     void update();
 
@@ -87,6 +89,10 @@ public:
 	void addObject(std::shared_ptr<Object> item);
     void removeItem(std::shared_ptr<Object> item, int x, int y);
     void removeItem(std::string item);
+
+    void setAnimType(animType type) {
+        anim.type = type;
+    }
 };
 
 std::string typeToString(tileType type);
