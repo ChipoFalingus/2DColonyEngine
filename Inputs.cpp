@@ -244,6 +244,13 @@ void processInput(GLFWwindow* window) {
 		}
         i.skills->changeText(std::wstring(skills.begin(), skills.end()));
 
+        std::string log = "Log:|";
+
+        for (auto& i : viewing->action_log) {
+            log += i + "|";
+        }
+
+        i.log->changeText(std::wstring(log.begin(), log.end()));
 
         i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 8, 18);
 
@@ -342,6 +349,7 @@ void handleClickedItem(int x, int y) {
     else if (auto s = mainWorld.atStockpile(mouseTileX, mouseTileY)) {
         Game::getInstance().getStockpileUI().updateStockpileUI(*s);
         Game::getInstance().getUIManager().addOrRemoveFrame(UI::Stockpile);
+        //mainWorld.removeStockpile(*s);
     }
 }
 

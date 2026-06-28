@@ -18,14 +18,14 @@ public:
 	int x, y;
 	int radius;
 
-	int maxSquadSize = 10;
+	int maxSquadSize = 30;
 
-	sf::Clock spawnClock;
+	float spawnClock;
 
 	void spawn() {
-		if (spawnClock.getElapsedTime().asSeconds() >= cooldown && squad->memberCount() < maxSquadSize) {
+		if (spawnClock >= cooldown && squad->memberCount() < maxSquadSize) {
 			// Spawn logic here
-			spawnClock.restart();
+			spawnClock = 0.0f;
 
 			int xOffset = getRandomInt(x - radius, x + radius);
 			int yOffset = getRandomInt(y - radius, y + radius);
@@ -42,6 +42,7 @@ public:
 	}
 
 	void update() {
+		spawnClock += Clock::deltaTime;
 		spawn();
 		if (squad) updateSquad();
 	}

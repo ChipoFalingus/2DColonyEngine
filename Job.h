@@ -126,11 +126,15 @@ public:
 
 	enum State {
 		GettingSeed,
+		Tilling,
 		Planting
 	};
 
 	int locX, locY;
 	std::string seed;
+
+	float plantClock;
+	float tillClock;
 
 	State plantState = State::GettingSeed;
 
@@ -243,6 +247,7 @@ class Attack : public Job {
 public:
 
 	Creature* target;
+	float attackClock;
 
 	Attack(Villager* v, Tool* tool, SkillType skillType, Creature* target)
 		: Job(v, tool, skillType), target(target)
@@ -323,6 +328,29 @@ public:
 	void update();
 };
 
+class HaulToStockpile : public Job {
+public:
+	enum State {
+		PickUpItem,
+		Move,
+		Drop,
+	};
+
+	std::shared_ptr<Object> itemToMove;
+	int fromX, fromY;
+	int toX, toY;
+
+	State moveState = State::PickUpItem;
+
+	HaulToStockpile(Villager* v, Tool* tool, SkillType skillType, std::shared_ptr<Object> item, int fX, int fY, int tX, int tY)
+		: Job(v, tool, skillType), itemToMove(item), fromX(fX), fromY(fY), toX(tX), toY(tY)
+	{
+		x = fX;
+		y = fY;
+	}
+	void update();
+};
+
 class FindFood : public Job {
 public:
 
@@ -392,7 +420,16 @@ public:
 
 class Talk : public Job {
 public:
+	enum State {
+		WalkTo,
+		TalkTo
+	};
+
 	Villager* other;
+	float clock;
+
+	State talkState = State::WalkTo;
+
 	Talk(Villager* v, Tool* tool, SkillType skillType, Villager* other)
 		: Job(v, tool, skillType), other(other)
 	{}

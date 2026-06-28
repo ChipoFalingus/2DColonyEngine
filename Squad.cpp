@@ -34,23 +34,6 @@ void Squad::update() {
 	}
 
 	case ATTACKING:
-
-		if (attackScanClock > 0.5f) {
-			//attackScanClock = 0.0f;
-			//
-			//Creature* c = findClosestCreatureType<Villager>(
-			//	getAvgPos().first,
-			//	getAvgPos().second,
-			//	96
-			//);
-
-			//if (c) {
-			//	//targetPos = { c->xPos, c->yPos };
-			//}
-			//else {
-			//	//state = state::IDLE;
-			//}
-		}
 		break;
 	}
 
@@ -62,7 +45,7 @@ void Squad::followLeader() {
 	if (members.empty()) return;
 
 	const int MACRO_DIM = 64;
-	const int MICRO_DIM = 64;
+	const int MICRO_DIM = 16;
 	const int macroHalf = MACRO_DIM / 2;
 	const int microHalf = MICRO_DIM / 2;
 
@@ -236,56 +219,56 @@ std::pair<int, int> Squad::getAvgPos() {
 void Squad::findTargets() {
 	attackScanClock += Clock::deltaTime;
 
-		if (attackScanClock > 0.5f) {
-			attackScanClock = 0.0f;
+	if (attackScanClock > 0.5f) {
+		attackScanClock = 0.0f;
 
-			std::pair<int, int> oldTopTargetPos = {0, 0};
+		std::pair<int, int> oldTopTargetPos = {0, 0};
 		if (!selectedTargets.empty()) {
 			oldTopTargetPos = selectedTargets.front().position;
 		}
 
-			selectedTargets.clear();
+		selectedTargets.clear();
 
-			auto center = getAvgPos();
-			const int scanRadius = 32;
+		auto center = getAvgPos();
+		const int scanRadius = 32;
 
-			auto structures = findAllItemInRange(center.first, center.second, scanRadius, [](const Object& item, int x, int y) {
-				return item.type == Type::Structure;
-				});
+		auto structures = findAllItemInRange(center.first, center.second, scanRadius, [](const Object& item, int x, int y) {
+			return item.type == Type::Structure;
+			});
 
-			if (structures.has_value()) {
-				for (auto& s : structures.value()) {
-					auto lockedItem = s.item.lock();
-					if (!lockedItem) continue;
+		if (structures.has_value()) {
+			for (auto& s : structures.value()) {
+				auto lockedItem = s.item.lock();
+				if (!lockedItem) continue;
 
-					auto structureShared = std::static_pointer_cast<Structure>(lockedItem);
-					selectedTargets.push_back(SelectedTarget({ s.x, s.y }, structureShared, 1));
-				}
-			}
-
-			auto creatures = findAllCreaturesInRange<Villager>(center.first, center.second, scanRadius);
-			for (auto& c : creatures) {
-				if (c->dead) continue;
-				selectedTargets.push_back(SelectedTarget({ c->xPos, c->yPos }, c, 1));
-			}
-
-			if (!selectedTargets.empty()) {
-				state = ATTACKING;
-
-				auto& primaryTarget = selectedTargets.front();
-				if (abs(primaryTarget.position.first - oldTopTargetPos.first) +
-					abs(primaryTarget.position.second - oldTopTargetPos.second) > 2) {
-					flow.clear();
-				}
-			}
-			else {
-				if (state == ATTACKING) {
-					flow.clear();
-					idleWanderClock = 2.0f;
-				}
-				state = IDLE;
+				auto structureShared = std::static_pointer_cast<Structure>(lockedItem);
+				selectedTargets.push_back(SelectedTarget({ s.x, s.y }, structureShared, 1));
 			}
 		}
+
+		auto creatures = findAllCreaturesInRange<Villager>(center.first, center.second, scanRadius);
+		for (auto& c : creatures) {
+			if (c->dead) continue;
+			selectedTargets.push_back(SelectedTarget({ c->xPos, c->yPos }, c, 1));
+		}
+
+		if (!selectedTargets.empty()) {
+			state = ATTACKING;
+
+			auto& primaryTarget = selectedTargets.front();
+			if (abs(primaryTarget.position.first - oldTopTargetPos.first) +
+				abs(primaryTarget.position.second - oldTopTargetPos.second) > 2) {
+				flow.clear();
+			}
+		}
+		else {
+			if (state == ATTACKING) {
+				flow.clear();
+				idleWanderClock = 2.0f;
+			}
+			state = IDLE;
+		}
+	}
 }
 
 SelectedTarget* Squad::chooseTarget(Creature* member, std::vector<int>& targetCounts, bool allowCreatures) {
@@ -337,14 +320,7 @@ SelectedTarget* Squad::chooseTarget(Creature* member, std::vector<int>& targetCo
 
 /*
 
-THE ALGORITHM:
-
-
-	- Put all possible targets into arrays (already doing that)
-	- Add a score for each that takes distance and attention into account
-	- Create a "general" flow field that directs to a nearby area
-	- Create a smaller flow field (or just a*) to the actual target
-	- I think the smaller flow field should ignore separation to allow higher damage without crowding
+this is stupid
 
 
 */

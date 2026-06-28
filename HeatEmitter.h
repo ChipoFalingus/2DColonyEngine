@@ -9,12 +9,15 @@
 class HeatEmitter : public Object {
 public:
     int x = 0, y = 0;
-    float heatIntensity = 50.0f;
+    float heatIntensity = 0.0f;
+    float lightIntensity = 50.0f;
     float heatRadius = 3.0f;
     float fuelAmount = 9999.0f;
 
     bool on = false;
     bool addedFuelJob = false;
+
+    bool autoRefuel = true;
 
 
     HeatEmitter() : Object() {}
@@ -39,7 +42,7 @@ public:
         Tile& tile = getTileRef(x, y);
         tile.setAnimType(FIRE);
 
-        Game::getInstance().getLightManager().addLight(glm::vec2(x, y), glm::vec3(255, 140, 0), 100.0f, .6f, -1.0f);
+        Game::getInstance().getLightManager().addLight(glm::vec2(x, y), glm::vec3(255, 140, 0), 100.0f, lightIntensity, -1.0f);
         Game::getInstance().getHeatManager().addHeatSource(x, y, heatIntensity, heatRadius);
     }
 

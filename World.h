@@ -22,7 +22,8 @@ class Villager;
 enum struct PlacementMode {
     SINGLE,
     LINE,
-	SQUARE
+	SQUARE,
+    FILLED_SQUARE
 };
 
 class World {
@@ -55,7 +56,7 @@ private:
     void addCreatures();
 public:
 
-	PlacementMode placementMode = PlacementMode::LINE;
+	PlacementMode placementMode = PlacementMode::SQUARE;
 
 	DayCycle dayCycle;
     
@@ -123,6 +124,7 @@ public:
 
         return lightMap[x + y * size];
     }
+
 
     std::vector<Stockpile>& getStockpiles() {
         return stockpiles;
@@ -210,6 +212,30 @@ public:
         }
 
         return count;
+    }
+
+    void removeStockpile(Stockpile s) {
+
+        auto loc = s.getLocation();
+        int width = s.getWidth();
+        int height = s.getHeight();
+
+        for (int x = loc.first; x < loc.first + width; x++) {
+            for (int y = loc.second; y < loc.second + height; y++) {
+                Tile& tile = getTileRef(x, y);
+                tile.removeItem("Stockpile");
+
+                if (auto i = s.retrieveItem(x, y)) {
+                    addItemToMove(i.value(), x, y);
+                }
+            }
+        }
+
+        auto it = std::find(stockpiles.begin(), stockpiles.end(), s);
+        if (it != stockpiles.end()) {
+            stockpiles.erase(it);
+        }
+
     }
 
     Chunk& loadOrGenerateChunk(int x, int y);

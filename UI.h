@@ -159,6 +159,7 @@ struct TemperatureUI {
     UI type = UI::Temperature;
 
     Button* firepit;
+    Button* torch;
 };
 
 TemperatureUI getTemperatureFrame();
@@ -216,6 +217,8 @@ struct StockpileUI {
     Text* capacity;
     Text* contents;
 
+    Button* remove;
+
 	std::vector<Checkbox*> typeFilters;
 
     void updateStockpileUI(Stockpile& stockpile);
@@ -236,6 +239,7 @@ struct VillagerInfoUI {
     Text* health;
 
     Text* skills;
+    Text* log;
 };
 
 VillagerInfoUI getVillagerInfoFrame();
@@ -270,6 +274,8 @@ struct InfoUI {
 	Text* itemName;
     Text* ingredients;
 	Text* description;
+
+    void configureInfoFrame(std::string obj);
 };
 
 InfoUI getInfoFrame();
@@ -282,4 +288,3 @@ Button& createButton(
 );
 
 void setMode(Mode mode);
-void configureInfo(std::string obj);

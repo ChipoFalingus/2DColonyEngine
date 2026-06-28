@@ -16,7 +16,8 @@
             "produces": [
                 {
                     "item": "Wheat Seeds",
-                    "amount": 1
+                    "amount": 1,
+                    "odds": 0.1
                 }
             ],
             "tool_required": "None",

@@ -28,6 +28,8 @@ enum class TraitType {
 	WorkWeight,
 	BraveryWeight,
 	TemperatureToleranceWeight,
+	EatWeight,
+	TiredWeight,
 
 	COUNT
 };
@@ -115,6 +117,7 @@ public:
 	float findBedClock;
 	float findFoodClock;
 	float socialClock;
+	float recreationClock;
 
 	float heatClock;
 
@@ -142,7 +145,8 @@ public:
 	int tiredness = 0;
 	int happiness = 50;
 	int stress = 0;
-	int social = 0;
+	int social = 100;
+	int recNeed = 100;
 
 	ActivityState activity_state;
 
@@ -200,7 +204,10 @@ public:
 	Evaluation evaluateSocializing();
 	Evaluation evaluateSitting();
 	Evaluation evaluateWarmingUp();
+	Evaluation evaluateIdle();
+	Evaluation evaluateWandering();
 
+	void calculateMood();
 	void sense();
 	void idle();
 	void decide();

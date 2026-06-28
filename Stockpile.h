@@ -39,6 +39,11 @@ public:
 
     }
 
+    bool operator==(const Stockpile& other) const {
+        return this->location.first == other.location.first &&
+            this->location.second == other.location.second;
+    }
+
     std::pair<int, int> getLocation() const { return location; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }

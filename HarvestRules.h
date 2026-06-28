@@ -3,16 +3,21 @@
 #include <vector>
 #include "JobType.h"
 
+struct Drop {
+	std::string drop;
+	int amount;
+	float odds = 1.0f;
+};
+
 class Rule {
 public:
 	std::string target;
-	std::vector<std::string> produces;
-	int amount;
+	std::vector<Drop> produces;
 	std::string toolRequired;
 	SkillType skillType;
 
-	Rule(std::string target, std::vector<std::string> produces, int amount, std::string toolRequired, SkillType skillType)
-		: target(target), produces(produces), amount(amount), toolRequired(toolRequired), skillType(skillType) {
+	Rule(std::string target, std::vector<Drop> produces, std::string toolRequired, SkillType skillType)
+		: target(target), produces(produces), toolRequired(toolRequired), skillType(skillType) {
 	}
 };
 

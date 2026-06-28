@@ -130,6 +130,10 @@ void loadObjects() {
 				auto obj = std::make_unique<HeatEmitter>();
 				obj->name = name;
 				obj->type = Type::Heat_Emitter;
+
+				obj->heatIntensity = i.at("heat_intensity").get<float>();
+				obj->lightIntensity = i.at("light_intensity").get<float>();
+
 				return obj;
 				});
 		}

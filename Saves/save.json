@@ -1,14 +1,20 @@
 {
-    "seed": 480581743,
+    "seed": 1317439070,
     "stockpiles": [
         {
-            "height": 8,
+            "height": 12,
             "items": [
                 {
                     "name": "Rock"
                 },
                 {
-                    "name": "Wood"
+                    "name": "Rock"
+                },
+                {
+                    "name": "Rock"
+                },
+                {
+                    "name": "Rock"
                 },
                 {
                     "name": "Rock"
@@ -20,13 +26,7 @@
                     "name": "Rock"
                 },
                 {
-                    "name": "Wheat Seeds"
-                },
-                {
                     "name": "Rock"
-                },
-                {
-                    "name": "Wheat Seeds"
                 },
                 {
                     "name": "Rock"
@@ -38,140 +38,77 @@
                     "name": "Rock"
                 },
                 {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
                     "name": "Rock"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
-                    "name": "Wood"
-                },
-                {
-                    "name": "Bundled Wheat"
-                },
-                {
-                    "name": "Wheat Seeds"
-                },
-                {
-                    "name": "Bundled Wheat"
                 }
             ],
-            "width": 10,
-            "x": -14,
-            "y": -6
+            "width": 15,
+            "x": -20,
+            "y": -30
         }
     ],
     "villagers": [
         {
-            "fname": "Sarah",
-            "job": "Lumberjack",
-            "lname": "Hernandez",
+            "fname": "Kingston",
+            "job": "None",
+            "lname": "Kim",
             "skills": [
-                3,
-                3,
+                2,
+                2,
                 1,
                 2,
-                3,
+                2,
+                2,
                 3,
                 2,
                 3,
-                1,
-                13,
-                3
+                2,
+                12
             ],
-            "traits": [
-                0.5258685946464539
-            ],
-            "x": -22,
-            "y": -2
+            "traits": [],
+            "x": -16,
+            "y": -15
         },
         {
-            "fname": "Eric",
-            "job": "Lumberjack",
-            "lname": "Martinez",
+            "fname": "Thomas",
+            "job": "None",
+            "lname": "Martin",
             "skills": [
-                11,
+                3,
+                10,
                 1,
                 2,
                 3,
-                1,
-                1,
-                2,
                 3,
                 2,
+                1,
+                1,
                 1,
                 1
             ],
-            "traits": [
-                0.9257739186286926
-            ],
-            "x": -15,
-            "y": -2
+            "traits": [],
+            "x": -23,
+            "y": 7
         },
         {
-            "fname": "Lisa",
-            "job": "Lumberjack",
-            "lname": "Brown",
+            "fname": "Wyatt",
+            "job": "None",
+            "lname": "Kim",
             "skills": [
-                1,
+                3,
                 3,
                 2,
-                3,
+                2,
+                1,
                 12,
+                3,
+                2,
                 1,
                 2,
-                3,
-                1,
-                1,
                 2
             ],
-            "traits": [
-                0.7502523064613342
-            ],
-            "x": -16,
-            "y": -5
+            "traits": [],
+            "x": 27,
+            "y": 6
         }
     ],
     "world": null

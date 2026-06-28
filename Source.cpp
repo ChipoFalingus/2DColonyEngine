@@ -786,16 +786,11 @@ int main() {
         // Move this to the World class later
         auto& creatures = mainWorld.getAllCreatures();
 
-        creatures.erase(
-            std::remove_if(creatures.begin(), creatures.end(),
-                [](const std::unique_ptr<Creature>& c) {
-                    return c->dead;
-                }),
-            creatures.end()
-        );
-
         for (auto& c : creatures) {
             if (!c) continue;
+            if (c->dead) {
+                mainWorld.removeCreature(c.get()); continue;
+            }
             c->doWork();
         }
 
@@ -861,7 +856,7 @@ int main() {
                     else if (i->type == Type::Heat_Emitter) {
                         std::shared_ptr<HeatEmitter> h = static_pointer_cast<HeatEmitter>(i);
 
-                        if (h->fuelAmount <= 0.0f && !h->addedFuelJob) {
+                        if (h->fuelAmount <= 0.0f && !h->addedFuelJob && h->autoRefuel) {
                             if (auto f = mainWorld.findItemInAllStockpile("Wood")) {
                                 auto fuelItem = f->first->retrieveItem(f->second.first, f->second.second);
 
@@ -897,14 +892,16 @@ int main() {
 
             for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
                 auto& item = it->first;
+                int currentX = it->second.first;
+                int currentY = it->second.second;
 
-                auto spotOpt = mainWorld.findStockpileSpotForItem(item->name, it->second.first, it->second.second);
+                auto spotOpt = mainWorld.findStockpileSpotForItem(item->name, currentX, currentY);
 
                 if (spotOpt) {
                     auto [stockpile, pos] = *spotOpt;
                     stockpile->addItem(item, pos.first, pos.second);
 
-                    Job* job = new MoveItem(nullptr, nullptr, SkillType::None, item, it->second.first, it->second.second, pos.first, pos.second);
+                    Job* job = new HaulToStockpile(nullptr, nullptr, SkillType::None, item, currentX, currentY, pos.first, pos.second);
 
                     job->priority = 35;
                     JobManager::addJob(job);

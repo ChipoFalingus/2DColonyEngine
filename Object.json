@@ -16,7 +16,9 @@
             "visual": {
                 "character": "o",
                 "color": [ 50, 50, 50 ]
-            }
+            },
+            "heat_intensity": 50.0,
+            "light_intensity": 1.0
         },
         {
             "name": "Scrap Metal",
@@ -288,7 +290,9 @@
             "visual": {
                 "character": "O",
                 "color": [ 128, 128, 128 ]
-            }
+            },
+            "heat_intensity": 10.0,
+            "light_intensity": 0.7
         },
         {
             "name": "Oven",
@@ -296,7 +300,9 @@
             "visual": {
                 "character": "H",
                 "color": [ 128, 128, 128 ]
-            }
+            },
+            "heat_intensity": 10.0,
+            "light_intensity": 0.5
         },
         {
             "name": "Carpentry Bench",
@@ -477,9 +483,6 @@
             },
             "nutrition": 60
         },
-
-
-
         {
             "name": "Potato Plant",
             "type": "crop",
@@ -694,6 +697,16 @@
                 "character": "%",
                 "color": [ 67, 203, 255 ]
             }
+        },
+        {
+            "name": "Torch",
+            "type": "heat_emitter",
+            "visual": {
+                "character": "|",
+                "color": [ 150, 75, 0 ]
+            },
+            "heat_intensity": 20.0,
+            "light_intensity": 0.6
         }
 
     ]

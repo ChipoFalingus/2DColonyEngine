@@ -199,7 +199,7 @@ VillagerListUI getVillagerListFrame() {
     VillagerListUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
-    ui.text = &frame->addElement<Text>(0, 0, L"Villagers", Anchor::TOP_LEFT);
+    //ui.text = &frame->addElement<Text>(0, 0, L"Villagers", Anchor::TOP_LEFT);
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
@@ -217,15 +217,20 @@ void VillagerListUI::configureVillagerList() {
     for (auto& villager : mainWorld.getAllVillagers()) {
 		auto panel = &frame->addElement<Panel>(0, i*5, 30, 5, Anchor::CENTER_LEFT);
 		std::string name = villager->firstname + " " + villager->lastname;
-		panel->addElement<Text>(1, 0, std::wstring(name.begin(), name.end()), Anchor::CENTER_LEFT);
+		auto& n = panel->addElement<Text>(1, -2, std::wstring(name.begin(), name.end()), Anchor::CENTER_LEFT);
+        n.setAnchorPosition(xFrustum, yFrustum);
 
 		std::string position = "Position: (" + std::to_string(villager->xPos) + ", " + std::to_string(villager->yPos) + ")";
-        panel->addElement<Text>(4, 1, std::wstring(position.begin(), position.end()), Anchor::CENTER_LEFT);
+        auto& p = panel->addElement<Text>(4, -1, std::wstring(position.begin(), position.end()), Anchor::CENTER_LEFT);
+        p.setAnchorPosition(xFrustum, yFrustum);
+
 
 		std::string status = "Status: " + activityStateToString(villager->activity_state);
-        panel->addElement<Text>(4, 2, std::wstring(status.begin(), status.end()), Anchor::CENTER_LEFT);
+        auto& s = panel->addElement<Text>(4, 0, std::wstring(status.begin(), status.end()), Anchor::CENTER_LEFT);
+        s.setAnchorPosition(xFrustum, yFrustum);
 
-		panel->addElement<Text>(2, 2, L"☺", Anchor::CENTER_LEFT);
+		auto& f = panel->addElement<Text>(2, 0, L"☺", Anchor::CENTER_LEFT);
+        f.setAnchorPosition(xFrustum, yFrustum);
 
         villagers.push_back(panel);
 
@@ -311,7 +316,8 @@ ProductionUI getProductionFrame() {
         });
 
     ui.carpentry_bench->setHoverFunction([&]() {
-        configureInfo("Carpentry Bench");
+        auto frame = Game::getInstance().getInfoUI();
+        frame.configureInfoFrame("Carpentry Bench");
 		Game::getInstance().getUIManager().push(UI::Info);
 		});
 
@@ -321,7 +327,8 @@ ProductionUI getProductionFrame() {
         });
 
     ui.stone_cutter->setHoverFunction([&]() {
-        configureInfo("Stone Cutter");
+        auto frame = Game::getInstance().getInfoUI();
+        frame.configureInfoFrame("Stone Cutter");
         Game::getInstance().getUIManager().push(UI::Info);
         });
 
@@ -331,7 +338,8 @@ ProductionUI getProductionFrame() {
         });
 
     ui.furnace->setHoverFunction([&]() {
-        configureInfo("Furnace");
+        auto frame = Game::getInstance().getInfoUI();
+        frame.configureInfoFrame("Furnace");
         Game::getInstance().getUIManager().push(UI::Info);
         });
 
@@ -341,7 +349,8 @@ ProductionUI getProductionFrame() {
         });
 
     ui.anvil->setHoverFunction([&]() {
-        configureInfo("Anvil");
+        auto& frame = Game::getInstance().getInfoUI();
+        frame.configureInfoFrame("Anvil");
         Game::getInstance().getUIManager().push(UI::Info);
         });
 
@@ -398,6 +407,13 @@ TemperatureUI getTemperatureFrame() {
     ui.firepit->setClickFunction([&]() {
         setMode(Mode::BUILD);
         Game::getInstance().setBuildItem("Fire Pit");
+        });
+
+    ui.torch = &createButton(*frame, 14, -8, L"Torch", Anchor::BOTTOM_LEFT);
+
+    ui.torch->setClickFunction([&]() {
+        setMode(Mode::BUILD);
+        Game::getInstance().setBuildItem("Torch");
         });
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
@@ -478,7 +494,7 @@ CarpentryBenchUI getCarpentryBenchFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_CENTER);
+    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_LEFT);
 
     ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_LEFT);
 	ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_LEFT);
@@ -754,6 +770,8 @@ VillagerInfoUI getVillagerInfoFrame() {
 
 	ui.skills = &ui.infoPanel->addElement<Text>(1, 6, L"", Anchor::TOP_LEFT);
 
+    ui.log = &ui.infoPanel->addElement<Text>(20, 1, L"", Anchor::TOP_LEFT);
+
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
@@ -836,20 +854,37 @@ InfoUI getInfoFrame() {
     InfoUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
-    ui.infoPanel = &frame->addElement<Panel>(0, 25, 20, 6, Anchor::BOTTOM_LEFT);
-    ui.itemName= &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
-	ui.ingredients = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_LEFT);
+    ui.infoPanel = &frame->addElement<Panel>(0, -20, 20, 6, Anchor::BOTTOM_LEFT);
+    ui.itemName= &frame->addElement<Text>(1, -24, L"", Anchor::BOTTOM_LEFT);
+	ui.ingredients = &frame->addElement<Text>(1, -23, L"", Anchor::BOTTOM_LEFT);
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
 
+
+void InfoUI::configureInfoFrame(std::string obj) {
+
+    auto object = ObjectRegistry::getInstance().get(obj);
+
+    std::wstring name = std::wstring(object->name.begin(), object->name.end());
+    itemName->changeText(name);
+    itemName->setAnchorPosition(xFrustum, yFrustum);
+
+    std::wstring ingredientStr = L"Ingredients:|";
+    auto recipe = RecipeRegistry::getInstance().get(obj);
+    if (recipe) {
+        for (auto& j : RecipeRegistry::getInstance().get(object->name)->ingredients) {
+            std::wstring ingredient = std::wstring(j.first.begin(), j.first.end()) + L": x" + std::to_wstring(j.second);
+            ingredientStr += ingredient + L"|";
+        }
+    }
+
+    ingredients->changeText(ingredientStr);
+    ingredients->setAnchorPosition(xFrustum, yFrustum);
+}
+
 // Helpers from here down
-Button& createButton(
-    Frame& frame,
-    int x, int y,
-    const std::wstring& label,
-    Anchor anchor
-) {
+Button& createButton(Frame& frame, int x, int y, const std::wstring& label, Anchor anchor) {
     std::wstring padded = L"" + label + L"";
     size_t width = padded.size();
 
@@ -869,28 +904,6 @@ Button& createButton(
     };
 
     return frame.addElement<Button>(x, y, normal, hover, hover, anchor);
-}
-
-
-void configureInfo(std::string obj) {
-
-    InfoUI& infoUI = Game::getInstance().getInfoUI();
-
-	auto object = ObjectRegistry::getInstance().get(obj);
-
-	std::wstring name = std::wstring(object->name.begin(), object->name.end());
-    infoUI.itemName->changeText(name);
-
-	std::wstring ingredientStr = L"Ingredients:|";
-    auto recipe = RecipeRegistry::getInstance().get(obj);
-    if (recipe) {
-        for (auto& j : RecipeRegistry::getInstance().get(object->name)->ingredients) {
-            std::wstring ingredient = std::wstring(j.first.begin(), j.first.end()) + L": x" + std::to_wstring(j.second);
-            ingredientStr += ingredient + L"|";
-        }
-    }
-
-    infoUI.ingredients->changeText(ingredientStr);
 }
 
 void setMode(Mode mode) {

@@ -1,4 +1,4 @@
-#include "Job.h"
+﻿#include "Job.h"
 #include "Item.h"
 #include "Light.h"
 #include "CreatureUtils.h"
@@ -103,7 +103,7 @@ struct Bid {
 };;
 
 void JobManager::assignJobs() {
-	
+
 	std::vector<Bid> bids;
 
 	for (Villager* v : mainWorld.getAllVillagers()) {
@@ -122,11 +122,11 @@ void JobManager::assignJobs() {
 			int dy = std::abs(v->yPos - job->y);
 
 			score += dx + dy;
-			score -= v->skills[job->type] * 100;
+			score -= v->skills[job->type] * 5000;
 
 			score += v->tiredness * 5;
 
-			if (v->getCurrentJob()) score += 50;
+			if (v->getCurrentJob()) score += 1000;
 
 			bids.push_back({ job, v, score });
 		}
@@ -278,9 +278,11 @@ void HarvestTile::update() {
 			tile.removeItem(targetItem, locX, locY);
 
 			for (auto& i : rule->produces) {
-				auto droppedItem = ObjectRegistry::getInstance().get(i);
-				tile.addObject(droppedItem);
-				mainWorld.addItemToMove(droppedItem, locX, locY);
+				if (getRandomFloat(0.0f, 1.0f) < i.odds) {
+					auto droppedItem = ObjectRegistry::getInstance().get(i.drop);
+					tile.addObject(droppedItem);
+					mainWorld.addItemToMove(droppedItem, locX, locY);
+				}
 			}
 
 			villager->clock = 0.0f;
@@ -295,6 +297,9 @@ void HarvestTile::update() {
 			}*/
 
 			getTileRef(locX, locY).markedForHarvest = false;
+			villager->tiredness += 2;
+
+			villager->log(villager->firstname + " " + villager->lastname + " harvested a " + item);
 			state = JobState::Completed;
 		}
 	}
@@ -540,24 +545,36 @@ void Plant::update() {
 		y = closestAdj.second;
 		if (isAtTile(villager->xPos, villager->yPos, itemLocation->x, itemLocation->y)) {
 			villager->pickUpItem(itemLocation->item.lock(), itemLocation->x, itemLocation->y);
-			plantState = Plant::Planting;
+			plantState = Plant::Tilling;
 		}
 		break;
 	}
-	case Plant::Planting: {
+	case Plant::Tilling: {
+
 		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, locX, locY);
 
 		x = closestAdj.first;
 		y = closestAdj.second;
 
 		if (tile.type == tileType::SOIL) {
-			needsSoil = false;
+			plantState = Planting;
 		}
 
 		if (villager->xPos == x && villager->yPos == y) {
-			if (needsSoil) {
+			tillClock += Clock::deltaTime;
+			if (tillClock > 2.0f) {
 				tile.changeTileType(tileType::SOIL);
+				plantState = Plant::Planting;
 			}
+		}
+
+		break;
+
+	}
+	case Plant::Planting: {
+		plantClock += Clock::deltaTime;
+
+		if (plantClock > 3.0f && villager->xPos == x && villager->yPos == y) {
 			auto c = ObjectRegistry::getInstance().get(seed);
 			if (c->type != Type::Seed) {
 				state = JobState::Completed;
@@ -579,6 +596,7 @@ void Plant::update() {
 }
 
 void Attack::update() {
+	attackClock += Clock::deltaTime;
 
 	if (!target || target->dead) {
 		auto c = findClosestCreatureType<Zombie>(villager->xPos, villager->yPos, villager->alertness * 1.5f);
@@ -615,13 +633,13 @@ void Attack::update() {
 		dmg = 1;
 	}
 
-	float dx = target->xPos - villager->xPos;
-	float dy = target->yPos - villager->yPos;
+	float dx = std::abs(target->xPos - villager->xPos);
+	float dy = std::abs(target->yPos - villager->yPos);
 	float distSq = dx * dx + dy * dy;
 	float rangeSq = range * range;
 
+
 	if (distSq > rangeSq) {
-		// Move toward target (replace later with pathfinding)
 		x = target->xPos;
 		y = target->yPos;
 	}
@@ -630,24 +648,10 @@ void Attack::update() {
 		x = villager->xPos;
 		y = villager->yPos;
 
-		if (villager->clock > attackCooldown) {
+		if (attackClock > attackCooldown) {
+			attackClock = 0.0f;
+			std::cout << "shot" << std::endl;
 			target->takeDamage(dmg, villager);
-
-			float dx = target->xPos - villager->xPos;
-			float dy = target->yPos - villager->yPos;
-
-			float length = std::sqrt(dx * dx + dy * dy);
-
-			glm::vec2 dir;
-			if (length == 0) {
-				dir = glm::vec2(1.0f, 0.0f);
-			}
-			else {
-				 dir = glm::vec2(dx / length, dy / length);
-			}
-
-			Game::getInstance().getLightManager().addDLight(glm::vec2(villager->xPos, villager->yPos), glm::vec3(1.0f, 1.0f, 0.0f), 10.0f, 5.0f, 0.03f, dir);
-			villager->clock = 0.0f;;
 		}
 	}
 }
@@ -731,12 +735,14 @@ void Retreat::update() {
 	}
 
 	if (foundMove && villager->moveClock > villager->speed) {
+		villager->lastTargetX = villager->xPos;
+		villager->lastTargetY = villager->yPos;
+
 		villager->xPos += bestMove.first;
 		villager->yPos += bestMove.second;
 
 		villager->lastMove = bestMove;
 		villager->moveClock = 0.0f;
-
 	}
 
 	if (!villager->threat || villager->threat->dead) {
@@ -757,18 +763,25 @@ void Sleep::update() {
 	if (villager->bed) {
 		x = villager->bed->first;
 		y = villager->bed->second;
-	}
-	else {
-		auto i = findBestTemperatureTile(villager->xPos, villager->yPos, 25, villager->preferredTemp);
-		x = i.first;
-		y = i.second;
+	} else {
+		if (!sleeping) {
+			auto i = findBestTemperatureTile(villager->xPos, villager->yPos, 25, villager->preferredTemp);
+			x = i.first;
+			y = i.second;
+
+		}
 	}
 
+	Tile& tile = getTileRef(x, y - 1);
+
 	if (villager->xPos == x && villager->yPos == y && !sleeping) {
+		tile.setAnimType(Z);
+
 		sleeping = true;
-		villager->clock = 0.0f;
 		
 	} else if (sleeping && mainWorld.dayCycle.getTimePeriod() == TimePeriod::Morning) {
+		tile.setAnimType(NONE);
+
 		sleeping = false;
 		villager->tiredness = 0;
 		state = JobState::Completed;
@@ -931,6 +944,68 @@ void MoveItem::update() {
 	}
 }
 
+void HaulToStockpile::update() {
+
+	villager->activity_state = ActivityState::Working;
+
+	switch (moveState) {
+
+
+	case (State::PickUpItem): {
+
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, fromX, fromY);
+		x = closestAdj.first;
+		y = closestAdj.second;
+		if (villager->xPos == x && villager->yPos == y) {
+			villager->pickUpItem(itemToMove, fromX, fromY);
+			moveState = State::Move;
+		}
+		break;
+
+	}
+
+	case (State::Move): {
+		std::pair<int, int> closestAdj = findClosestAdjTile(villager->xPos, villager->yPos, toX, toY);
+		x = closestAdj.first;
+		y = closestAdj.second;
+		if (villager->xPos == x && villager->yPos == y) {
+
+
+			auto* s = mainWorld.atStockpile(toX, toY);
+			if (s) {
+				s->placeItem(itemToMove, toX, toY);
+				villager->dropItem(itemToMove, toX, toY);
+				itemToMove->claimed = false;
+				villager->tiredness++;
+				state = JobState::Completed;
+			}
+			else {
+				auto spotOpt = mainWorld.findStockpileSpotForItem(itemToMove->name, x, y);
+
+				if (spotOpt) {
+					auto [stockpile, pos] = *spotOpt;
+					stockpile->addItem(itemToMove, pos.first, pos.second);
+
+					toX = pos.first;
+					toY = pos.second;
+				}
+				else {
+					mainWorld.addItemToMove(itemToMove, villager->xPos, villager->yPos);
+					villager->dropItem(itemToMove, villager->xPos, villager->yPos);
+					villager->tiredness++;
+					state = JobState::Completed;
+				}
+			}
+		}
+		break;
+	}
+
+	case (State::Drop):
+
+		break;
+	}
+}
+
 void FindFood::update() {
 	/*if (!food) {
 		completed = true;
@@ -1051,7 +1126,7 @@ void Sit::update() {
 		init = true;
 	}
 
-	if (clock > 20.0f) {
+	if (clock > villager->tiredness * 0.5f) {
 		clock = 0.0f;
 		state = JobState::Completed;
 		chair.lock()->claimed = false;
@@ -1089,6 +1164,7 @@ void Wander::update() {
 
 	if (villager->xPos == tX && villager->yPos == tY) {
 
+		villager->recNeed += 10;
 		state = JobState::Completed;
 	}
 }
@@ -1136,41 +1212,57 @@ void Talk::update() {
 		return;
 	}
 
-	int dx = std::abs(villager->xPos - other->xPos);
-	int dy = std::abs(villager->yPos - other->yPos);
+	switch (talkState) {
+	case (State::WalkTo): {
+		int dx = std::abs(villager->xPos - other->xPos);
+		int dy = std::abs(villager->yPos - other->yPos);
 
-	auto adj = findClosestAdjTile(villager->xPos, villager->yPos, other->xPos, other->yPos);
-	x = adj.first;
-	y = adj.second;
-	
-	Tile& tile = getTileRef(villager->xPos, villager->yPos - 1);
+		auto adj = findClosestAdjTile(villager->xPos, villager->yPos, other->xPos, other->yPos);
+		x = adj.first;
+		y = adj.second;
 
-	if (dx + dy <= 3) {
-		// Stop moving when in range
-		x = villager->xPos;
-		y = villager->yPos;
+		Tile& tile = getTileRef(villager->xPos, villager->yPos - 1);
 
-		tile.setAnimType(SPEECH_BUBBLE);
+		if (dx + dy <= 3) {
+			// Stop moving when in range
+			x = villager->xPos;
+			y = villager->yPos;
 
-		villager->talkClock += Clock::deltaTime;
+			talkState = State::TalkTo;
+		}
 
-		// End early if other villager starts doing something else
+		break;
+	}
+	case (State::TalkTo): {
+		Tile& tile = getTileRef(villager->xPos, villager->yPos - 1);
+		//tile.setAnimType(SPEECH_BUBBLE);
+
+		clock += Clock::deltaTime;
+
 		if (other->activity_state != ActivityState::Socializing) {
-			villager->nearby = nullptr;
-
+			Tile& otherTile = getTileRef(other->xPos, other->yPos);
+			otherTile.setAnimType(NONE);
 			tile.setAnimType(NONE);
+
+			villager->nearby = nullptr;
+			villager->social = 100;
 			state = JobState::Completed;
 		}
 
-		if (villager->talkClock > 10.0f) {
-			villager->talkClock = 0.0f;
-			villager->social = 0;
+		if (clock > 10.0f) {
+			clock = 0.0f;
+			villager->social = 100;
 
 			villager->nearby = nullptr;
 
 			tile.setAnimType(NONE);
+
+			villager->log(villager->firstname + " " + villager->lastname + " talked to " + other->firstname + " " + other->lastname);
 			state = JobState::Completed;
 		}
+
+		break;
+	}
 	}
 }
 

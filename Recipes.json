@@ -80,11 +80,18 @@
             "quantity": 1,
             "ingredients": {
                 "Rock": 4,
-                "Stick" : 4
+                "Stick": 4
             },
             "required_bench": "None"
         },
-
+        {
+            "result": "Torch",
+            "quantity": 1,
+            "ingredients": {
+                "Stick": 2
+            },
+            "required_bench": "None"
+        },
         {
             "result": "Wooden Plank",
             "quantity": 2,

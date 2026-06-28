@@ -390,7 +390,7 @@ void Tile::getTile(int x, int y) {
 
         float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
 
-        /*if (outposts < 0.000005f) {
+        /*if (x == 10 && y == 10) {
             items.clear();
             auto item = ObjectRegistry::getInstance().get("Outpost");
             auto spawner = static_cast<Spawner*>(item.get());
@@ -412,156 +412,41 @@ void Tile::getTile(int x, int y) {
             tiles.push_back({ x, y });
         }*/
 
-        int range = 10;
+        /*int range = 10;
 
-        //if (
-        //    (x == 5 || x == -5 || y == 5 || y == -5) &&
-        //    (x >= -5 && x <= 5 && y >= -5 && y <= 5) && x != 0
-        //    ) {
-        //    items.clear();
-        //    auto item = ObjectRegistry::getInstance().get("Wooden Wall");
-        //    auto i = static_cast<Structure*>(item.get());
-        //    i->x = x;
-        //    i->y = y;
-        //    addObject(item);
-        //    blocked = true;
-        //}
-        ///*else if (
-        //    (x == 5 || x == -5 || y == 5 || y == -5) &&
-        //    (x >= -5 && x <= 5 && y >= -5 && y <= 5)
-        //    ) {
-        //    items.clear();
-        //    auto item = ObjectRegistry::getInstance().get("Wooden Gate");
-        //    auto i = static_cast<Gate*>(item.get());
-        //    i->x = x;
-        //    i->y = y;
-        //    addObject(item);
-        //    blocked = true;
-        //}*/
-
-        //if (
-        //    (x >= -4 && x <= 4 && y >= -4 && y <= 4)
-        //    ) {
-        //    items.clear();
-        //    addObject("Stone Floor");
-        //}
-
-        //if ((x == 4 && y == 4) ||
-        //    (x == -4 && y == 4) ||
-        //    (x == 4 && y == -4) ||
-        //    (x == -4 && y == -4)) {
-        //    items.clear();
-        //    addObject("Bed");
-        //}
-        //if ((x == 3 && y == 4) ||
-        //    (x == -3 && y == 4) ||
-        //    (x == 3 && y == -4) ||
-        //    (x == -3 && y == -4)) {
-        //    items.clear();
-        //    addObject("Wooden Chair");
-        //}
-        //if ((x == 4 && y == 3) ||
-        //    (x == -4 && y == 3) ||
-        //    (x == 4 && y == -3) ||
-        //    (x == -4 && y == -3)) {
-        //    items.clear();
-        //    addObject("Wooden Chair");
-        //}
-
-        //if (x == 10 && y >= 0 && y <= 5) {
-        //    items.clear();
-        //    addObject("Wooden Chair");
-        //}
-        //if (x == 9 && y >= 0 && y <= 5) {
-        //    items.clear();
-        //    addObject("Wooden Table");
-        //}
-
-        //if (x == -0 && y == 0) {
-        //    items.clear();
-        //    addObject("Furnace");
-        //}
-        //if (x == -1 && y == 0) {
-        //    items.clear();
-        //    addObject("Carpentry Bench");
-        //}
-        //if (x == 1 && y == 0) {
-        //    items.clear();
-        //    addObject("Anvil");
-        //}
-
-    }
-
-    /*if (x > 3 && x < 5 && y > 5 && y < 9) {
-        items.clear();
-        auto item = ObjectRegistry::getInstance().get("Wooden Chair");
-        addObject(item);
-	}
-    if (x > 2 && x < 4 && y > 5 && y < 9) {
-        items.clear();
-        auto item = ObjectRegistry::getInstance().get("Wooden Table");
-        addObject(item);
-    }*/
-
-    /*if (x > -3 && x < 3 && y > -3 + 10 && y < 3 + 10) {
-		int num = getRandomInt(0, 0);
-        if (num == 0) {
+        if (
+            (x == 5 || x == -5 || y == 5 || y == -5) &&
+            (x >= -5 && x <= 5 && y >= -5 && y <= 5) && x != 0
+            ) {
             items.clear();
-            auto item = ObjectRegistry::getInstance().get("Wheat Seeds");
+            auto item = ObjectRegistry::getInstance().get("Wooden Wall");
+            auto i = static_cast<Structure*>(item.get());
+            i->x = x;
+            i->y = y;
             addObject(item);
-            mainWorld.addItemToMove(item, x, y);
+            blocked = true;
         }
-        else if (num == 1) {
+        else if (
+            (x == 5 || x == -5 || y == 5 || y == -5) &&
+            (x >= -5 && x <= 5 && y >= -5 && y <= 5)
+            ) {
             items.clear();
-            auto item = ObjectRegistry::getInstance().get("Carrot Seeds");
+            auto item = ObjectRegistry::getInstance().get("Wooden Gate");
+            auto i = static_cast<Gate*>(item.get());
+            i->x = x;
+            i->y = y;
             addObject(item);
-            mainWorld.addItemToMove(item, x, y);
+            blocked = true;
         }
-        else {
+
+        if (
+            (x >= -4 && x <= 4 && y >= -4 && y <= 4)
+            ) {
             items.clear();
-            auto item = ObjectRegistry::getInstance().get("Potato Seeds");
-            addObject(item);
-            mainWorld.addItemToMove(item, x, y);
-        }
-        
-    }*/
-    if (x == 0 && y == 0) {
-        addObject("Carpentry Bench");
-        tiles.push_back({x,y});
-    }
+            addObject("Stone Floor");
+        }*/
 
-    if (x == 1 && y == 5) {
-        items.clear();
-        addObject("Stone Chair");
     }
-
-    if (x == -1 && y == 5) {
-        items.clear();
-        addObject("Stone Chair");
-    }
-
-    if (x == 0 && y == 4) {
-        items.clear();
-        addObject("Stone Chair");
-    }
-
-    if (x == 0 && y == 6) {
-        items.clear();
-        addObject("Stone Chair");
-    }
-
-    if (x == 0 && y == 5) {
-        items.clear();
-        addObject("Stone Table");
-    }
-
-  //  if (x > -10 && x < 10 && y > -10 && y < 10) {
-  //      auto item = ObjectRegistry::getInstance().get("Wheat");
-		////auto c = static_cast<Crop*>(item.get());
-  //      items.clear();
-		//addObject(item);
-		//tiles.push_back({ x, y });
-  //  }
 
     // Sets starting displays, subject to change
     auto display = getTileDisplay(type);

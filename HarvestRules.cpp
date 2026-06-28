@@ -12,14 +12,16 @@ void loadHarvestRules() {
 
     for (auto& i : data.at("rules")) {
 
-        int amount;
-
-        std::vector<std::string> outputs;
+        std::vector<Drop> outputs;
         for (const auto& p : i.at("produces")) {
-            amount = p.at("amount").get<int>();
-            for (int j = 0; j < amount; j++) {
-                outputs.push_back(p.at("item").get<std::string>());
+            Drop drop;
+            drop.drop = p.at("item").get<std::string>();
+            drop.amount = p.at("amount").get<int>();
+            if (p.contains("odds")) {
+                drop.odds = p.at("odds").get<float>();
             }
+
+            outputs.push_back(drop);
         }
 
         std::string toolRequired = i.at("tool_required").get<std::string>();
@@ -29,7 +31,7 @@ void loadHarvestRules() {
 
             std::string target = j;
 
-            Rule rule(target, outputs, amount, toolRequired, skillType);
+            Rule rule(target, outputs, toolRequired, skillType);
             HarvestRuleRegistry::getInstance().addRule(rule);
         }
     }

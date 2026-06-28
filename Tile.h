@@ -23,7 +23,8 @@ enum animType {
     WHITE_BREATHE = 5,
     WATER = 6,
     FIRE = 7,
-    SPEECH_BUBBLE = 8
+    SPEECH_BUBBLE = 8,
+    Z = 9
 };
 
 struct Animation {

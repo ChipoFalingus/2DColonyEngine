@@ -114,18 +114,12 @@ void World::addCreatures() {
 
     int range = 2;
 
-
-    auto axe = ObjectRegistry::getInstance().get("Axe");
-    auto pickaxe = ObjectRegistry::getInstance().get("Pickaxe");
-
-	int v = 4;
-
-    auto gun = ObjectRegistry::getInstance().get("Minigun");
+	int v = 3;
 
     for (int i = 0; i < v; i++) {
         auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
         v->setJob(JobType::None);
-        v->itemInHand = std::dynamic_pointer_cast<Gun>(gun);
+        //v->itemInHand = std::dynamic_pointer_cast<Gun>(gun);
         allCreatures.push_back(std::move(v));
     }
 }
@@ -144,10 +138,8 @@ std::vector<Villager*> World::getAllVillagers() {
 // Central method to generate the world
 void World::generateWorld() {
     // World setup
-    
 
-	ThreadPool threadPool{ std::thread::hardware_concurrency() };
-
+    // Another thread for world gen, main thread does loading screen
     std::thread([this] {
         currentlyRendering = true;
         initializePermutation(seed);
@@ -172,11 +164,11 @@ void World::generateWorld() {
 
         //addPaths();
 
+        Game::getInstance().getUIManager().swapFrame(UI::Loading, UI::InGame);
+
         currentlyRendering = false;
         rendered = true;
 
-        Game::getInstance().getUIManager().remove(UI::Loading);
-        Game::getInstance().getUIManager().push(UI::InGame);
         }).detach();
 
     

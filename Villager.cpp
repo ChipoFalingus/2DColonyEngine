@@ -244,17 +244,6 @@ void Villager::sense() {
 
 void Villager::idle() {
 
-	//heatClock += Clock::deltaTime;
-
-	//if (0.5f > bellCurve(mainWorld.getTemperatureMapIndex(xPos, yPos), preferredTemp, 8)) {
-	//	// Find heat source
-
-	//	if (heatClock > 5.f) {
-	//		heatClock = 0.0f;
-	//		currentPath = findPath(xPos, yPos, findBestTemperatureTile(xPos, yPos, 25, preferredTemp));
-	//	}
-	//}
-
 }
 
 Evaluation Villager::evaluateEating() {
@@ -268,20 +257,12 @@ Evaluation Villager::evaluateEating() {
 
 	if (foodLocation.has_value()) {
 		if (auto lockedFood = foodLocation->item.lock()) {
-			float score = (60.0f - hunger) * 1;
+			float weight = traits[TraitType::EatWeight] + 0.5f;
+			float score = std::pow(hunger * 0.01f, 3) * 100.0f * weight;
 			return { UtilityType::EAT, score, lockedFood, foodLocation->x, foodLocation->y};
 		}
 	}
 	return { UtilityType::EAT, 0.0f };
-}
-
-Evaluation Villager::evaluateSleeping() {
-	//if (tiredness <= 20) return { UtilityType::SLEEP, 0.0f };
-	float score = (tiredness - 50.0f) * 1.0f;
-	if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
-		//score += 50.0f;
-	}
-	return { UtilityType::SLEEP, score };
 }
 
 Evaluation Villager::evaluateCombat() {
@@ -298,7 +279,7 @@ Evaluation Villager::evaluateMeditation() {
 }
 
 Evaluation Villager::evaluateSocializing() {
-	if (social < 25) return { UtilityType::SOCIALIZE, -1.0f };
+	if (social > 75) return { UtilityType::SOCIALIZE, -1.0f };
 
 	Villager* bestTarget = nullptr;
 	float closestDist = 9999.0f;
@@ -320,37 +301,67 @@ Evaluation Villager::evaluateSocializing() {
 
 	this->nearby = bestTarget;
 
-	float trait = 1.0f + traits.at(TraitType::SocialWeight);
-	float tiredFactor = 1.0f - (tiredness * 0.01f);
-	return { UtilityType::SOCIALIZE, social * trait * tiredFactor };
+	float socialFactor = social * 0.01f;
+	float tirednessFactor = 1 - (tiredness * 0.01f);
+	float score = std::pow(1 - socialFactor, 3) * 100.0f;
+
+	return { UtilityType::SOCIALIZE, score * tirednessFactor };
 }
 
 Evaluation Villager::evaluateSitting() {
+	if (tiredness <= 20) return { UtilityType::SIT, -1.0f };
 	if (findChairClock < 5.0f) return { UtilityType::SIT, -1.0f };
 	findChairClock = 0.0f;
 
 	auto loc = findClosestItemType(xPos, yPos, 30, [](const Object& obj, int x, int y) {
-		return (obj.name == "Wooden Chair" || obj.name == "Stone Chair") && !obj.claimed;
+		return (obj.name == "Wooden Chair" || obj.name == "Stone Chair") && !obj.claimed
+			&& !mainWorld.atStockpile(x, y);
 		});
 
 	if (loc) {
-		float score = (tiredness - 50.0f) * 1.0f;
-		if (mainWorld.dayCycle.getTimePeriod() != TimePeriod::Night) {
-			score += 30.0f;
+		if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
+			return { UtilityType::SIT, -1.0f };
 		}
+
+		float weight = 2.0f * traits[TraitType::TiredWeight] + 0.5f;
+		float score = std::pow(tiredness * 0.01f, 3) * 100.0f * weight;
 		return { UtilityType::SIT, score, loc.value().item.lock(), loc.value().x, loc.value().y};
 	}
 	else {
 		return { UtilityType::SIT, -1.0f};
 	}
 }
+
+Evaluation Villager::evaluateSleeping() {
+	if (tiredness <= 20) return { UtilityType::SLEEP, 0.0f };
+
+	if (mainWorld.dayCycle.getTimePeriod() != TimePeriod::Night) {
+		return { UtilityType::SLEEP, -1.0f };
+	}
+
+	float weight = traits[TraitType::TiredWeight] + 0.5f;
+	float score = std::pow(hunger * 0.01f, 3) * 100.0f * weight;
+
+	if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
+		score *= 4.0f;
+	}
+
+	return { UtilityType::SLEEP, score };
+}
+
 Evaluation Villager::evaluateWarmingUp() {
 	if (heatClock < 5.0f) return { UtilityType::WARMING_UP, -1.0f };
 	heatClock = 0.0f;
 
 	float deviation = bellCurve(mainWorld.getTemperatureMapIndex(xPos, yPos), preferredTemp, 8);
+	float score = deviation * 10.0f * (traits.at(TraitType::TemperatureToleranceWeight) + 0.5f);
+
+	if (activity_state != ActivityState::None) {
+		score *= 0.5f;
+	}
+
 	if (0.5f > deviation) {
-		return { UtilityType::WARMING_UP, deviation * 10.0f * (traits.at(TraitType::TemperatureToleranceWeight) + 0.5f)};
+		return { UtilityType::WARMING_UP, score};
 	}
 	else {
 		return { UtilityType::WARMING_UP, -1.0f};
@@ -358,12 +369,24 @@ Evaluation Villager::evaluateWarmingUp() {
 	
 }
 
+Evaluation Villager::evaluateIdle() {
+	return { UtilityType::IDLE, (tiredness * 0.25f) + 10.0f };
+}
+
+Evaluation Villager::evaluateWandering() {
+
+	float recWeight = (100.0f - recNeed) * 0.1f;
+	float traitWeight = (1.0f - traits[TraitType::SocialWeight]) * 5.0f;
+
+	return { UtilityType::WANDER, recWeight * traitWeight };
+}
+
 
 void Villager::decide() {
-	if (tirednessClock > 12.0f && !sleeping) { tiredness++; tirednessClock = 0.0f; }
+	if (tirednessClock > 10.0f && !sleeping) { tiredness++; tirednessClock = 0.0f; }
 	if (hungerClock > 10.0f) { hunger--; hungerClock = 0.0f; }
-	if (socialClock > 12.0f * traits.at(TraitType::SocialWeight) + 1.0f) { 
-		social++; socialClock = 0.0f; }
+	if (socialClock > 12.0f * traits.at(TraitType::SocialWeight) + 1.0f) { social--; socialClock = 0.0f; }
+	if (recreationClock > 12.0f * traits.at(TraitType::WorkWeight) + 1.0f) { recNeed--; recreationClock = 0.0f; }
 
 	
 	std::vector<Evaluation> options = {
@@ -373,6 +396,8 @@ void Villager::decide() {
 		evaluateWarmingUp(),
 		evaluateSocializing(),
 		evaluateSitting(),
+		//evaluateWandering(),
+		//evaluateIdle(),
 		//evaluateMeditation(),
 	};
 
@@ -406,6 +431,7 @@ void Villager::decide() {
 		if (best.type == UtilityType::SOCIALIZE && activity_state == ActivityState::Socializing) { currentJob->state = JobState::Active; return; }
 		if (best.type == UtilityType::EAT && activity_state == ActivityState::Eating) { currentJob->state = JobState::Active; return; }
 		if (best.type == UtilityType::SIT && activity_state == ActivityState::Sitting) { currentJob->state = JobState::Active; return; }
+		if (best.type == UtilityType::WANDER && activity_state == ActivityState::Wandering) { currentJob->state = JobState::Active; return; }
 
 		if (best.score > (float)currentJob->priority) {
 			interrupted.push_back(currentJob);
@@ -468,25 +494,36 @@ void Villager::decide() {
 		job->priority = best.score;
 		currentJob = job;
 		break;
-
-	case UtilityType::SOCIALIZE: {
-		activity_state = ActivityState::Socializing;
-		
-		job = new Talk(this, nullptr, SkillType::None, nearby);
+	case UtilityType::WANDER:
+		activity_state = ActivityState::Wandering;
+		job = new Wander(this, nullptr, SkillType::None);
 		job->priority = best.score;
 		currentJob = job;
-
+		break;
+	case UtilityType::SOCIALIZE: {
 		if (nearby) {
+
+			if (nearby->currentJob && nearby->getCurrentJob()->priority > best.score) {
+				currentJob = nullptr;
+				break;
+			}
+
+			if (nearby->currentJob) {
+				nearby->interrupted.push_back(nearby->currentJob);
+			}
+
 			nearby->activity_state = ActivityState::Socializing;
 
 			Job* partnerJob = new Talk(nearby, nullptr, SkillType::None, this);
 			partnerJob->priority = best.score;
 
-			if (nearby->getCurrentJob()) {
-				nearby->interrupted.push_back(nearby->getCurrentJob());
-			}
-
 			nearby->currentJob = partnerJob;
+
+			activity_state = ActivityState::Socializing;
+
+			job = new Talk(this, nullptr, SkillType::None, nearby);
+			job->priority = best.score;
+			currentJob = job;
 		}
 
 		break;
@@ -520,8 +557,6 @@ void Villager::decide() {
 		}
 
 		break;
-
-	case UtilityType::IDLE:
 	default:
 		activity_state = ActivityState::None;
 		break;
@@ -576,6 +611,7 @@ void Villager::doWork() {
 	findBedClock += Clock::deltaTime;
 	tirednessClock += Clock::deltaTime;
 	socialClock += Clock::deltaTime;
+	recreationClock += Clock::deltaTime;
 
 	heatClock += Clock::deltaTime;
 	findChairClock += Clock::deltaTime;
@@ -611,7 +647,8 @@ std::string getJobName(const Job* job) {
 	if (dynamic_cast<const Retreat*>(job))   return "Retreat";
 	if (dynamic_cast<const Sleep*>(job))     return "Sleep";
 	if (dynamic_cast<const FindFood*>(job))  return "FindFood";
-	if (dynamic_cast<const Talk*>(job))  return "Talking";
+	if (dynamic_cast<const Talk*>(job))      return "Talking";
+	if (dynamic_cast<const Sit*>(job))       return "Sitting";
 
 	return "Unknown Job Type";
 }

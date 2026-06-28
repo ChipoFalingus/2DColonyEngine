@@ -105,6 +105,18 @@ void applyAnimation(Tile& tile, glm::vec3& currentColor, wchar_t& currentDisplay
             currentColor = glm::vec3(1.0f, 1.0f, 1.0f);
         }
     }
+    else if (tile.anim.type == Z) {
+        float cyclePosition = fmod(time + tile.animOffset, 1.5f);
+
+        if (cyclePosition < 0.5f) {
+            currentDisplayChar = L'z';
+            currentColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        }
+        else if (cyclePosition < 1.0f) {
+            currentDisplayChar = L'Z';
+            currentColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        }
+    }
 }
 
 

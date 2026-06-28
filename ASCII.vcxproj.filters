@@ -317,6 +317,9 @@
     <ClInclude Include="Heat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ObjectManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Menu.txt">

@@ -22,10 +22,10 @@ class Creature {
 		int tiredness = 0;
 		bool sleeping = false;
 
+	public:
 		int lastTargetX = 0;
 		int lastTargetY = 0;
 
-	public:
 		sf::Clock clock;
 		sf::Clock attackClock;
 		sf::Clock repathClock;
