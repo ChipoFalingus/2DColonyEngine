@@ -26,7 +26,7 @@ public:
 		health -= damage;
 
 		if (health <= 0) {
-			getTileRef(x, y).removeItem(name);
+			mainWorld.objectManager.removeItem(x, y, name);
 			getTileRef(x, y).walkable = true;
 			std::cout << "Broken" << std::endl;
 		}

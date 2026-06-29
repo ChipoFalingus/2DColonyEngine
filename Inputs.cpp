@@ -265,8 +265,7 @@ void processInput(GLFWwindow* window) {
     if (mainWorld.isRendered()) {
         Tile& tile = getTileRef(mouseTileX, mouseTileY);
         std::string itemStr = "";
-
-        for (auto& item : tile.items) {
+        for (auto& item : mainWorld.objectManager.getObjectsAt(mouseTileX, mouseTileY)) {
             itemStr += item->name;
 
             if (item->type == Type::Crop) {
@@ -331,19 +330,19 @@ void handleMode() {
 void handleClickedItem(int x, int y) {
     auto& uiManager = Game::getInstance().getUIManager();
 
-    if (getTileRef(x, y).containsItem("Carpentry Bench")) {
+    if (mainWorld.objectManager.hasItem(x, y, "Carpentry Bench")) {
         uiManager.addOrRemoveFrame(UI::Carpentry);
     }
-    else if (getTileRef(x, y).containsItem("Stone Cutter")) {
+    else if (mainWorld.objectManager.hasItem(x, y, "Stone Cutter")) {
         uiManager.addOrRemoveFrame(UI::StoneCutter);
     }
-    else if (getTileRef(x, y).containsItem("Anvil")) {
+    else if (mainWorld.objectManager.hasItem(x, y, "Anvil")) {
         uiManager.addOrRemoveFrame(UI::Anvil);
 	}
-    else if (getTileRef(x, y).containsItem("Furnace")) {
+    else if (mainWorld.objectManager.hasItem(x, y, "Furnace")) {
         // do later
     }
-    else if (getTileRef(x, y).containsItem("Gun Bench")) {
+    else if (mainWorld.objectManager.hasItem(x, y, "Gun Bench")) {
         uiManager.addOrRemoveFrame(UI::Gun);
     }
     else if (auto s = mainWorld.atStockpile(mouseTileX, mouseTileY)) {
@@ -414,26 +413,28 @@ void harvest(int left, int right, int top, int bottom) {
         for (int y = top; y <= bottom; y++) {
 
             Tile& tile = getTileRef(x, y);
+            ObjectManager* manager = &mainWorld.objectManager;
+            auto& objectList = manager->getObjectsAt(x, y);
 
             if (mainWorld.atStockpile(x, y)) continue;
-            if (tile.items.empty()) continue;
+            if (objectList.empty()) continue;
 			if (tile.markedForHarvest) continue;
 
 
-            if (tile.items[0]->type == Type::Crop) {
-                auto crop = static_cast<Crop*>(tile.items[0].get());
+            if (objectList[0]->type == Type::Crop) {
+                auto crop = static_cast<Crop*>(objectList[0].get());
                 if (!crop->isGrown()) {
                     tile.markedForHarvest = false;
                     continue;
                 }
             }
 
-            Rule* rule = HarvestRuleRegistry::getInstance().get(tile.items[0]->name);
+            Rule* rule = HarvestRuleRegistry::getInstance().get(objectList[0]->name);
             if (!rule) {
-                if (tile.items[0]->type == Type::Item || tile.items[0]->type == Type::Tool || tile.items[0]->type == Type::Food) {
-                    mainWorld.addItemToMove(tile.items[0], x, y);
+                if (objectList[0]->type == Type::Item || objectList[0]->type == Type::Tool || objectList[0]->type == Type::Food) {
+                    mainWorld.addItemToMove(objectList[0], x, y);
                     tile.markedForHarvest = false;
-                    tile.items[0]->claimed = true;
+                    objectList[0]->claimed = true;
                 }
                 continue;
 			}
@@ -447,7 +448,7 @@ void harvest(int left, int right, int top, int bottom) {
 
             if (rule->toolRequired == "None") {
 
-                Job* job = new HarvestTile(nullptr, nullptr, skill, tile.items[0].get()->name, x, y);
+                Job* job = new HarvestTile(nullptr, nullptr, skill, objectList[0].get()->name, x, y);
                 job->priority = 40;
                 JobManager::JobList.push_back(job);
             }
@@ -456,7 +457,7 @@ void harvest(int left, int right, int top, int bottom) {
                 Tool* tool = dynamic_cast<Tool*>(toolInRegistry.get());
                 if (tool) {
                     //std::cout << "Adding harvest job for " << tile.items[0]->name << " at (" << x << ", " << y << ") with tool " << tool->name << std::endl;
-                    Job* harvestJob = new HarvestTile(nullptr, tool, skill, tile.items[0].get()->name, x, y);
+                    Job* harvestJob = new HarvestTile(nullptr, tool, skill, objectList[0].get()->name, x, y);
                     harvestJob->priority = 40;
                     JobManager::JobList.push_back(harvestJob);
                 }
@@ -488,10 +489,12 @@ void plant(int left, int right, int top, int bottom) {
 
 void stockpile(int left, int right, int top, int bottom) {
 
+    ObjectManager* manager = &mainWorld.objectManager;
+
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
             Tile& tile = getTileRef(x, y);
-            if (!tile.walkable || tile.containsItem("Stockpile")) {
+            if (!tile.walkable || manager->hasItem(x, y, "Stockpile")) {
                 std::cout << "Cannot create stockpile: Tile at (" << x << ", " << y << ") is not empty.\n";
                 return;
 			}
@@ -510,8 +513,8 @@ void stockpile(int left, int right, int top, int bottom) {
 
             Tile& tile = getTileRef(x, y);
 
-            tile.items.clear();
-            tile.addObject("Stockpile");
+            manager->clearTile(x, y);
+            manager->addObject(x, y, "Stockpile");
         }
     }
 

@@ -262,7 +262,6 @@ std::pair<int, int> makeRiver(int x, int y) {
 }
 
 Tile assignTileTypes(int x, int y) {
-    // Base tile types, theres no way to change them yet
 
     Tile tile;
     tile.altitude = calculateAltitude(x, y);
@@ -294,6 +293,8 @@ Tile assignTileTypes(int x, int y) {
 
 
 void Tile::getTile(int x, int y) {
+    ObjectManager* manager = &mainWorld.objectManager;
+
     // Item adders
 
     // Probably a better way than a giant if-else chain
@@ -318,44 +319,44 @@ void Tile::getTile(int x, int y) {
 
         if (tallGrassNoise > 0.3f) {
             if (r < 0.7f) {
-                items.clear();
-                addObject("Tall Grass");
+                manager->clearTile(x, y);
+                manager->addObject(x, y, "Tall Grass");
             }
 		}
 
         if (oakNoise > 0.3f || spruceNoise > 0.3f) {
             if (oakNoise > 0.3f /*&& altitude < waterLevel + 70.0f*/) {
                 if (r < 0.1f) {
-                    items.clear();
-                    addObject("Oak Tree");
+                    manager->clearTile(x, y);
+                    manager->addObject(x, y, "Oak Tree");
                 }
                 else if (r < 0.101f) {
-                    items.clear();
+                    manager->clearTile(x, y);
                     auto item = ObjectRegistry::getInstance().get("Apple Tree");
                     auto spawner = static_cast<FoliageCrop*>(item.get());
                     spawner->x = x;
                     spawner->y = y;
-                    addObject(item);
+                    //manager->addObject(x, y, spawner);
                     tiles.push_back({ x, y });
-                   // addObject("Stick");
+                    //manager->addObject(x, y, "Stick");
                 }
                 else if (r < 0.13f) {
-                    items.clear();
-                   // addObject("Pebble");
+                    manager->clearTile(x, y);
+                    //manager->addObject(x, y, "Pebble");
                 }
             }
             if (spruceNoise > 0.3f) {
                 if (r < 0.1f) {
-                    items.clear();
-                    addObject("Pine Tree");
+                    manager->clearTile(x, y);
+                    manager->addObject(x, y, "Pine Tree");
                 }
                 else if (r < 0.11f) {
-                    items.clear();
-                   //addObject("Stick");
+                    manager->clearTile(x, y);
+                    //manager->addObject(x, y, "Stick");
                 }
                 else if (r < 0.13f) {
-                    items.clear();
-                    //addObject("Pebble");
+                    manager->clearTile(x, y);
+                    //manager->addObject(x, y, "Pebble");
                 }
             }
         }
@@ -365,17 +366,17 @@ void Tile::getTile(int x, int y) {
 
             if (oreSprinkler < 0.6f) {
                 if (ironNoise > oreThreshold - 0.1f) {
-                    items.clear();
-                    addObject("Raw Iron");
+                    manager->clearTile(x, y);
+                    manager->addObject(x, y, "Raw Iron");
                 }
                 if (rubyNoise > oreThreshold - 0.1f) {
-                    items.clear();
-                    addObject("Copper");
+                    manager->clearTile(x, y);
+                    manager->addObject(x, y, "Copper");
                     anim.type = WHITE_BREATHE;
                 }
                 if (sapphireNoise > oreThreshold) {
-                    items.clear();
-                    addObject("Coal");
+                    manager->clearTile(x, y);
+                    manager->addObject(x, y, "Coal");
                     anim.type = NONE;
                 }
             }
@@ -384,8 +385,8 @@ void Tile::getTile(int x, int y) {
 		float rock = hashNoise(x + 10000.0f, y + 10000.0f, seed);
         
         if (rock < 0.1f && altitude > waterLevel + 80.0f) {
-            items.clear();
-            addObject("Rock");
+            manager->clearTile(x, y);
+            manager->addObject(x, y, "Rock");
         }
 
         float outposts = hashNoise(x + 10000.0f, y + 10000.0f, seed);
@@ -446,6 +447,20 @@ void Tile::getTile(int x, int y) {
             addObject("Stone Floor");
         }*/
 
+        if (x == 0 && y == 5) {
+            manager->clearTile(x, y);
+            manager->addObject(x, y, "Bed");
+        }
+
+        if (x == -2 && y == 5) {
+            manager->clearTile(x, y);
+            manager->addObject(x, y, "Bed");
+        }
+
+        if (x == 2 && y == 5) {
+            manager->clearTile(x, y);
+            manager->addObject(x, y, "Bed");
+        }
     }
 
     // Sets starting displays, subject to change
@@ -455,40 +470,35 @@ void Tile::getTile(int x, int y) {
 
     color = display.color;
 
-    if (items.size() > 0) {
-        walkable = getTileWalkable(items[0].get(), type);
-    }
-    else {
-		walkable = getTileWalkable(nullptr, type);
-    }
+	walkable = getTileWalkable(nullptr, type);
 }
 
 void Tile::update() {
-    if (items.size() == 0) {
-        return;
-    }
+   // if (items.size() == 0) {
+   //     return;
+   // }
 
-    for (auto& i : items) {
-        if (i->type == Type::Foliage_Crop) {
-			FoliageCrop* crop = static_cast<FoliageCrop*>(i.get());
-            crop->spawnProduce();
-        }
+   // for (auto& i : items) {
+   //     if (i->type == Type::Foliage_Crop) {
+			//FoliageCrop* crop = static_cast<FoliageCrop*>(i.get());
+   //         crop->spawnProduce();
+   //     }
 
-        if (i->type == Type::Crop) {
-            Crop* cropPtr = static_cast<Crop*>(i.get());
-            cropPtr->grow();
-        }
+   //     if (i->type == Type::Crop) {
+   //         Crop* cropPtr = static_cast<Crop*>(i.get());
+   //         cropPtr->grow();
+   //     }
 
-        if (i->type == Type::Spawner) {
-            Spawner* spawnerPtr = static_cast<Spawner*>(i.get());
-            spawnerPtr->update();
-        }
+   //     if (i->type == Type::Spawner) {
+   //         Spawner* spawnerPtr = static_cast<Spawner*>(i.get());
+   //         spawnerPtr->update();
+   //     }
 		
-        if (i->type == Type::Furnace) {
-            //Furnace* furnacePtr = static_cast<Furnace*>(i.get());
-			//furnacePtr->cook();
-        }
-    }
+   //     if (i->type == Type::Furnace) {
+   //         //Furnace* furnacePtr = static_cast<Furnace*>(i.get());
+			////furnacePtr->cook();
+   //     }
+   // }
 }
 
 void Tile::changeTileChar(sf::String string) {
@@ -500,49 +510,49 @@ void Tile::changeTileType(tileType newType) {
 	color = getTileDisplay(type).color;
 }
 
-bool Tile::containsItem(const std::string& item) {
-    for (auto& i : items) {
-        if (i->name == item) {
-			return true;
-        }
-    }
-    return false;
-}
-
-
-void Tile::addObject(std::string itemName) {
-	auto item = ObjectRegistry::getInstance().get(itemName);
-    if (item) {
-		addObject(item);
-	}
-}
-
-void Tile::addObject(std::shared_ptr<Object> item) {
-    items.insert(items.begin(), item);
-}
-
-void Tile::removeItem(std::shared_ptr<Object> item, int x, int y) {
-    anim.type = animType::NONE;
-    auto stockpile = mainWorld.atStockpile(x, y);
-    if (stockpile) {
-        stockpile->removeItem(x, y, item);
-    }
-    for (auto it = items.begin(); it != items.end(); ++it) {
-        if ((*it)->name == item->name) {
-            items.erase(it);
-            return;
-        }
-    }
-}
-
-void Tile::removeItem(std::string item) {
-    for (auto it = items.begin(); it != items.end(); ++it) {
-        if ((*it)->name == item) {
-            items.erase(it);
-            return;
-        }
-    }
-}
+//bool Tile::containsItem(const std::string& item) {
+//    for (auto& i : items) {
+//        if (i->name == item) {
+//			return true;
+//        }
+//    }
+//    return false;
+//}
+//
+//
+//void Tile::addObject(std::string itemName) {
+//	auto item = ObjectRegistry::getInstance().get(itemName);
+//    if (item) {
+//		addObject(item);
+//	}
+//}
+//
+//void Tile::addObject(std::shared_ptr<Object> item) {
+//    items.insert(items.begin(), item);
+//}
+//
+//void Tile::removeItem(std::shared_ptr<Object> item, int x, int y) {
+//    anim.type = animType::NONE;
+//    auto stockpile = mainWorld.atStockpile(x, y);
+//    if (stockpile) {
+//        stockpile->removeItem(x, y, item);
+//    }
+//    for (auto it = items.begin(); it != items.end(); ++it) {
+//        if ((*it)->name == item->name) {
+//            items.erase(it);
+//            return;
+//        }
+//    }
+//}
+//
+//void Tile::removeItem(std::string item) {
+//    for (auto it = items.begin(); it != items.end(); ++it) {
+//        if ((*it)->name == item) {
+//            items.erase(it);
+//            return;
+//        }
+//    }
+//}
 
 tileDisplay getTileDisplay(tileType type) {
 

@@ -28,7 +28,7 @@ enum animType {
 };
 
 struct Animation {
-    animType type;
+    animType type = animType::NONE;
     bool isOtherChar = false;
 };
 
@@ -67,9 +67,7 @@ public:
     bool walkable;
     bool blocked = false;
 	bool markedForHarvest = false;
-
-    //replace with global map later
-    std::vector<std::shared_ptr<Object>> items;
+    bool hasItems = false;
 
     tileType type;
 
@@ -85,11 +83,6 @@ public:
     void changeTileType(tileType type);
 
     void getTile(int x, int y);
-    bool containsItem(const std::string& item);
-    void addObject(std::string itemName);
-	void addObject(std::shared_ptr<Object> item);
-    void removeItem(std::shared_ptr<Object> item, int x, int y);
-    void removeItem(std::string item);
 
     void setAnimType(animType type) {
         anim.type = type;

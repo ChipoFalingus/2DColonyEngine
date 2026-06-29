@@ -547,22 +547,32 @@ void drawMap(Shader& shader)
             Tile& tile = getTileRef(x, y);
 
             // Tile contents
-            if (tile.items.size() != 0) {
-                auto display = tile.items[0]->getVisual();
-                if (tile.items[0]->type == Type::Tool) {
-                    auto* tool = static_cast<Tool*>(tile.items[0].get());
-                    color = materialToColor(tool->material);
+            if (tile.hasItems) {
+                const auto& tileObjects = mainWorld.objectManager.getObjectsAt(x, y);
+
+                int i = tileObjects.size() - 1;
+
+                if (!tileObjects.empty()) {
+                    auto display = tileObjects[i]->getVisual();
+                    if (tileObjects[i]->type == Type::Tool) {
+                        auto* tool = static_cast<Tool*>(tileObjects[i].get());
+                        color = materialToColor(tool->material);
+                    }
+                    else {
+                        color = glm::vec3(display.displayColor.r / 255.0f, display.displayColor.g / 255.0f, display.displayColor.b / 255.0f);
+                    }
+
+
+                    if (tile.anim.type != animType::NONE) {
+                        applyAnimation(tile, color, string);
+                    }
+
+                    string = display.displayChar;
                 }
                 else {
-                    color = glm::vec3(display.displayColor.r / 255.0f, display.displayColor.g / 255.0f, display.displayColor.b / 255.0f);
+                    tile.hasItems = false;
                 }
 
-
-                if (tile.anim.type != animType::NONE) {
-                    applyAnimation(tile, color, string);
-                }
-
-                string = display.displayChar;
             }
             else {
                 string = tile.character;
@@ -839,7 +849,7 @@ int main() {
 
                 bool hasActiveComponent = false;
 
-                for (auto& i : tile.items) {
+                for (auto& i : mainWorld.objectManager.getObjectsAt(it->first, it->second)) {
                     if (i->type == Type::Foliage_Crop) {
                         static_cast<FoliageCrop*>(i.get())->spawnProduce();
                         hasActiveComponent = true;
@@ -903,7 +913,7 @@ int main() {
 
                     Job* job = new HaulToStockpile(nullptr, nullptr, SkillType::None, item, currentX, currentY, pos.first, pos.second);
 
-                    job->priority = 35;
+                    job->priority = 10;
                     JobManager::addJob(job);
                     it = itemsToMove.erase(it);
                 }
@@ -922,8 +932,7 @@ int main() {
     return 0;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 	scrWidth = width;
 	scrHeight = height;

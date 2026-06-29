@@ -100,7 +100,7 @@ public:
         if (clock >= currentRecipe->time) {
             auto resultItem = ObjectRegistry::getInstance().get(currentRecipe->result);
             mainWorld.addItemToMove(resultItem, x, y);
-            getTileRef(x, y).addObject(resultItem);
+            mainWorld.objectManager.addObject(x, y, resultItem);
 
             clock = 0.0f;
             input = nullptr;

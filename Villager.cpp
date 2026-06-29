@@ -247,9 +247,9 @@ void Villager::idle() {
 }
 
 Evaluation Villager::evaluateEating() {
-	if (findFoodClock < 2.0f) return { UtilityType::EAT, 0.0f };
+	if (findFoodClock < 2.0f) return { UtilityType::EAT, -1.0f };
 	findFoodClock = 0.0f;
-	if (hunger >= 80) return { UtilityType::EAT, 0.0f };
+	if (hunger >= 80) return { UtilityType::EAT, -1.0f };
 
 	auto foodLocation = findClosestItemType(xPos, yPos, 50, [](const Object& obj, int x, int y) {
 		return obj.type == Type::Food && !obj.claimed;
@@ -258,11 +258,11 @@ Evaluation Villager::evaluateEating() {
 	if (foodLocation.has_value()) {
 		if (auto lockedFood = foodLocation->item.lock()) {
 			float weight = traits[TraitType::EatWeight] + 0.5f;
-			float score = std::pow(hunger * 0.01f, 3) * 100.0f * weight;
+			float score = std::pow(hunger * 0.01f, 2) * 100.0f * weight;
 			return { UtilityType::EAT, score, lockedFood, foodLocation->x, foodLocation->y};
 		}
 	}
-	return { UtilityType::EAT, 0.0f };
+	return { UtilityType::EAT, -1.0f };
 }
 
 Evaluation Villager::evaluateCombat() {
@@ -333,14 +333,14 @@ Evaluation Villager::evaluateSitting() {
 }
 
 Evaluation Villager::evaluateSleeping() {
-	if (tiredness <= 20) return { UtilityType::SLEEP, 0.0f };
+    if (tiredness <= 20) return { UtilityType::SLEEP, 0.0f };
 
 	if (mainWorld.dayCycle.getTimePeriod() != TimePeriod::Night) {
 		return { UtilityType::SLEEP, -1.0f };
 	}
 
 	float weight = traits[TraitType::TiredWeight] + 0.5f;
-	float score = std::pow(hunger * 0.01f, 3) * 100.0f * weight;
+	float score = std::pow(tiredness * 0.01f, 3) * 100.0f * weight;
 
 	if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
 		score *= 4.0f;
@@ -629,14 +629,14 @@ void Villager::doWork() {
 }
 
 void Villager::pickUpItem(std::shared_ptr<Object> item, int x, int y, Stockpile* stockpile) {
-	getTileRef(x, y).removeItem(item, x, y);
+	mainWorld.objectManager.removeItem(x, y, item);
 	inventory.add(item);
 }
 
 void Villager::dropItem(std::shared_ptr<Object> item, int x, int y) {
 	if (!inventory.has(item->name)) return;
 	inventory.remove(item->name);
-	getTileRef(x, y).addObject(item);
+	mainWorld.objectManager.addObject(x, y, item);
 }
 
 

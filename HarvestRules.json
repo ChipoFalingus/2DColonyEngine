@@ -17,7 +17,7 @@
                 {
                     "item": "Wheat Seeds",
                     "amount": 1,
-                    "odds": 0.1
+                    "odds": 0.2
                 }
             ],
             "tool_required": "None",

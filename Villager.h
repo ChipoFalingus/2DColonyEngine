@@ -233,6 +233,7 @@ public:
 
 		if (loc) {
 			bed = { loc->x, loc->y };
+			std::cout << firstname << " " << lastname << " claimed a bed at " << loc->x << " " << loc->y << std::endl;
 			loc->item.lock()->claimed = true;
 		}
 

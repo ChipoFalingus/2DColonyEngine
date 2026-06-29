@@ -11,6 +11,7 @@
 #include "Light.h"
 #include "Stockpile.h"
 #include "DayCycle.h"
+#include "ObjectManager.h"
 
 #include "Chunk.h"
 #include "Pair.h"
@@ -59,6 +60,7 @@ public:
 	PlacementMode placementMode = PlacementMode::SQUARE;
 
 	DayCycle dayCycle;
+    ObjectManager objectManager;
     
     static World& get();
 
@@ -223,7 +225,7 @@ public:
         for (int x = loc.first; x < loc.first + width; x++) {
             for (int y = loc.second; y < loc.second + height; y++) {
                 Tile& tile = getTileRef(x, y);
-                tile.removeItem("Stockpile");
+                objectManager.removeItem(x, y, "Stockpile");
 
                 if (auto i = s.retrieveItem(x, y)) {
                     addItemToMove(i.value(), x, y);

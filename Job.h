@@ -104,6 +104,7 @@ public:
 
 	Rule* rule;
 	float searchTimer = 0.0f;
+	float harvestClock = 0.0f;
 
 	State harvestState = State::MovingToTile;
 

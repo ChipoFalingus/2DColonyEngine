@@ -209,7 +209,7 @@ void Harvest::update() {
 	}
 
 	if (villager->xPos == x && villager->yPos == y) {
-		getTileRef(itemLocation->first, itemLocation->second).removeItem(item, itemLocation->first, itemLocation->second);
+		mainWorld.objectManager.removeItem(itemLocation->first, itemLocation->second, item);
 		itemFound = false;
 		state = JobState::Completed;
 	}
@@ -264,37 +264,26 @@ void HarvestTile::update() {
 		bool adjacent = isAtTile(villager->xPos, villager->yPos, locX, locY);
 
 		if (adjacent) {
-			villager->clock = 0.0f;
 			harvestState = HarvestTile::Harvesting;
 		}
 
 		break;
 	}
 	case HarvestTile::Harvesting: {
+		harvestClock += Clock::deltaTime;
+
 		int skill = villager->skills[type];
-		if (villager->clock > villager->harvestTime * (10.0f / skill)) {
+		if (harvestClock > villager->harvestTime * (10.0f / skill)) {
 
 			auto targetItem = ObjectRegistry::getInstance().get(rule->target);
-			tile.removeItem(targetItem, locX, locY);
-
+			mainWorld.objectManager.removeItem(locX, locY, targetItem);
 			for (auto& i : rule->produces) {
 				if (getRandomFloat(0.0f, 1.0f) < i.odds) {
 					auto droppedItem = ObjectRegistry::getInstance().get(i.drop);
-					tile.addObject(droppedItem);
+					mainWorld.objectManager.addObject(locX, locY, droppedItem);
 					mainWorld.addItemToMove(droppedItem, locX, locY);
 				}
 			}
-
-			villager->clock = 0.0f;
-			//villager->tiredness += 5;
-
-			//auto i = static_cast<Tool*>(villager->inventory.get(rule->toolRequired).get());
-			//i->durability--;
-
-			/*if (i->durability <= 0) {
-				std::cout << "Tool broke: " << i->name << std::endl;
-				villager->inventory.remove(rule->toolRequired);
-			}*/
 
 			getTileRef(locX, locY).markedForHarvest = false;
 			villager->tiredness += 2;
@@ -387,7 +376,7 @@ void Build::update() {
 			auto item = ObjectRegistry::getInstance().get(recipe->result);
 
 			for (int i = 0; i < recipe->quantity; i++) {
-				getTileRef(loc.first, loc.second).addObject(item);
+				mainWorld.objectManager.addObject(locX, locY, item);
 				//getTileRef(loc.first, loc.second).walkable = false;
 
 				if (item->type == Type::Heat_Emitter) {
@@ -488,7 +477,7 @@ void PlaceItem::update() {
 	x = closestAdj.first;
 	y = closestAdj.second;
 	if (villager->xPos == x && villager->yPos == y) {
-		tile.addObject(std::make_unique<Object>(*itemToPlace));
+		mainWorld.objectManager.addObject(x, y, itemToPlace->name);
 		state = JobState::Completed;
 	}
 }
@@ -582,7 +571,7 @@ void Plant::update() {
 			}
 			auto s = static_cast<Seed*>(c.get());
 			villager->inventory.remove(seed);
-			tile.addObject(s->cropType);
+			mainWorld.objectManager.addObject(locX, locY, s->cropType);
 			tiles.push_back({ locX, locY });
 			state = JobState::Completed;
 		}
@@ -868,7 +857,7 @@ void Craft::update() {
 					auto food = static_cast<Food*>(item.get());
 				}
 
-				getTileRef(loc->first, loc->second).addObject(item);
+				mainWorld.objectManager.addObject(loc->first, loc->second, item);
 				mainWorld.addItemToMove(item, loc->first, loc->second);
 			}
 			
@@ -1027,13 +1016,13 @@ void FindFood::update() {
 
 		if (isAtTile(villager->xPos, villager->yPos, tX, tY)) {
 			Tile& tile = getTileRef(tX, tY);
-			if (!tile.containsItem(food->name)) {
+			if (!mainWorld.objectManager.hasItem(tX, tY, food->name)) {
 				food->claimed = false;
 				state = JobState::Completed;
 				return;
 			}
 
-			getTileRef(tX, tY).removeItem(food, tX, tY);
+			mainWorld.objectManager.removeItem(tX, tY, food->name);
 
 			foodState = State::Find;
 		}
@@ -1058,7 +1047,7 @@ void FindFood::update() {
 
 				const Tile& t = getTileRef(nx, ny);
 
-				for (auto& item : t.items) {
+				for (auto& item : mainWorld.objectManager.getObjectsAt(nx, ny)) {
 					if (item->name == "Wooden Table") {
 						return true;
 					}

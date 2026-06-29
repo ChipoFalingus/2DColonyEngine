@@ -400,7 +400,7 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
-            "grow_time": 300.0,
+            "grow_time": 1.0,
             "stages": [
                 {
                     "char": ".",

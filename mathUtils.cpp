@@ -74,7 +74,7 @@ Vec2 getGradient(int hash) {
 }
 
 float calculateMapSize() {
-    return 500.0f;
+    return 1200.0f;
 }
 
 
@@ -220,7 +220,7 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
             
             bool isBlockedByGate = false;
             if (c) {
-                for (auto& i : neighborTile.items) {
+                for (auto& i : mainWorld.objectManager.getObjectsAt(neighborX, neighborY)) {
                     if (i->type == Type::Gate) {
                         auto g = static_cast<Gate*>(i.get());
                         if (!g->getWalkability(c)) {
@@ -369,7 +369,7 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
 
             bool isBlockedByGate = false;
             if (c) {
-                for (auto& i : tile.items) {
+                for (auto& i : mainWorld.objectManager.getObjectsAt(worldX + dir.first, worldY + dir.second)) {
                     if (i->type == Type::Gate) {
                         auto g = static_cast<Gate*>(i.get());
                         if (!g->getWalkability(c)) {

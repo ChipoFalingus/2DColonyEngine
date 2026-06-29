@@ -39,23 +39,23 @@ void World::renderWorld() {
 }
 
 
-void addPaths() {
-	int mapDim = calculateMapSize();
-    auto points = createVoronoiMap(10, -mapDim, mapDim, -mapDim, mapDim);
-
-    for (int i = 0; i < points.size(); i++) {
-        auto& point1 = points[getRandomInt(0, points.size() - 1)];
-	    auto& point2 = points[getRandomInt(0, points.size() - 1)];
-
-        auto line = findPath(point1.first, point1.second, { point2.first, point2.second });
-
-        for (auto& p : line) {
-            if (!getTileRef(p.first, p.second).containsItem("Path")) {
-                getTileRef(p.first, p.second).addObject("Path");
-            }
-		}
-	}
-}
+//void addPaths() {
+//	int mapDim = calculateMapSize();
+//    auto points = createVoronoiMap(10, -mapDim, mapDim, -mapDim, mapDim);
+//
+//    for (int i = 0; i < points.size(); i++) {
+//        auto& point1 = points[getRandomInt(0, points.size() - 1)];
+//	    auto& point2 = points[getRandomInt(0, points.size() - 1)];
+//
+//        auto line = findPath(point1.first, point1.second, { point2.first, point2.second });
+//
+//        for (auto& p : line) {
+//            if (!getTileRef(p.first, p.second).containsItem("Path")) {
+//                getTileRef(p.first, p.second).addObject("Path");
+//            }
+//		}
+//	}
+//}
 
 
 
@@ -265,14 +265,17 @@ void World::updateMiniMap() {
                 Tile& tile = chunkPair.second.tiles[j][k];
                 typeTracker[tile.type]++;
 
-                if (tile.items.size() > 0) {
-                    std::string display = tile.items[0]->name;
-					displayTracker[display]++;
-                }
+                /*if (tile.hasItems) {
+                    const auto& tileObjects = objectManager.getObjectsAt(chunkPair.first.first * chunkDim + j, chunkPair.first.second * chunkDim + k);
+                    if (!tileObjects.empty() && tileObjects[0]) {
+                        std::string display = tileObjects[0]->name;
+                        displayTracker[display]++;
+                    }
+                }*/
 
-                if (tile.containsItem("Outpost")) {
+                /*if (tile.containsItem("Outpost")) {
                     displayTracker["Outpost"] = 999;
-                }
+                }*/
             }
         }
 

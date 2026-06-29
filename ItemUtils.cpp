@@ -1,4 +1,5 @@
 #include "ItemUtils.h"
+#include "World.h"
 
 #include <queue>
 #include <unordered_set>
@@ -21,7 +22,7 @@ std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, 
         if (dx * dx + dy * dy > radius * radius)
             continue;
 
-        for (const auto& item : tile.items) {
+        for (const auto& item : mainWorld.objectManager.getObjectsAt(current.first, current.second)) {
             if (filter(*item, current.first, current.second)) {
                 return ItemLocation(current.first, current.second, item);
             }
@@ -42,7 +43,7 @@ std::optional<std::vector<ItemLocation>> findAllItemInRange(int xPos, int yPos, 
     for (int x = xPos - radius; x <= xPos + radius; x++) {
         for (int y = yPos - radius; y <= yPos + radius; y++) {
             Tile& tile = getTileRef(x, y);
-            for (const auto& item : tile.items) {
+            for (const auto& item : mainWorld.objectManager.getObjectsAt(x, y)) {
                 if (filter(*item, x, y)) {
                     foundItems.push_back(ItemLocation(x, y, item));
                 }

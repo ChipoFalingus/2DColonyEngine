@@ -27,7 +27,7 @@ std::optional<std::pair<int, int>> findClosestTileItem(const std::string name, i
             continue;
 
         Tile& tile = getTileRef(current.first, current.second);
-        if (tile.containsItem(name)) {
+        if (mainWorld.objectManager.hasItem(current.first, current.second, name)) {
             //tile.claimed = true;
             return current;
         }
@@ -46,12 +46,12 @@ std::optional<std::pair<int, int>> findClosestTileItem(const std::string name, i
 
 bool isAtItem(const Object& item, int x, int y) {
 
-    if (getTileRef(x, y).containsItem(item.name)) {
+    if (mainWorld.objectManager.hasItem(x, y, item.name)) {
         return true;
     }
 
     for (auto& i : getNeighbors(x, y)) {
-        if (getTileRef(i.first, i.second).containsItem(item.name)) {
+        if (mainWorld.objectManager.hasItem(i.first, i.second, item.name)) {
             return true; // This is the line they guessed
         }
     }

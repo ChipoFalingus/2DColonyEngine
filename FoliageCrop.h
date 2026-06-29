@@ -34,9 +34,9 @@ public:
 
 		for (auto& i : neighbors) {
 			Tile& tile = getTileRef(x + i.first, y + i.second);
-			if (tile.items.empty()) {
+			if (mainWorld.objectManager.getObjectsAt(x + i.first, y + i.second).empty()) {
 				auto item = ObjectRegistry::getInstance().get(produce);
-				tile.addObject(item);
+				mainWorld.objectManager.addObject(x + i.first, y + i.second, item);
 				if (owner) {
 					mainWorld.addItemToMove(item, x + i.first, y + i.second);
 				}
