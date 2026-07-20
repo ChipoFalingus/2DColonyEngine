@@ -64,9 +64,10 @@ public:
     int16_t altitude;
     int16_t region = -1;
 
-    bool walkable;
+    bool walkable = false;
     bool blocked = false;
 	bool markedForHarvest = false;
+
     bool hasItems = false;
 
     tileType type;
@@ -75,14 +76,13 @@ public:
 
     float animOffset = getRandomFloat(0, 2 * 3.1415926);
     
-
-
-    void update();
-
-    void changeTileChar(sf::String string);
     void changeTileType(tileType type);
-
     void getTile(int x, int y);
+
+    void addObject_Clear(int x, int y, const std::string item);
+	void addObject(int x, int y, const std::string item, bool addToMove = false);
+
+	void removeObject(int x, int y, entt::entity item);
 
     void setAnimType(animType type) {
         anim.type = type;
@@ -92,7 +92,7 @@ public:
 std::string typeToString(tileType type);
 
 tileDisplay getTileDisplay(tileType type);
-bool getTileWalkable(Object* itemOnTile, tileType type);
+bool getTileWalkable(tileType type);
 
 Tile assignTileTypes(int x, int y);
 

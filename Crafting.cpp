@@ -37,9 +37,9 @@ void loadRecipes() {
 			recipe.time = i.at("time").get<int>();
 		}
 
-		if (i.contains("material")) {
+		/*if (i.contains("material")) {
 			recipe.material = stringToMaterial(i.at("material").get<std::string>());
-		}
+		}*/
 
 		RecipeRegistry::getInstance().addRecipe(recipe);
 

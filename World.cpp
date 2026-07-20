@@ -9,6 +9,7 @@
 #include "Chunk.h"
 #include "Game.h"
 #include "Squad.h"
+#include "CreatureComponents.h"
 
 World& World::get() {
     static World instance;
@@ -100,36 +101,57 @@ void createRegions() {
     }
 }
 
-// Adds creatures to the world
-void World::addCreatures() {
-   /* for (int i = 0; i < 10000; i++) {
-        int x = getRandomInt(-100, 100);
-        int y = getRandomInt(-100, 100);
-        if (getTileRef(x, y).walkable) {
-            auto v = std::make_unique<Zombie>(x, y);
-            squad1.addMember(v.get());
-            allCreatures.push_back(std::move(v));
-        }
-    }*/
+void spawnSquad(int x, int y) {
+    auto& registry = mainWorld.registry;
+    entt::entity squadEntity = registry.create();
+    auto& controller = registry.emplace<SquadController>(squadEntity);
 
-    int range = 2;
+    controller.groupTargetPos = { x, y };
+    controller.state = SquadState::IDLE;
 
-	int v = 3;
+    for (int i = 0; i < 4; i++) {
+        entt::entity member = registry.create();
 
-    for (int i = 0; i < v; i++) {
-        auto v = std::make_unique<Villager>(getRandomInt(-range, range), getRandomInt(-range, range));
-        v->setJob(JobType::None);
-        //v->itemInHand = std::dynamic_pointer_cast<Gun>(gun);
-        allCreatures.push_back(std::move(v));
+        int spawnX = x + getRandomInt(-10, 10);
+        int spawnY = y + getRandomInt(-10, 10);
+        registry.emplace<Position>(member, spawnX, spawnY);
+
+        registry.emplace<Movable>(member, 0.2f, 0.2f, 0.0f, spawnX, spawnY);
+
+        registry.emplace<SquadMemberComponent>(member, squadEntity);
+
+        registry.emplace<Renderable>(member, L'Z', glm::vec3(0.0f, 1.0f, 0.0f));
+        registry.emplace<Name>(member, "Zombie");
+
+        controller.members.push_back(member);
     }
 }
 
-std::vector<Villager*> World::getAllVillagers() {
-    std::vector<Villager*> result;
-    for (auto& c : getAllCreatures()) {
-        auto* v = dynamic_cast<Villager*>(c.get());
-        if (v) {
-            result.push_back(v);
+// Adds creatures to the world
+void World::addCreatures() {
+   /* int range = 3;
+    for (int i = 0; i < 1000; i++) {
+        int x = getRandomInt(-range, range);
+        int y = getRandomInt(-range, range);
+        auto v = spawnVillager(x, y);
+        objectManager.addObject(x, y, v);
+    }*/
+
+    for (int i = 0; i < 1; i++) {
+        spawnSquad(getRandomInt(-20, 20), getRandomInt(-20, 20));
+    }
+    
+
+}
+
+std::vector<entt::entity> World::getAllVillagers() {
+    std::vector<entt::entity> result;
+
+	auto view = registry.view<Movable>();
+
+    for (auto entity : view) {
+        if (registry.any_of<Movable>(entity)) {
+            result.push_back(entity);
         }
     }
     return result;
@@ -302,14 +324,15 @@ void World::updateMiniMap() {
 
         int itemThreshold = 16;
 
+        chunkPair.second.dominantDisplay = getTileDisplay(type);
 
-        if (maxItemCount > itemThreshold) {
+        /*if (maxItemCount > itemThreshold) {
 			auto item = ObjectRegistry::getInstance().get(dominantItem);
 			auto display = VisualRegistry::getInstance().get(dominantItem);
             chunkPair.second.dominantDisplay = { {display.displayChar}, {display.displayColor} };
         }
         else {
             chunkPair.second.dominantDisplay = getTileDisplay(type);
-        }
+        }*/
     }
 }

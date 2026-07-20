@@ -8,6 +8,10 @@
 
 class Creature;
 
+struct Direction {
+    int dx, dy;
+};
+
 extern std::mt19937 rng;
 extern int seed;
 
@@ -34,7 +38,7 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
 std::vector<std::pair<int, int>> bresenham(int x0, int y0, int x1, int y1);
 bool raycast(int x0, int y0, int x1, int y1);
 
-std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim, Creature* c = nullptr);
+std::vector<Direction> buildFlowField(int targetX, int targetY, int dim, Creature* c = nullptr);
 std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim);
 
 float bellCurve(float current, float preferred, float deviation);

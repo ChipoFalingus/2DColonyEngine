@@ -42,7 +42,8 @@ public:
         float pi = 3.14159265f;
         float cycle = currentTime * (2.0f * pi / dayLength);
 
-        return std::max(0.5f * std::sin(cycle - pi / 2.0f) + 0.55f, 0.1f);
+        //return std::max(0.5f * std::sin(cycle - pi / 2.0f) + 0.55f, 0.1f);
+        return 1.1f;
     }
 
     float getTemperatureFactor() const {

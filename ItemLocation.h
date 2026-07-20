@@ -2,11 +2,11 @@
 
 struct ItemLocation {
     int x, y;
-    std::weak_ptr<Object> item;
+    entt::entity item;
 
     ItemLocation() = default;
 
-    ItemLocation(int px, int py, std::weak_ptr<Object> pitem)
+    ItemLocation(int px, int py, entt::entity  pitem)
         : x(px), y(py), item(pitem) {
     }
 };

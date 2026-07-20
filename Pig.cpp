@@ -2,7 +2,6 @@
 #include "Item.h"
 #include "Tile.h"
 #include "mathUtils.h"
-#include "Crop.h"
 
 Pig::Pig(int x, int y)
     : Animal(x, y, 'P', glm::vec3(255, 0, 255))

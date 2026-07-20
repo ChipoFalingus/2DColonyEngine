@@ -103,7 +103,7 @@ struct VillagerListUI {
 
     std::vector<Panel*> villagers;
 
-	void configureVillagerList();
+	//void configureVillagerList();
 };
 
 VillagerListUI getVillagerListFrame();
@@ -187,7 +187,7 @@ struct StoneCutterUI {
     Button* closeButton;
 };
 
-StoneCutterUI getStoneCutterFrame();
+//StoneCutterUI getStoneCutterFrame();
 
 struct AnvilUI {
     UI type = UI::Anvil;
@@ -197,7 +197,7 @@ struct AnvilUI {
     Button* closeButton;
 };
 
-AnvilUI getAnvilFrame();
+//AnvilUI getAnvilFrame();
 
 struct GunBenchUI {
     UI type = UI::Gun;
@@ -208,7 +208,7 @@ struct GunBenchUI {
     Button* closeButton;
 };
 
-GunBenchUI getGunBenchFrame();
+//GunBenchUI getGunBenchFrame();
 
 struct StockpileUI {
     UI type = UI::Stockpile;
@@ -221,7 +221,7 @@ struct StockpileUI {
 
 	std::vector<Checkbox*> typeFilters;
 
-    void updateStockpileUI(Stockpile& stockpile);
+    //void updateStockpileUI(Stockpile& stockpile);
 };
 
 StockpileUI getStockpileFrame();

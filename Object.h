@@ -6,124 +6,171 @@
 #include <SFML/Graphics/Color.hpp>
 
 #include "json.hpp"
+#include <entt/entt.hpp>
+
+#include "ItemComponents.h"
 
 using json = nlohmann::json;
 
-enum struct Type {
-	Item,
-	Tool,
-	Food,
-	Crop,
-	Foliage_Crop,
-	Heat_Emitter,
-	Furnace,
-	Gun,
-	Bench,
-	Structure,
-	Gate,
-	Furniture,
-	Spawner,
-	Seed,
-	COUNT
-};
-
-std::vector<Type> getAllTypes();
-std::string itemTypeToString(Type type);
-
-struct Visual {
-	wchar_t displayChar;
-	sf::Color displayColor;
-};
-
-
-class VisualRegistry {
-public:
-	static VisualRegistry& getInstance() {
-		static VisualRegistry instance;
-		return instance;
-	}
-	void addVisual(const std::string& name, const Visual& visual) {
-		visuals[name] = visual;
-	}
-	const Visual& get(const std::string& name) {
-		if (visuals.find(name) == visuals.end()) {
-			//std::cout << "Visual " << name << " not found in registry: " << name << std::endl;
-			static Visual defaultVisual{ L'?', sf::Color::Magenta };
-			return defaultVisual;
-		}
-		return visuals.at(name);
-	}
-
-
-private:
-	std::unordered_map<std::string, Visual> visuals;
-};
-
-class Object {
-public:
-	virtual ~Object() = default;
-
-	// Default
-	std::string name;
-
-	// Changeable
-	wchar_t displayChar;
-	sf::Color displayColor;
-
-	bool claimed = false;
-
-	Type type;
-
-	Object() : name("") {}
-
-	Object(std::string name, wchar_t ch, sf::Color col)
-		: name(name) {
-		displayChar = ch;
-		displayColor = col;
-	}
-
-	virtual Visual getVisual() const {
-		return VisualRegistry::getInstance().get(name);
-	}
+struct Blueprint {
+	json data;
 };
 
 class ObjectRegistry {
+private:
+	std::unordered_map<std::string, Blueprint> blueprintMap;
+
+	entt::registry staticRegistry;
 public:
 	static ObjectRegistry& getInstance() {
 		static ObjectRegistry instance;
 		return instance;
 	}
 
-	using Factory = std::function<std::shared_ptr<Object>()>;
-
-	void addObject(const std::string& name, Factory factory) {
-		registry[name] = factory;
+	void addObject(const std::string& name, Blueprint templateEntity) {
+		blueprintMap[name] = templateEntity;
 	}
 
-	std::shared_ptr<Object> get(const std::string name) {
-		auto it = registry.find(name);
-		if (it == registry.end()) {
-			std::cout << "Object not found in registry: " << name << std::endl;
-			return nullptr;
+	entt::registry& getStaticRegistry() {
+		return staticRegistry;
+	}
+
+	entt::entity getStaticObject(const std::string& name) {
+		auto view = staticRegistry.view<Name>();
+
+		for (auto entity : view) {
+			const auto& nameComp = view.get<Name>(entity);
+
+			if (nameComp.name == name) {
+				return entity;
+			}
 		}
-		return it->second();
+
+		return entt::null;
 	}
 
+	entt::entity createInstance(const std::string& name, entt::registry& targetWorldRegistry) {
+		auto it = blueprintMap.find(name);
+		if (it == blueprintMap.end()) {
+			std::cout << "Object prototype not found in registry: " << name << std::endl;
+			return entt::null;
+		}
 
-private:
-	std::unordered_map<std::string, Factory> registry;
-};
+		entt::entity newEntity = targetWorldRegistry.create();
 
-struct ObjectHash {
-	std::size_t operator()(const Object& obj) const noexcept {
-		return std::hash<std::string>{}(obj.name);
+		targetWorldRegistry.emplace<Claimable>(newEntity, false);
+
+		const json& blueprintData = it->second.data;
+
+		for (auto& [name, data] : blueprintData.items()) {
+			if (name == "name") {
+				std::string name = data.get<std::string>();
+
+				targetWorldRegistry.emplace<Name>(newEntity, name);
+			}
+
+			if (name == "visual") {
+				wchar_t character;
+				auto& chNode = data.at("character");
+
+				if (chNode.is_number_integer()) {
+					character = static_cast<wchar_t>(chNode.get<int>());
+				}
+				else {
+					character = chNode.get<std::string>()[0];
+				}
+
+				auto& colorArray = data.at("color");
+				glm::vec3 color(
+					colorArray.at(0).get<int>() / 255.0f,
+					colorArray.at(1).get<int>() / 255.0f,
+					colorArray.at(2).get<int>() / 255.0f
+				);
+				targetWorldRegistry.emplace<Renderable>(newEntity, character, color);
+			}
+
+			if (name == "name") {
+				std::string name = data.get<std::string>();
+
+				targetWorldRegistry.emplace<Name>(newEntity, name);
+			}
+
+			if (name == "drop") {
+				std::string dropName = data.at("item").get<std::string>();
+				SkillType requiredSkill = stringToSkillType(data.at("skill").get<std::string>());
+				targetWorldRegistry.emplace<Harvestable>(newEntity, dropName, requiredSkill);
+			}
+
+			if (name == "crop") {
+				float growthTime = data.at("grow_time").get<float>();
+				std::string produce = data.at("produce").get<std::string>();
+
+				std::vector<std::pair<wchar_t, glm::vec3>> growthStages;
+				for (auto& stage : data.at("stages")) {
+					auto& chNode = stage.at("char");
+					wchar_t ch = chNode.is_number_integer() ? chNode.get<int>() : chNode.get<std::string>()[0];
+
+					auto& col = stage.at("color");
+					glm::vec3 color(
+						col.at(0).get<int>() / 255.0f,
+						col.at(1).get<int>() / 255.0f,
+						col.at(2).get<int>() / 255.0f
+					);
+
+					growthStages.push_back({ ch, color });
+				}
+
+				targetWorldRegistry.emplace<Crop>(newEntity, growthStages, produce, growthTime, 0.0f, 0, static_cast<int>(growthStages.size() - 1));
+
+			}
+
+			if (name == "produce") {
+				std::string produce = data.get<std::string>();
+				targetWorldRegistry.emplace<ProduceSpawner>(newEntity, produce);
+			}
+
+			if (name == "grows_into") {
+				std::string produce = data.get<std::string>();
+				targetWorldRegistry.emplace<Seed>(newEntity, produce);
+			}
+
+			if (name == "recipe") {
+				std::unordered_map<std::string, int> ingredients;
+				for (auto& element : data.at("ingredients")) {
+					std::string ingredientName = element.at("item").get<std::string>();
+					int quantity = element.at("quantity").get<int>();
+
+					ingredients[ingredientName] = quantity;
+				}
+
+				std::string bench = data.at("required_bench").get<std::string>();
+
+				targetWorldRegistry.emplace<Craftable>(newEntity, ingredients, bench);
+			}
+
+			if (name == "nutrition") {
+				int nutrition = data.get<int>();
+				targetWorldRegistry.emplace<Nutritional>(newEntity, nutrition);
+			}
+			
+			if (name == "furniture") {
+				targetWorldRegistry.emplace<Furniture>(newEntity, false);
+				if (data.at("sittable").get<bool>()) {
+					targetWorldRegistry.emplace<Sittable>(newEntity);
+				}
+				if (data.at("has_surface").get<bool>()) {
+					targetWorldRegistry.emplace<Table>(newEntity);
+				}
+			}
+
+			if (name == "structure") {
+				targetWorldRegistry.emplace<Structure>(newEntity);
+			}
+		}
+
+		return newEntity;
 	}
-};
 
-struct ObjectEqual {
-	bool operator()(const Object& lhs, const Object& rhs) const noexcept {
-		return lhs.name == rhs.name;
-	}
+	void loadObjects();
+	void loadStaticObjects();
 };
-
-void loadObjects();

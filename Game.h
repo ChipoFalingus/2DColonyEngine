@@ -3,6 +3,7 @@
 #include "UI.h"
 
 #include "Heat.h"
+#include <entt/entt.hpp>
 
 enum struct Material {
     WOOD,
@@ -41,8 +42,8 @@ private:
 	HeatManager heatManager;
 	Material selectedMaterial = Material::WOOD;
 
-    std::shared_ptr<Object> selectedBuildItem;
-    Object* selectedCraftItem;
+    std::string selectedBuildItem;
+    //Object* selectedCraftItem;
 
 public:
 
@@ -67,13 +68,13 @@ public:
 		villagerListUI = getVillagerListFrame();
         buildUI = getBuildFrame();
         productionUI = getProductionFrame();
-		furnitureUI = getFurnitureFrame();
+        furnitureUI = getFurnitureFrame();
         temperatureUI = getTemperatureFrame();
         structureUI = getStructureFrame();
         carpentryBenchUI = getCarpentryBenchFrame();
-		stoneCutterUI = getStoneCutterFrame();
+		/*stoneCutterUI = getStoneCutterFrame();
 		anvilUI = getAnvilFrame();
-		gunBenchUI = getGunBenchFrame();
+		gunBenchUI = getGunBenchFrame();*/
         stockpileUI = getStockpileFrame();
         villagerInfoUI = getVillagerInfoFrame();
         infoUI = getInfoFrame();
@@ -181,20 +182,20 @@ public:
         return heatManager;
 	}
 
-    std::shared_ptr<Object> getBuildItem() {
+    std::string getBuildItem() const {
         return selectedBuildItem;
     }
 
-    void setBuildItem(const std::string& name) {
-        selectedBuildItem = ObjectRegistry::getInstance().get(name);
+    void setBuildItem(std::string item) {
+        selectedBuildItem = item;
     }
 
-    Object* getCraftItem() {
+    /*Object* getCraftItem() {
         return selectedCraftItem;
     }
 
     void setCraftItem(std::string name) {
         selectedCraftItem = ObjectRegistry::getInstance().get(name).get();
-    }
+    }*/
     
 };

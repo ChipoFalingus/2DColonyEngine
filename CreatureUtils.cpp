@@ -27,7 +27,7 @@ std::optional<std::pair<int, int>> findClosestTileItem(const std::string name, i
             continue;
 
         Tile& tile = getTileRef(current.first, current.second);
-        if (mainWorld.objectManager.hasItem(current.first, current.second, name)) {
+        if (mainWorld.objectManager.has(current.first, current.second, name)) {
             //tile.claimed = true;
             return current;
         }
@@ -44,44 +44,44 @@ std::optional<std::pair<int, int>> findClosestTileItem(const std::string name, i
 }
 
 
-bool isAtItem(const Object& item, int x, int y) {
-
-    if (mainWorld.objectManager.hasItem(x, y, item.name)) {
-        return true;
-    }
-
-    for (auto& i : getNeighbors(x, y)) {
-        if (mainWorld.objectManager.hasItem(i.first, i.second, item.name)) {
-            return true; // This is the line they guessed
-        }
-    }
-    return false;
-}
-
-std::pair<int, int> findBestTemperatureTile(int x, int y, int radius, float preferredTemp) {
-    std::pair<int, int> bestTile = { x, y };
-    float bestScore = 0.f;
-
-    for (int dx = -radius; dx <= radius; dx++) {
-        for (int dy = -radius; dy <= radius; dy++) {
-            int nx = x + dx;
-            int ny = y + dy;
-			Tile& tile = getTileRef(nx, ny);
-
-            if (!tile.walkable) continue;
-
-            float comfortScore = bellCurve(mainWorld.getTemperatureMapIndex(nx, ny), preferredTemp, 8);
-            float distance = std::abs(dx) + std::abs(dy);
-
-            float distancePenalty = distance * 0.01f;
-            float finalScore = comfortScore - distancePenalty;
-
-            if (finalScore > bestScore) {
-                bestScore = finalScore;
-                bestTile = { nx, ny };
-            }
-		}
-    }
-
-    return bestTile;
-}
+//bool isAtItem(const Object& item, int x, int y) {
+//
+//    if (mainWorld.objectManager.hasItem(x, y, item.name)) {
+//        return true;
+//    }
+//
+//    for (auto& i : getNeighbors(x, y)) {
+//        if (mainWorld.objectManager.hasItem(i.first, i.second, item.name)) {
+//            return true; // This is the line they guessed
+//        }
+//    }
+//    return false;
+//}
+//
+//std::pair<int, int> findBestTemperatureTile(int x, int y, int radius, float preferredTemp) {
+//    std::pair<int, int> bestTile = { x, y };
+//    float bestScore = 0.f;
+//
+//    for (int dx = -radius; dx <= radius; dx++) {
+//        for (int dy = -radius; dy <= radius; dy++) {
+//            int nx = x + dx;
+//            int ny = y + dy;
+//			Tile& tile = getTileRef(nx, ny);
+//
+//            if (!tile.walkable) continue;
+//
+//            float comfortScore = bellCurve(mainWorld.getTemperatureMapIndex(nx, ny), preferredTemp, 8);
+//            float distance = std::abs(dx) + std::abs(dy);
+//
+//            float distancePenalty = distance * 0.01f;
+//            float finalScore = comfortScore - distancePenalty;
+//
+//            if (finalScore > bestScore) {
+//                bestScore = finalScore;
+//                bestTile = { nx, ny };
+//            }
+//		}
+//    }
+//
+//    return bestTile;
+//}

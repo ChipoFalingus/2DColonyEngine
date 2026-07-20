@@ -137,8 +137,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animal.cpp" />
-    <ClCompile Include="Brain.cpp" />
-    <ClCompile Include="Building.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="Crafting.cpp" />
     <ClCompile Include="Creature.cpp" />
@@ -148,6 +146,7 @@
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="HarvestRules.cpp" />
     <ClCompile Include="Inputs.cpp" />
+    <ClCompile Include="ItemComponents.h" />
     <ClCompile Include="ItemUtils.cpp" />
     <ClCompile Include="JobManager.cpp" />
     <ClCompile Include="Monster.cpp" />
@@ -157,6 +156,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Squad.cpp" />
+    <ClCompile Include="Stockpile.cpp" />
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="Tool.cpp" />
     <ClCompile Include="UI.cpp" />
@@ -176,18 +176,13 @@
     <ClInclude Include="Colony.h" />
     <ClInclude Include="Crafting.h" />
     <ClInclude Include="Creature.h" />
-    <ClInclude Include="Crop.h" />
+    <ClInclude Include="CreatureComponents.h" />
     <ClInclude Include="DayCycle.h" />
     <ClInclude Include="Dot.h" />
-    <ClInclude Include="FoliageCrop.h" />
-    <ClInclude Include="Food.h" />
-    <ClInclude Include="HeatEmitter.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Globals.h" />
-    <ClInclude Include="Gun.h" />
     <ClInclude Include="HarvestRules.h" />
     <ClInclude Include="Heat.h" />
-    <ClInclude Include="Helper.h" />
     <ClInclude Include="Inputs.h" />
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="Item.h" />
@@ -205,18 +200,14 @@
     <ClInclude Include="CreatureUtils.h" />
     <ClInclude Include="Pig.h" />
     <ClInclude Include="Save.h" />
-    <ClInclude Include="Seed.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="Spawner.h" />
     <ClInclude Include="Squad.h" />
     <ClInclude Include="SquadManager.h" />
     <ClInclude Include="Stockpile.h" />
-    <ClInclude Include="Structure.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="TileAnimation.h" />
     <ClInclude Include="TileDisplay.h" />
-    <ClInclude Include="Tool.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="UIElements.h" />
     <ClInclude Include="UIManager.h" />
@@ -229,9 +220,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Art.txt" />
-    <Text Include="Cart.txt" />
     <Text Include="FlingGames.txt" />
-    <Text Include="House.txt" />
     <Text Include="VillagerMenu.txt" />
     <Text Include="WorldMenu.txt" />
     <Text Include="Info.txt" />

@@ -4,7 +4,6 @@
 #include <typeindex>
 
 #include "Item.h"
-#include "Tool.h"
 
 enum CreatureType {
 	VILLAGER,
@@ -46,8 +45,7 @@ class Creature {
 		int yPos;
 
 		// Creatures can hold one item type and a weapon/tool
-		std::shared_ptr<Object> itemInHand;
-		std::shared_ptr<Tool> toolInHand;
+		//std::shared_ptr<Object> itemInHand;
 
 		CreatureType type;
 

@@ -1,5 +1,7 @@
 #pragma once
+#include <iostream>
 #include <string>
+#include <unordered_map>
 
 enum class JobType {
 	None,
@@ -98,7 +100,7 @@ inline std::string skillTypeToString(SkillType type) {
     case SkillType::Mining:       return "Mining";
     case SkillType::Woodcutting:  return "Woodcutting";
     case SkillType::Carpentry:    return "Carpentry";
-	case SkillType::Masonry:      return "Masonry";
+    case SkillType::Masonry:      return "Masonry";
     case SkillType::Blacksmithing:return "Blacksmithing";
     case SkillType::Gunsmithing:  return "Gunsmithing";
     case SkillType::Cooking:      return "Cooking";
@@ -108,6 +110,20 @@ inline std::string skillTypeToString(SkillType type) {
     default:                     return "Unknown";
     }
 }
+
+struct Skills {
+    std::unordered_map<SkillType, int> skills;
+    void setSkillLevel(SkillType type, int level) {
+        skills[type] = level;
+    }
+    int getSkillLevel(SkillType type) const {
+        auto it = skills.find(type);
+        if (it != skills.end()) {
+            return it->second;
+        }
+        return 0;
+    }
+};
 
 inline SkillType stringToSkillType(const std::string& type) {
     if (type == "Farming")      return SkillType::Farming;

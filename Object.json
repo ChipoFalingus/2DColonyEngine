@@ -42,6 +42,10 @@
             "visual": {
                 "character": "|",
                 "color": [ 121, 208, 33 ]
+            },
+            "drop": {
+                "item": "Wheat Seeds",
+                "skill": "Farming"
             }
         },
         {
@@ -50,6 +54,10 @@
             "visual": {
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
             }
         },
         {
@@ -58,6 +66,10 @@
             "visual": {
                 "character": 9824,
                 "color": [ 42, 55, 12 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
             }
         },
         {
@@ -66,6 +78,10 @@
             "visual": {
                 "character": 9827,
                 "color": [ 255, 255, 255 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
             }
         },
         {
@@ -74,6 +90,10 @@
             "visual": {
                 "character": "Y",
                 "color": [ 150, 75, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
             }
         },
         {
@@ -93,19 +113,20 @@
             }
         },
         {
-            "name": "Dead Tree",
-            "type": "object",
-            "visual": {
-                "character": "Y",
-                "color": [ 150, 75, 0 ]
-            }
-        },
-        {
             "name": "Stick",
             "type": "object",
             "visual": {
                 "character": "/",
                 "color": [ 150, 75, 0 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
             }
         },
         {
@@ -121,6 +142,18 @@
             "type": "object",
             "visual": {
                 "character": "R",
+                "color": [ 128, 128, 128 ]
+            },
+            "drop": {
+                "item": "Rock Chunk",
+                "skill": "Mining"
+            }
+        },
+        {
+            "name": "Rock Chunk",
+            "type": "object",
+            "visual": {
+                "character": "r",
                 "color": [ 128, 128, 128 ]
             }
         },
@@ -210,6 +243,15 @@
             "visual": {
                 "character": "=",
                 "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wood",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
             }
         },
         {
@@ -238,10 +280,19 @@
         },
         {
             "name": "Wooden Wall",
-            "type": "structure",
+            "structure": "",
             "visual": {
                 "character": "%",
                 "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -282,6 +333,15 @@
             "visual": {
                 "character": "B",
                 "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
             }
         },
         {
@@ -310,6 +370,15 @@
             "visual": {
                 "character": 960,
                 "color": [ 117, 66, 12 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wood",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -342,6 +411,19 @@
             "visual": {
                 "character": "h",
                 "color": [ 148, 77, 0 ]
+            },
+            "furniture": {
+                "sittable": true,
+                "has_surface": false
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
             }
         },
         {
@@ -350,6 +432,19 @@
             "visual": {
                 "character": "T",
                 "color": [ 148, 77, 0 ]
+            },
+            "furniture": {
+                "sittable": false,
+                "has_surface":  true
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 4
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
             }
         },
         {
@@ -366,6 +461,10 @@
             "visual": {
                 "character": "T",
                 "color": [ 128, 128, 128 ]
+            },
+            "furniture": {
+                "sittable": false,
+                "has_surface": true
             }
         },
         {
@@ -400,25 +499,28 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
-            "grow_time": 1.0,
-            "stages": [
-                {
-                    "char": ".",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "w",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "W",
-                    "color": [ 147, 196, 125 ]
-                },
-                {
-                    "char": "W",
-                    "color": [ 255, 229, 153 ]
-                }
-            ]
+            "crop": {
+                "grow_time": 200.0,
+                "produce": "Bundled Wheat",
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "w",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "W",
+                        "color": [ 147, 196, 125 ]
+                    },
+                    {
+                        "char": "W",
+                        "color": [ 255, 229, 153 ]
+                    }
+                ]
+            }
         },
         {
             "name": "Wheat Seeds",
@@ -445,25 +547,28 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
-            "grow_time": 2.0,
-            "stages": [
-                {
-                    "char": ".",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "v",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "V",
-                    "color": [ 170, 255, 0 ]
-                },
-                {
-                    "char": "V",
-                    "color": [ 255, 145, 0 ]
-                }
-            ]
+            "crop": {
+                "grow_time": 2.0,
+                "produce": "Carrot",
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "v",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "V",
+                        "color": [ 170, 255, 0 ]
+                    },
+                    {
+                        "char": "V",
+                        "color": [ 255, 145, 0 ]
+                    }
+                ]
+            }
         },
         {
             "name": "Carrot Seeds",
@@ -490,25 +595,28 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
-            "grow_time": 2.0,
-            "stages": [
-                {
-                    "char": ",",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "|",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "M",
-                    "color": [ 56, 118, 29 ]
-                },
-                {
-                    "char": "o",
-                    "color": [ 183, 146, 104 ]
-                }
-            ]
+            "crop": {
+                "grow_time": 2.0,
+                "produce": "Potato",
+                "stages": [
+                    {
+                        "char": ",",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "|",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "M",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "o",
+                        "color": [ 183, 146, 104 ]
+                    }
+                ]
+            }
         },
         {
             "name": "Potato Seeds",
@@ -528,16 +636,16 @@
             },
             "nutrition": 140
         },
-
-
-
-
         {
             "name": "Apple Tree",
             "type": "foliage_crop",
             "visual": {
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
             },
             "produce": "Apple"
         },
@@ -548,6 +656,10 @@
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
             },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            },
             "produce": "Orange"
         },
         {
@@ -557,9 +669,12 @@
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
             },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            },
             "produce": "Lemon"
         },
-
         {
             "name": "Berry Bush",
             "type": "foliage_crop",

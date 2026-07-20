@@ -2,19 +2,16 @@
 #include <vector>
 #include <functional>
 #include "Item.h"
-#include "Crop.h"
-#include "Tool.h"
 #include "Creature.h"
 #include "JobType.h"
 #include "Crafting.h"
 #include "ItemLocation.h"
-#include "Food.h"
 #include "HarvestRules.h"
 
 
-class Villager;
-class HeatEmitter;
-
+//class Villager;
+//class HeatEmitter;
+//
 enum class JobState {
 	Active,
 	Queued,
@@ -25,8 +22,8 @@ enum class JobState {
 
 
 struct Job {
-	Villager* villager = nullptr; // Who is assigned to the job
-	Tool* preferredTool = nullptr;
+	entt::entity villager = entt::null; // Who is assigned to the job
+	entt::entity preferredTool = entt::null;
 	std::string preferredToolName;
 	SkillType type;
 	JobState state = JobState::Queued;
@@ -34,19 +31,19 @@ struct Job {
 	int x, y; // Where the job requires you to be
 	int priority = 0; // Higher priority jobs get assigned first
 
-	Job(Villager* v, Tool* preferredTool, SkillType skillType)
+	Job(entt::entity v, entt::entity preferredTool, SkillType skillType)
 		:villager(v), preferredTool(preferredTool), type(skillType) {
 
-		if (preferredTool) {
-			preferredToolName = preferredTool->name;
+		if (preferredTool != entt::null) {
 		}
 	}
 
 	virtual ~Job() = default;
 
 	virtual void update() {}
-	virtual void waitingUpdate() {}
-	virtual void onFail() {}
+	virtual void onInterrupt() {}
+	//virtual void waitingUpdate() {}
+	//virtual void onFail() {}
 };
 
 
@@ -56,8 +53,8 @@ public:
 	// Holds all available jobs and gives them to villagers whenever possible
 	static std::vector<Job*> JobList;
 
-	static void findBestColonistForJob(Job& job);
-	static void findJobForColonist(Villager& v);
+	//static void findBestColonistForJob(Job& job);
+	//static void findJobForColonist(Villager& v);
 	static void addJob(Job* job) {
 		JobList.push_back(job);
 	}
@@ -66,6 +63,7 @@ public:
 			std::remove(JobList.begin(), JobList.end(), job),
 			JobList.end()
 		);
+		delete job;
 	}
 
 
@@ -77,10 +75,10 @@ public:
 class Harvest : public Job {
 public:
 	bool itemFound = false;
-	std::shared_ptr<Object> item;
+	entt::entity item;
 
 
-	Harvest(Villager* v, Tool* tool, SkillType skillType, std::shared_ptr<Object> i)
+	Harvest(entt::entity v, entt::entity tool, SkillType skillType, entt::entity i)
 		: Job(v, tool, skillType), item(i)
 	{}
 
@@ -96,29 +94,21 @@ public:
 		Harvesting,
 	};
 
-	std::string item;
+	entt::entity item;
 	int locX, locY;
-	bool isHarvesting = false;
-	bool addedGetToolJob = false;
-	bool gotTool = false;
 
-	Rule* rule;
-	float searchTimer = 0.0f;
 	float harvestClock = 0.0f;
 
 	State harvestState = State::MovingToTile;
 
-	HarvestTile(Villager* v, Tool* tool, SkillType skillType, std::string i, int locX, int locY)
-		: Job(v, tool, skillType), item(i), locX(locX), locY(locY)
+	HarvestTile(entt::entity v, entt::entity tool, SkillType skill, entt::entity i, int locX, int locY)
+		: Job(v, tool, skill), item(i), locX(locX), locY(locY)
 	{
 		x = locX;
 		y = locY;
-
-		rule = HarvestRuleRegistry::getInstance().get(item);
 	}
 
 	void update();
-	void waitingUpdate();
 };
 
 
@@ -139,7 +129,7 @@ public:
 
 	State plantState = State::GettingSeed;
 
-	Plant(Villager* v, Tool* tool, SkillType skillType, std::string seed, int locX, int locY)
+	Plant(entt::entity v, entt::entity tool, SkillType skillType, std::string seed, int locX, int locY)
 		: Job(v, tool, skillType), seed(seed), locX(locX), locY(locY)
 	{
 		x = locX;
@@ -153,20 +143,19 @@ public:
 class Build : public Job {
 public:
 	std::string itemName;
+	entt::entity staticRecipeEntity = entt::null;
+
 	int locX, locY;
 	bool grabbedAllItems = false;
 	bool init = false;
-	std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>> reserve;
+	std::vector<std::pair<std::pair<int, int>, entt::entity>> reserve;
 
-	Recipe* recipe;
-	std::unordered_map<std::string, int> ingredients;
-	Build(Villager* v, Tool* tool, SkillType skillType, std::string item, int locX, int locY)
-		: Job(v, tool, skillType), itemName(item), locX(locX), locY(locY)
+	Build(entt::entity v, entt::entity tool, SkillType skillType, std::string itemName, int locX, int locY)
+		: Job(v, tool, skillType), itemName(itemName), locX(locX), locY(locY)
 	{
 		x = locX;
 		y = locY;
-		recipe = RecipeRegistry::getInstance().get(item);
-		ingredients = recipe->ingredients;
+
 	}
 
 	void update();
@@ -180,7 +169,7 @@ public:
 		Placing
 	};
 
-	std::weak_ptr<Object> itemName;
+	entt::entity item;
 	int fX, fY;
 	int tX, tY;
 	bool grabbedItem = false;
@@ -188,8 +177,8 @@ public:
 
 	State jobState = State::Getting;
 
-	BuildFurniture(Villager* v, Tool* tool, SkillType skillType, std::weak_ptr<Object> item, int fX, int fY, int tX, int tY)
-		: Job(v, tool, skillType), itemName(item), fX(fX), fY(fY), tX(tX), tY(tY)
+	BuildFurniture(entt::entity v, entt::entity tool, SkillType skillType, entt::entity item, int fX, int fY, int tX, int tY)
+		: Job(v, tool, skillType), item(item), fX(fX), fY(fY), tX(tX), tY(tY)
 	{
 		x = fX;
 		y = fY;
@@ -200,8 +189,8 @@ public:
 
 class Refuel : public Job {
 public:
-	std::weak_ptr<Object> fuel;
-	std::weak_ptr<HeatEmitter> target;
+	entt::entity fuel;
+	entt::entity target;
 	int fX, fY;
 
 	enum State {
@@ -211,7 +200,7 @@ public:
 
 	State jobState = State::Getting;
 
-	Refuel(Villager* v, Tool* tool, SkillType skillType, std::weak_ptr<Object> fuel, std::weak_ptr<HeatEmitter> target, int fX, int fY)
+	Refuel(entt::entity v, entt::entity tool, SkillType skillType, entt::entity fuel, entt::entity target, int fX, int fY)
 		: Job(v, tool, skillType), fuel(fuel), target(target), fX(fX), fY(fY)
 	{
 	}
@@ -221,10 +210,10 @@ public:
 
 class PlaceItem : public Job {
 public:
-	Object* itemToPlace;
+	entt::entity itemToPlace;
 	int locX, locY;
 
-	PlaceItem(Villager* v, Tool* tool, SkillType skillType, Object* item, int locX, int locY)
+	PlaceItem(entt::entity v, entt::entity tool, SkillType skillType, entt::entity item, int locX, int locY)
 		: Job(v, tool, skillType), itemToPlace(item), locX(locX), locY(locY)
 	{}
 
@@ -235,22 +224,24 @@ class Idle : public Job {
 public:
 
 	float waitTime = 0.0f;
+	float clock = 0.0f;
 	bool initialized = false;
 
-	Idle(Villager* v, Tool* tool, SkillType skillType)
+	Idle(entt::entity v, entt::entity tool, SkillType skillType)
 		: Job(v, tool, skillType)
 	{}
 
 	void update();
+	void onInterrupt();
 };
 
 class Attack : public Job {
 public:
 
-	Creature* target;
+	entt::entity target;
 	float attackClock;
 
-	Attack(Villager* v, Tool* tool, SkillType skillType, Creature* target)
+	Attack(entt::entity v, entt::entity tool, SkillType skillType, entt::entity target)
 		: Job(v, tool, skillType), target(target)
 	{}
 
@@ -260,9 +251,9 @@ public:
 class Retreat : public Job {
 public:
 
-	Creature* threat;
+	entt::entity threat;
 
-	Retreat(Villager* v, Tool* tool, SkillType skillType, Creature* threat)
+	Retreat(entt::entity v, entt::entity tool, SkillType skillType, entt::entity threat)
 		: Job(v, tool, skillType), threat(threat)
 	{}
 
@@ -274,7 +265,7 @@ public:
 	bool sleeping = false;
 	bool lookedForBed = false;
 
-	Sleep(Villager* v, Tool* tool, SkillType skillType)
+	Sleep(entt::entity v, entt::entity tool, SkillType skillType)
 		: Job(v, tool, skillType)
 	{}
 
@@ -283,19 +274,27 @@ public:
 
 class Craft : public Job {
 public:
-	std::string itemName;
+	enum State {
+		FetchingItems,
+		MovingToBench,
+		Crafting
+	};
+
+	State jobState = State::FetchingItems;
+
+	std::string item;
+	entt::entity staticRecipeEntity = entt::null;
+
 	std::unordered_map<std::string, int> ingredients;
-	std::vector<std::pair<std::pair<int, int>, std::shared_ptr<Object>>> reserve;
+	std::vector<std::pair<std::pair<int, int>, entt::entity>> reserve;
 	bool init = false;
 	bool grabbedAllItems = false;
 
-	Recipe* recipe;
-	Craft(Villager* v, Tool* tool, SkillType skillType, std::string item)
-		: Job(v, tool, skillType), itemName(item)
+	Craft(entt::entity v, entt::entity tool, SkillType skillType, std::string item)
+		: Job(v, tool, skillType), item(item)
 	{
-		recipe = RecipeRegistry::getInstance().get(item);
-		ingredients = recipe->ingredients;
 	}
+
 	void update();
 };
 
@@ -304,7 +303,7 @@ class Move : public Job {
 public:
 	int toX;
 	int toY;
-	Move(Villager* v, Tool* tool, SkillType skillType, int x, int y)
+	Move(entt::entity v, entt::entity tool, SkillType skillType, int x, int y)
 		: Job(v, tool, skillType), toX(x), toY(y)
 	{
 	}
@@ -313,14 +312,14 @@ public:
 
 class MoveItem : public Job {
 public:
-	std::shared_ptr<Object> itemToMove;
+	entt::entity itemToMove;
 	int fromX, fromY;
 	int toX, toY;
 
 	bool itemPickedUp = false;
 	bool claimedSpot = false;
 
-	MoveItem(Villager* v, Tool* tool, SkillType skillType, std::shared_ptr<Object> item, int fX, int fY, int tX, int tY)
+	MoveItem(entt::entity v, entt::entity tool, SkillType skillType, entt::entity item, int fX, int fY, int tX, int tY)
 		: Job(v, tool, skillType), itemToMove(item), fromX(fX), fromY(fY), toX(tX), toY(tY)
 	{
 		x = fX;
@@ -337,13 +336,13 @@ public:
 		Drop,
 	};
 
-	std::shared_ptr<Object> itemToMove;
+	entt::entity itemToMove;
 	int fromX, fromY;
 	int toX, toY;
 
 	State moveState = State::PickUpItem;
 
-	HaulToStockpile(Villager* v, Tool* tool, SkillType skillType, std::shared_ptr<Object> item, int fX, int fY, int tX, int tY)
+	HaulToStockpile(entt::entity v, entt::entity tool, SkillType skillType, entt::entity item, int fX, int fY, int tX, int tY)
 		: Job(v, tool, skillType), itemToMove(item), fromX(fX), fromY(fY), toX(tX), toY(tY)
 	{
 		x = fX;
@@ -363,12 +362,12 @@ public:
 
 	float eatTimer = 0.0f;
 	int tX, tY;
-	std::shared_ptr<Food> food;
+	entt::entity food;
 	std::optional<ItemLocation> place = std::nullopt;
 
 	State foodState = State::Grab;
 
-	FindFood(Villager* v, Tool* tool, SkillType skillType, int x, int y, std::shared_ptr<Food> food)
+	FindFood(entt::entity v, entt::entity tool, SkillType skillType, int x, int y, entt::entity food)
 		: Job(v, tool, skillType), tX(x), tY(y), food(food)
 	{}
 	void update();
@@ -377,12 +376,12 @@ public:
 class Sit : public Job {
 public:
 	int tX, tY;
-	std::weak_ptr<Object> chair;
+	entt::entity chair;
 	bool init = false;
 
 	float clock;
 
-	Sit(Villager* v, Tool* tool, SkillType skillType, std::weak_ptr<Object> chair, int x, int y)
+	Sit(entt::entity v, entt::entity tool, SkillType skillType, entt::entity chair, int x, int y)
 		: Job(v, tool, skillType), chair(chair), tX(x), tY(y)
 	{
 	}
@@ -398,7 +397,7 @@ public:
 	int tX;
 	int tY;
 	bool hasTarget = false;
-	Wander(Villager* v, Tool* tool, SkillType skillType)
+	Wander(entt::entity v, entt::entity tool, SkillType skillType)
 		: Job(v, tool, skillType)
 	{}
 
@@ -412,7 +411,7 @@ public:
 	int tX;
 	int tY;
 	bool hasTarget = false;
-	Meditate(Villager* v, Tool* tool, SkillType skillType)
+	Meditate(entt::entity v, entt::entity tool, SkillType skillType)
 		: Job(v, tool, skillType)
 	{}
 	void update();
@@ -426,12 +425,12 @@ public:
 		TalkTo
 	};
 
-	Villager* other;
+	entt::entity other;
 	float clock;
 
 	State talkState = State::WalkTo;
 
-	Talk(Villager* v, Tool* tool, SkillType skillType, Villager* other)
+	Talk(entt::entity v, entt::entity tool, SkillType skillType, entt::entity other)
 		: Job(v, tool, skillType), other(other)
 	{}
 	void update();

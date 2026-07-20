@@ -7,7 +7,6 @@
 #include "Zombie.h"
 #include "Villager.h"
 #include "Pig.h"
-#include "Gun.h"
 #include "Light.h"
 #include "Stockpile.h"
 #include "DayCycle.h"
@@ -16,9 +15,10 @@
 #include "Chunk.h"
 #include "Pair.h"
 
+#include <entt/entt.hpp>
+
 class Creature;
 class Colony;
-class Villager;
 
 enum struct PlacementMode {
     SINGLE,
@@ -38,7 +38,7 @@ private:
     std::atomic<bool> currentlyRendering = false;
     std::atomic<int> chunksRendered = 0;
 
-    std::vector<Colony> worldColonies;
+    //std::vector<Colony> worldColonies;
     std::vector<std::unique_ptr<Creature>> allCreatures;
 
     std::unordered_map<std::pair<int, int>, Chunk, pair_hash> chunks;
@@ -47,7 +47,7 @@ private:
     std::vector<Stockpile> stockpiles;
 	
     // This needs to be in the colony class too
-    std::vector<std::pair<std::shared_ptr<Object>, std::pair<int, int>>> itemsToMove;
+    std::vector<std::pair<entt::entity, std::pair<int, int>>> itemsToMove;
 
 
     std::vector<float> lightMap;
@@ -57,6 +57,8 @@ private:
     void addCreatures();
 public:
 
+    entt::registry registry;
+
 	PlacementMode placementMode = PlacementMode::SQUARE;
 
 	DayCycle dayCycle;
@@ -64,10 +66,10 @@ public:
     
     static World& get();
 
-	const std::vector<Colony>& getColonies() const { return worldColonies; }
+	//const std::vector<Colony>& getColonies() const { return worldColonies; }
 	std::vector<std::unique_ptr<Creature>>& getAllCreatures() { return allCreatures; }
 
-    std::vector<Villager*> getAllVillagers();
+    std::vector<entt::entity> getAllVillagers();
 
     void addCreature(std::unique_ptr<Creature> creature) {
         allCreatures.push_back(std::move(creature));
@@ -185,20 +187,20 @@ public:
         return std::nullopt;
     }
 
-    std::optional<std::pair<std::pair<int, int>, std::shared_ptr<Object>>> findUnclaimedItemInAllStockpile(const std::string& name) {
+    std::optional<std::pair<std::pair<int, int>, entt::entity>> findUnclaimedItemInAllStockpile(const std::string& name) {
         for (auto& s : stockpiles) {
             auto it = s.findUnclaimedItemLocation(name);
             if (it) {
-                auto itemOpt = s.retrieveItem(it->first, it->second);
-                if (itemOpt && !itemOpt->get()->claimed) {
-					return std::make_pair(*it, *itemOpt);
+                auto itemEntity = s.retrieveItem(it->first, it->second);
+                if (!registry.try_get<Claimable>(itemEntity)->claimed) {
+					return std::make_pair(*it, itemEntity);
                 }
             }
         }
         return std::nullopt;
 	}
 
-    int countItemInStockpiles(const std::string& item) {
+   /* int countItemInStockpiles(const std::string& item) {
         int count = 0;
 
         for (auto& s : stockpiles) {
@@ -214,9 +216,9 @@ public:
         }
 
         return count;
-    }
+    }*/
 
-    void removeStockpile(Stockpile s) {
+    /*void removeStockpile(Stockpile s) {
 
         auto loc = s.getLocation();
         int width = s.getWidth();
@@ -238,7 +240,7 @@ public:
             stockpiles.erase(it);
         }
 
-    }
+    }*/
 
     Chunk& loadOrGenerateChunk(int x, int y);
     void addTileToMinimap(Chunk& chunk);
@@ -247,11 +249,11 @@ public:
 
 	std::unordered_map<std::pair<int, int>, Chunk, pair_hash>& getChunks() { return chunks; }
     
-    void addItemToMove(std::shared_ptr<Object> item, int x, int y) {
+    void addItemToMove(entt::entity item, int x, int y) {
         itemsToMove.push_back(std::make_pair(item, std::make_pair(x, y)));
     }
 
-    void removeItemToMove(Object* item, int x, int y) {
+    /*void removeItemToMove(entt::entity* item, int x, int y) {
         for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
             if (it->first.get() == item &&
                 it->second.first == x &&
@@ -263,9 +265,9 @@ public:
                 it++;
             }
         }
-    }
+    }*/
 
-    std::vector<std::pair<std::shared_ptr<Object>, std::pair<int, int>>>& getItemsToMove() {
+    std::vector<std::pair<entt::entity, std::pair<int, int>>>& getItemsToMove() {
         return itemsToMove;
     }
 

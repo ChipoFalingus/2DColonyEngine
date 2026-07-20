@@ -8,7 +8,6 @@
 #include "Pair.h"
 #include "Creature.h"
 #include "World.h"
-#include "Structure.h"
 
 const int PERMUTATION_SIZE = 256;
 int p[PERMUTATION_SIZE * 2];
@@ -74,7 +73,7 @@ Vec2 getGradient(int hash) {
 }
 
 float calculateMapSize() {
-    return 1200.0f;
+    return 500.0f;
 }
 
 
@@ -218,7 +217,7 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
             Tile& neighborTile = getTileRef(neighborX, neighborY);
             if (!neighborTile.walkable) continue;
             
-            bool isBlockedByGate = false;
+            /*bool isBlockedByGate = false;
             if (c) {
                 for (auto& i : mainWorld.objectManager.getObjectsAt(neighborX, neighborY)) {
                     if (i->type == Type::Gate) {
@@ -230,9 +229,9 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
                     }
                 }
 
-            }
+            }*/
 
-            if (isBlockedByGate) continue;
+            //if (isBlockedByGate) continue;
 
 
             int tentativeG = gScore[current] + 1;
@@ -326,12 +325,12 @@ char getArrow(int dx, int dy) {
     return '.'; // no direction
 }
 
-std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int targetY, int dim, Creature* c) {
+std::vector<Direction> buildFlowField(int targetX, int targetY, int dim, Creature* c) {
 
     int half = dim / 2;
 
-    std::vector<std::vector<std::pair<int, int>>> flowField(dim, std::vector<std::pair<int, int>>(dim, { 0, 0 }));
-    std::vector<std::vector<float>> dist(dim, std::vector<float>(dim, FLT_MAX));
+    std::vector<Direction> flowField(dim * dim, Direction{ 0, 0 });
+    std::vector<float> dist(dim * dim, FLT_MAX);
 
     std::vector<std::pair<int, int>> dirs = {
         {1,0}, {-1,0}, {0,1}, {0,-1},
@@ -343,7 +342,7 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
     int cx = dim / 2;
     int cy = dim / 2;
 
-    dist[cx][cy] = 0;
+    dist[cx * dim + cy] = 0;
     q.push({ cx, cy });
 
     while (!q.empty()) {
@@ -352,6 +351,7 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
 
         int x = curr.first;
         int y = curr.second;
+        int currentIndex = y * dim + x;
 
         for (auto& dir : dirs) {
             int nx = x + dir.first;
@@ -367,25 +367,9 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
             if (!tile.walkable)
                 continue;
 
-            bool isBlockedByGate = false;
-            if (c) {
-                for (auto& i : mainWorld.objectManager.getObjectsAt(worldX + dir.first, worldY + dir.second)) {
-                    if (i->type == Type::Gate) {
-                        auto g = static_cast<Gate*>(i.get());
-                        if (!g->getWalkability(c)) {
-                            isBlockedByGate = true;
-                            break;
-                        }
-                    }
-                }
-
-            }
-
-            if (isBlockedByGate) continue;
-
-
-            if (dist[nx][ny] > dist[x][y] + 1) {
-                dist[nx][ny] = dist[x][y] + 1;
+            int neighborIndex = ny * dim + nx;
+            if (dist[neighborIndex] > dist[currentIndex] + 1) {
+                dist[neighborIndex] = dist[currentIndex] + 1;
                 q.push({ nx, ny });
             }
         }
@@ -394,15 +378,16 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
 
     // Set Directions next
 
-    for (int x = 0; x < flowField.size(); x++) {
-        for (int y = 0; y < flowField[0].size(); y++) {
+    for (int x = 0; x < dim; x++) {
+        for (int y = 0; y < dim; y++) {
+            int index = y * dim + x;
 
-            if (dist[x][y] == FLT_MAX) {
-                flowField[x][y] = { 0, 0 };
+            if (dist[index] == FLT_MAX) {
+                flowField[index] = { 0, 0 };
                 continue;
             }
 
-            float bestDist = dist[x][y];
+            float bestDist = dist[index];
             std::pair<int, int> bestDir = { 0, 0 };
 
             for (auto& dir : dirs) {
@@ -412,16 +397,18 @@ std::vector<std::vector<std::pair<int, int>>> buildFlowField(int targetX, int ta
                 if (nx < 0 || nx >= dim || ny < 0 || ny >= dim)
                     continue;
 
-                if (dist[nx][ny] == FLT_MAX)
+                int neighborIndex = ny * dim + nx;
+
+                if (dist[neighborIndex] == FLT_MAX)
                     continue;
 
-                if (dist[nx][ny] < bestDist) {
-                    bestDist = dist[nx][ny];
+                if (dist[neighborIndex] < bestDist) {
+                    bestDist = dist[neighborIndex];
                     bestDir = dir;
                 }
             }
 
-            flowField[x][y] = bestDir;
+            flowField[index] = Direction(bestDir.first, bestDir.second);
 
             int worldX = targetX + (x - half);
             int worldY = targetY + (y - half);

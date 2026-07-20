@@ -1,211 +1,252 @@
 #include "Squad.h"
 #include "CreatureUtils.h"
 #include "Villager.h"
+#include "ItemUtils.h"
+#include "CreatureComponents.h"
+#include "World.h"
 
-void Squad::addMember(Creature* member) {
-	members.push_back(member);
+void findTargets(entt::entity entity, entt::registry& registry);
+SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::registry& registry);
+std::pair<int, int> getAvgPos(entt::entity entity, entt::registry& registry);
+void onIdle(entt::entity squad);
+void onAttack(entt::entity squad);
+
+void updateSquadMovement(entt::entity squad) {
+	auto& registry = mainWorld.registry;
+	auto& squadView = registry.get<SquadController>(squad);
+
+	findTargets(squad, registry);
+
+	squadView.state = (squadView.targets.empty()) ? IDLE : ATTACKING;
+
+	if (squadView.state == SquadState::IDLE) {
+		onIdle(squad);
+	}
+	else if (squadView.state == SquadState::ATTACKING) {
+		// do later
+
+		onAttack(squad);
+	}
+
+	
 }
 
-void Squad::update() {
+void onIdle(entt::entity squad) {
 
-	removeDeadMembers();
-	findTargets();
+	const int flowSize = 64;
+	const int half = flowSize / 2;
 
-	auto avg = getAvgPos();
+	auto& registry = mainWorld.registry;
+	auto& squadView = registry.get<SquadController>(squad);
 
-	idleWanderClock += Clock::deltaTime;
+	squadView.idleWanderClock += Clock::deltaTime;
+	if (squadView.macroFlowField.empty() || squadView.idleWanderClock > 6.0f) {
+		squadView.idleWanderClock = 0.0f;
+		auto avg = getAvgPos(squad, registry);
 
-	switch (state) {
-	case IDLE: {
-		if (idleWanderClock > 1.0f) {
-			idleWanderClock = 0.0f;
+		int range = 25;
+		int randX = getRandomInt(avg.first - range, avg.first + range);
+		int randY = getRandomInt(avg.second - range, avg.second + range);
 
-			int range = 5;
-
-			targetPos = {
-				getRandomInt(avg.first - range, avg.first + range),
-				getRandomInt(avg.second - range, avg.second + range)
-				//avg.first,
-				//avg.second
-			};
+		if (getTileRef(randX, randY).walkable) {
+			squadView.groupTargetPos = { randX, randY };
+			squadView.macroFlowField = buildFlowField(randX, randY, flowSize);
 		}
-
-		break;
 	}
 
-	case ATTACKING:
-		break;
-	}
+	if (squadView.macroFlowField.empty()) return;
 
+	for (auto& i : squadView.members) {
+		auto& pos = registry.get<Position>(i);
+		auto& movable = registry.get<Movable>(i);
 
-	followLeader();
-}
+		movable.movementClock += Clock::deltaTime;
+		if (movable.movementClock > movable.speed) {
+			movable.movementClock = 0.0f;
 
-void Squad::followLeader() {
-	if (members.empty()) return;
+			int localX = pos.x - (squadView.groupTargetPos.first - half);
+			int localY = pos.y - (squadView.groupTargetPos.second - half);
 
-	const int MACRO_DIM = 64;
-	const int MICRO_DIM = 16;
-	const int macroHalf = MACRO_DIM / 2;
-	const int microHalf = MICRO_DIM / 2;
-
-	auto center = getAvgPos();
-
-	if (flow.empty() || abs(targetPos.first - lastTargetPos.first) +
-		abs(targetPos.second - lastTargetPos.second) > 2) {
-
-		flow = buildFlowField(targetPos.first, targetPos.second, MACRO_DIM, members.front());
-		lastTargetPos = { targetPos.first, targetPos.second };
-	}
-
-	if (flow.empty()) {
-		return;
-	}
-
-	int macroStartX = targetPos.first - macroHalf;
-	int macroStartY = targetPos.second - macroHalf;
-
-	std::vector<int> targetCounts(selectedTargets.size(), 0);
-
-	for (Creature* member : members) {
-
-		auto target = chooseTarget(member, targetCounts);
-
-		std::pair<int, int> memberTargetPos = targetPos;
-		std::shared_ptr<Structure> targetStructureInstance = nullptr;
-		Creature* targetCreatureInstance = nullptr;
-
-		if (target != nullptr) {
-			if (target->targetCreature) {
-				target->position = { target->targetCreature->xPos, target->targetCreature->yPos };
-			}
-
-			memberTargetPos = target->position;
-			targetStructureInstance = target->targetStructure.lock();
-			targetCreatureInstance = target->targetCreature;
-
-			bool instance = targetCreatureInstance || targetStructureInstance;
-
-			if (instance && (target->flow.empty() || abs(memberTargetPos.first - target->position.first) > 1)) {
-				target->flow = buildFlowField(target->position.first, target->position.second, MICRO_DIM, member);
-			}
-		}
-
-		std::pair<int, int> dir = { 0,0 };
-		bool microGridAttempted = false;
-
-		if (target != nullptr && !target->flow.empty()) {
-			int localFx = member->xPos - target->position.first;
-			int localFy = member->yPos - target->position.second;
-			int distToStructureSq = localFx * localFx + localFy * localFy;
-
-			if (distToStructureSq <= (microHalf * microHalf)) {
-				microGridAttempted = true;
-				int microStartX = target->position.first - microHalf;
-				int microStartY = target->position.second - microHalf;
-
-				int fxMicro = member->xPos - microStartX;
-				int fyMicro = member->yPos - microStartY;
-
-				if (fxMicro >= 0 && fyMicro >= 0 && fxMicro < MICRO_DIM && fyMicro < MICRO_DIM) {
-					dir = target->flow[fxMicro][fyMicro];
-				}
-			}
-		}
-
-		if (dir.first == 0 && dir.second == 0) {
-			int fxMacro = member->xPos - macroStartX;
-			int fyMacro = member->yPos - macroStartY;
-
-			if (fxMacro >= 0 && fyMacro >= 0 && fxMacro < MACRO_DIM && fyMacro < MACRO_DIM) {
-				dir = flow[fxMacro][fyMacro];
-			}
-		}
-
-		if (targetStructureInstance || targetCreatureInstance) {
-			int distToTargetX = abs(member->xPos - memberTargetPos.first);
-			int distToTargetY = abs(member->yPos - memberTargetPos.second);
-
-			if (distToTargetX + distToTargetY == 1) {
-				if (member->clock.getElapsedTime().asSeconds() > member->speed) {
-
-					if (targetStructureInstance) {
-						targetStructureInstance->takeDamage(10);
-					}
-					else if (targetCreatureInstance) {
-						targetCreatureInstance->takeDamage(5, member);
-					}
-
-					member->clock.restart();
-				}
+			if (localX < 0 || localX >= flowSize || localY < 0 || localY >= flowSize) {
 				continue;
 			}
-		}
 
-		int dirX = dir.first;
-		int dirY = dir.second;
+			auto& dir = squadView.macroFlowField[(localY * flowSize) + localX];
 
-		int sepX = 0;
-		int sepY = 0;
+			int sepX = 0;
+			int sepY = 0;
 
-		for (Creature* other : members) {
-			if (other == member) continue;
+			for (auto other : squadView.members) {
+				if (other == i) continue;
+				auto& otherPos = registry.get<Position>(other);
+				int dx = pos.x - otherPos.x;
+				int dy = pos.y - otherPos.y;
+				int dist2 = dx * dx + dy * dy;
 
-			int dx = member->xPos - other->xPos;
-			int dy = member->yPos - other->yPos;
-			int dist2 = dx * dx + dy * dy;
-
-			if (dist2 > 0 && dist2 <= 4) {
-				sepX += dx;
-				sepY += dy;
+				if (dist2 > 0 && dist2 <= 4) {
+					sepX += dx;
+					sepY += dy;
+				}
 			}
-		}
 
-		int moveX = dirX + ((sepX > 0) - (sepX < 0));
-		int moveY = dirY + ((sepY > 0) - (sepY < 0));
+			int moveX = dir.dx;
+			int moveY = dir.dy;
 
-		moveX = std::clamp(moveX, -1, 1);
-		moveY = std::clamp(moveY, -1, 1);
+			int pushX = (sepX > 0) - (sepX < 0);
+			int pushY = (sepY > 0) - (sepY < 0);
 
-		int newX = member->xPos + moveX;
-		int newY = member->yPos + moveY;
+			moveX += pushX;
+			moveY += pushY;
 
-		if (!getTileRef(newX, newY).walkable)
-			continue;
+			moveX = std::clamp(moveX, -1, 1);
+			moveY = std::clamp(moveY, -1, 1);
 
-		if (member->clock.getElapsedTime().asSeconds() > member->speed) {
-			member->xPos = newX;
-			member->yPos = newY;
-			member->clock.restart();
+			int newX = pos.x + moveX;
+			int newY = pos.y + moveY;
+
+			if (!getTileRef(newX, newY).walkable) {
+				newX = pos.x + dir.dx;
+				newY = pos.y + dir.dy;
+				if (!getTileRef(newX, newY).walkable) continue;
+			}
+
+			mainWorld.objectManager.removeItem(pos.x, pos.y, i);
+			mainWorld.objectManager.addObject(newX, newY, i);
+
+			pos.x = newX;
+			pos.y = newY;
 		}
 	}
 }
 
-void Squad::removeDeadMembers() {
-	members.erase(
-		std::remove_if(members.begin(), members.end(), [](Creature* c) { return c->dead; }),
-		members.end()
-	);
+void onAttack(entt::entity squad) {
+	auto& registry = mainWorld.registry;
+	auto& squadView = registry.get<SquadController>(squad);
+
+	for (auto& i : squadView.members) {
+		auto& memberComponent = registry.get<SquadMemberComponent>(i);
+		memberComponent.target = chooseTarget(squad, i, registry);
+
+		auto targetEntity = memberComponent.target.target;
+
+		if (targetEntity == entt::null) continue;
+
+		auto& movable = registry.get<Movable>(i);
+		auto& pos = registry.get<Position>(i);
+
+		auto& targetPos = registry.get<Position>(targetEntity);
+
+		movable.hasTarget = true;
+		movable.targetX = targetPos.x;
+		movable.targetY = targetPos.y;
+
+		if (pos.x == targetPos.x && pos.y == targetPos.y) {
+			auto& structureHealth = registry.get<Structure>(targetEntity);
+			structureHealth.health--;
+		}
+	}
 }
 
-std::pair<int, int> Squad::getAvgPos() {
-	if (members.empty()) return { 0, 0 };
+SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::registry& registry) {
+	auto& squadComponent = registry.get<SquadController>(squad);
+	auto& pos = registry.get<Position>(member);
+
+	int bestScore = 999999;
+	size_t bestIndex = 0;
+	bool foundValidTarget = false;
+
+	for (size_t i = 0; i < squadComponent.targets.size(); i++) {
+		auto& currentTarget = squadComponent.targets[i];
+
+		int score = 0;
+		score += currentTarget.target_population * 200;
+
+		if (!registry.valid(currentTarget.target) || !registry.all_of<Position>(currentTarget.target)) continue;
+
+		auto& targetPos = registry.get<Position>(currentTarget.target);
+
+		int dx = std::abs(targetPos.x - pos.x);
+		int dy = std::abs(targetPos.y - pos.y);
+
+		score += dx + dy;
+		score += currentTarget.score;
+
+		if (score < bestScore) {
+			bestIndex = i;
+			bestScore = score;
+			foundValidTarget = true;
+		}
+	}
+
+	if (!foundValidTarget) {
+		SelectedTarget nullTarget;
+		nullTarget.target = entt::null;
+		nullTarget.score = 0;
+		nullTarget.target_population = 0;
+		return nullTarget;
+	}
+
+	squadComponent.targets[bestIndex].target_population++;
+	return squadComponent.targets[bestIndex];
+}
+
+void findTargets(entt::entity entity, entt::registry& registry) {
+	auto& squad = registry.get<SquadController>(entity);
+	squad.attackScanClock += Clock::deltaTime;
+
+	if (squad.attackScanClock > 0.5f) {
+		squad.attackScanClock = 0.0f;
+
+		squad.targets.clear();
+
+		auto center = getAvgPos(entity, registry);
+		const int scanRadius = 32;
+
+		auto structures = findAllItemInRange(center.first, center.second, scanRadius, [](entt::entity entity, entt::registry& registry, int x, int y) {
+			return registry.all_of<Structure>(entity);
+			});
+
+		if (structures.has_value()) {
+			for (auto& s : structures.value()) {
+				SelectedTarget selected;
+				selected.target = s.item;
+				selected.score = 1;
+
+				squad.targets.push_back(selected);
+			}
+		}
+
+		auto creatures = findAllItemInRange(center.first, center.second, scanRadius, [](entt::entity entity, entt::registry& registry, int x, int y) {
+			return registry.all_of<Villager>(entity);
+			});
+
+		if (creatures.has_value()) {
+			for (auto& c : creatures.value()) {
+				SelectedTarget selected;
+				selected.target = c.item;
+				selected.score = 1;
+
+				squad.targets.push_back(selected);
+			}
+		}
+	}
+}
+
+std::pair<int, int> getAvgPos(entt::entity entity, entt::registry& registry) {
+	auto& squad = registry.get<SquadController>(entity);
+	if (squad.members.empty()) return { 0, 0 };
 
 	long long sumX = 0;
 	long long sumY = 0;
 	size_t valid = 0;
 
-	for (Creature* member : members) {
-		if (!member) {
-			continue;
+	for (auto member : squad.members) {
+		if (registry.valid(member)) {
+			auto& pos = registry.get<Position>(member);
+			sumX += static_cast<long long>(pos.x);
+			sumY += static_cast<long long>(pos.y);
+			valid++;
 		}
-		if (member->dead) {
-			continue;
-		}
-
-		sumX += static_cast<long long>(member->xPos);
-		sumY += static_cast<long long>(member->yPos);
-		valid++;
 	}
 
 	if (valid == 0) return { 0, 0 };
@@ -216,111 +257,9 @@ std::pair<int, int> Squad::getAvgPos() {
 	return { avgX, avgY };
 }
 
-void Squad::findTargets() {
-	attackScanClock += Clock::deltaTime;
-
-	if (attackScanClock > 0.5f) {
-		attackScanClock = 0.0f;
-
-		std::pair<int, int> oldTopTargetPos = {0, 0};
-		if (!selectedTargets.empty()) {
-			oldTopTargetPos = selectedTargets.front().position;
-		}
-
-		selectedTargets.clear();
-
-		auto center = getAvgPos();
-		const int scanRadius = 32;
-
-		auto structures = findAllItemInRange(center.first, center.second, scanRadius, [](const Object& item, int x, int y) {
-			return item.type == Type::Structure;
-			});
-
-		if (structures.has_value()) {
-			for (auto& s : structures.value()) {
-				auto lockedItem = s.item.lock();
-				if (!lockedItem) continue;
-
-				auto structureShared = std::static_pointer_cast<Structure>(lockedItem);
-				selectedTargets.push_back(SelectedTarget({ s.x, s.y }, structureShared, 1));
-			}
-		}
-
-		auto creatures = findAllCreaturesInRange<Villager>(center.first, center.second, scanRadius);
-		for (auto& c : creatures) {
-			if (c->dead) continue;
-			selectedTargets.push_back(SelectedTarget({ c->xPos, c->yPos }, c, 1));
-		}
-
-		if (!selectedTargets.empty()) {
-			state = ATTACKING;
-
-			auto& primaryTarget = selectedTargets.front();
-			if (abs(primaryTarget.position.first - oldTopTargetPos.first) +
-				abs(primaryTarget.position.second - oldTopTargetPos.second) > 2) {
-				flow.clear();
-			}
-		}
-		else {
-			if (state == ATTACKING) {
-				flow.clear();
-				idleWanderClock = 2.0f;
-			}
-			state = IDLE;
-		}
+void updateSquadComponent() {
+	auto view = mainWorld.registry.view<SquadController>();
+	for (auto& i : view) {
+		updateSquadMovement(i);
 	}
 }
-
-SelectedTarget* Squad::chooseTarget(Creature* member, std::vector<int>& targetCounts, bool allowCreatures) {
-	SelectedTarget* target = nullptr;
-	int bestScore = 9999999;
-	int chosenIndex = -1;
-
-	if (state == ATTACKING && !selectedTargets.empty()) {
-
-		for (size_t i = 0; i < selectedTargets.size(); i++) {
-			auto& potential = selectedTargets[i];
-
-			if (potential.targetCreature && potential.targetCreature->dead) continue;
-
-			std::shared_ptr<Structure> lockedStruct = potential.targetStructure.lock();
-			if (!potential.targetCreature && (!lockedStruct || lockedStruct->health <= 0)) continue;
-
-			if (potential.targetCreature && !allowCreatures) continue;
-
-
-			int dx = member->xPos - potential.position.first;
-			int dy = member->yPos - potential.position.second;
-			int dist2 = dx * dx + dy * dy;
-			if (dist2 < 1) dist2 = 1;
-			potential.score = dist2;
-
-			int crowdPenalty = targetCounts[i] * 50;
-			int adjustedScore = potential.score + crowdPenalty;
-
-			if (potential.targetCreature) {
-				adjustedScore -= 300;
-			}
-
-			if (adjustedScore < bestScore) {
-				bestScore = adjustedScore;
-				chosenIndex = static_cast<int>(i);
-			}
-		}
-
-		if (chosenIndex != -1) {
-			targetCounts[chosenIndex]++;
-			return &selectedTargets[chosenIndex];
-		}
-	}
-
-	return nullptr;
-}
-
-
-/*
-
-this is stupid
-
-
-*/

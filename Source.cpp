@@ -13,26 +13,27 @@
 #include <future>
 #include <chrono>
 
+#include <entt/entt.hpp>
+
 #include "mathUtils.h"
 #include "Pair.h"
 #include "Tile.h"
 #include "Chunk.h"
 #include "Item.h"
-#include "Gun.h"
 #include "Job.h"
 #include "Globals.h"
 #include "UIElements.h"
 #include "Crafting.h"
 #include "HarvestRules.h"
 #include "World.h"
-#include "Food.h"
 #include "UIManager.h"
 #include "Game.h"
 #include "UI.h"
 #include "Creature.h"
 #include "TileAnimation.h"
-#include "FoliageCrop.h"
-#include "HeatEmitter.h"
+#include "ItemComponents.h"
+#include "CreatureComponents.h"
+#include "Squad.h"
 
 #include "Pig.h"
 #include "Zombie.h"
@@ -49,7 +50,6 @@
 #include <SFML/Audio.hpp>
 
 #include <ft2build.h>
-#include "Spawner.h"
 #include FT_FREETYPE_H
 
 
@@ -308,37 +308,34 @@ static void FlushBatch(Shader& shader) {
 
 
 void RenderText(Shader& shader, const wchar_t& text, float x, float y, float scale, glm::vec3 color) {
-    //for (wchar_t c : text) {
-        //if (Characters.find(c) == Characters.end()) continue;
-        Character ch = Characters[text];
+    Character ch = Characters[text];
 
-        float xpos = x + ch.Bearing.x * scale;
-        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
-        float w = ch.Size.x * scale;
-        float h = ch.Size.y * scale;
+    float xpos = x + ch.Bearing.x * scale;
+    float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+    float w = ch.Size.x * scale;
+    float h = ch.Size.y * scale;
 
-        float u0 = ch.UV0.x, v0 = ch.UV0.y;
-        float u1 = ch.UV1.x, v1 = ch.UV1.y;
+    float u0 = ch.UV0.x, v0 = ch.UV0.y;
+    float u1 = ch.UV1.x, v1 = ch.UV1.y;
 
-        // six vertices (two triangles). Each vertex: x,y,u,v,r,g,b
-        float r = color.r, g = color.g, b = color.b;
+    // six vertices (two triangles). Each vertex: x,y,u,v,r,g,b
+    float r = color.r, g = color.g, b = color.b;
 
-        float quad[6][7] = {
-            { xpos,     ypos + h,   u0, v0, r, g, b },
-            { xpos,     ypos,       u0, v1, r, g, b },
-            { xpos + w, ypos,       u1, v1, r, g, b },
+    float quad[6][7] = {
+        { xpos,     ypos + h,   u0, v0, r, g, b },
+        { xpos,     ypos,       u0, v1, r, g, b },
+        { xpos + w, ypos,       u1, v1, r, g, b },
 
-            { xpos,     ypos + h,   u0, v0, r, g, b },
-            { xpos + w, ypos,       u1, v1, r, g, b },
-            { xpos + w, ypos + h,   u1, v0, r, g, b }
-        };
+        { xpos,     ypos + h,   u0, v0, r, g, b },
+        { xpos + w, ypos,       u1, v1, r, g, b },
+        { xpos + w, ypos + h,   u1, v0, r, g, b }
+    };
 
 
 
-        batchVertices.insert(batchVertices.end(), &quad[0][0], &quad[0][0] + 6 * 7);
+    batchVertices.insert(batchVertices.end(), &quad[0][0], &quad[0][0] + 6 * 7);
 
-        x += ch.Advance * scale;
-    //}
+    x += ch.Advance * scale;
 }
 
 sf::Color hsvToRgb(float h, float s, float v) {
@@ -482,20 +479,8 @@ void drawMap(Shader& shader)
 		lineTiles.insert(line.begin(), line.end());
     }
 
-
-    std::unordered_map<std::pair<int, int>, Creature*, pair_hash> creaturesInScope;
-
-
-    for (auto& creature : mainWorld.getAllCreatures()) {
-        if (!creature) continue;
-        int cx = creature->xPos;
-        int cy = creature->yPos;
-        if (cx >= xPlayer - xFrustum / 2 && cx <= xPlayer + xFrustum / 2 &&
-            cy >= yPlayer - yFrustum / 2 && cy <= yPlayer + yFrustum / 2) {
-            creaturesInScope[{cx, cy}] = creature.get();
-        }
-    }
-
+    auto& registry = mainWorld.registry;
+    auto& renderablePool = registry.storage<Renderable>();
 
     float dayLight = mainWorld.dayCycle.getDaylightFactor();
 
@@ -547,37 +532,23 @@ void drawMap(Shader& shader)
             Tile& tile = getTileRef(x, y);
 
             // Tile contents
-            if (tile.hasItems) {
-                const auto& tileObjects = mainWorld.objectManager.getObjectsAt(x, y);
+            const auto& itemsOnTile = mainWorld.objectManager.getObjectsAt(x, y);
 
-                int i = tileObjects.size() - 1;
+            bool entityDrawn = false;
 
-                if (!tileObjects.empty()) {
-                    auto display = tileObjects[i]->getVisual();
-                    if (tileObjects[i]->type == Type::Tool) {
-                        auto* tool = static_cast<Tool*>(tileObjects[i].get());
-                        color = materialToColor(tool->material);
-                    }
-                    else {
-                        color = glm::vec3(display.displayColor.r / 255.0f, display.displayColor.g / 255.0f, display.displayColor.b / 255.0f);
-                    }
-
-
-                    if (tile.anim.type != animType::NONE) {
-                        applyAnimation(tile, color, string);
-                    }
-
-                    string = display.displayChar;
+            if (!itemsOnTile.empty()) {
+                entt::entity topEntity = itemsOnTile.back();
+                if (registry.valid(topEntity) && renderablePool && renderablePool.contains(topEntity)) {
+                    const auto& renderable = renderablePool.get(topEntity);
+                    color = renderable.color;
+                    string = renderable.character;
+                    entityDrawn = true;
                 }
-                else {
-                    tile.hasItems = false;
-                }
-
             }
-            else {
+
+            if (!entityDrawn) {
                 string = tile.character;
                 color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
-
             }
 
 			if (tile.anim.type != animType::NONE) applyAnimation(tile, color, string);
@@ -592,7 +563,11 @@ void drawMap(Shader& shader)
                     int bottom = std::max(corner.second, mouseTileY);
 
                     if (x >= left && x <= right && y >= top && y <= bottom) {
-                        if (mainWorld.atStockpile(x, y) || !tile.walkable) {
+                        if (y == top || y == bottom || x == left || x == right) {
+                            string = L'+';
+                            color = glm::vec3(1.0f, 0.0f, 0.0f);
+                        }
+                        /*if (mainWorld.atStockpile(x, y) || !tile.walkable) {
                             string = L'X';
                             color = glm::vec3(1.0f, 0.0f, 0.0f);
                         }
@@ -601,7 +576,7 @@ void drawMap(Shader& shader)
                                 string = L'+';
                                 color = glm::vec3(1.0f, 0.0f, 0.0f);
                             }
-                        }
+                        }*/
                     }
                 }
                 if (mainWorld.placementMode == PlacementMode::LINE) {
@@ -617,16 +592,6 @@ void drawMap(Shader& shader)
                     }
                 }
             }
-
-			auto it = creaturesInScope.find(std::make_pair(x, y));
-            if (it != creaturesInScope.end()) {
-                string = it->second->displayChar;
-                color = it->second->displayColor;
-
-				color.r /= 255.0f;
-				color.g /= 255.0f;
-				color.b /= 255.0f;
-			}
 
             if (viewHeightMap) {
                 string = L'■';
@@ -648,6 +613,110 @@ void drawMap(Shader& shader)
             }
         }
     };
+}
+
+void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, Movable>();
+
+    for (auto [entity, pos, movable] : view.each()) {
+        if (!movable.hasTarget) continue;
+
+        movable.movementClock += deltaTime;
+
+        if (movable.movementClock >= movable.currentSpeed) {
+            movable.movementClock = 0.0f;
+
+            if (movable.path.empty()) {
+                movable.path = findPath(pos.x, pos.y, { movable.targetX, movable.targetY });
+
+                if (movable.path.empty()) {
+                    movable.hasTarget = false;
+                    continue;
+                }
+            }
+
+            if (!movable.path.empty()) {
+                int newX = movable.path[0].first;
+                int newY = movable.path[0].second;
+
+                //int newX = pos.x + dx;
+                //int newY = pos.y + dy;
+
+                objectManager.removeItem(pos.x, pos.y, entity);
+                objectManager.addObject(newX, newY, entity);
+
+                pos.x = newX;
+                pos.y = newY;
+
+                movable.path.erase(movable.path.begin());
+            }
+
+            if (pos.x == movable.targetX && pos.y == movable.targetY) {
+                movable.hasTarget = false;
+                movable.path.clear();
+            }
+        }
+    }
+}
+
+void updateCropSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, Name, Renderable, Crop>();
+    for (auto [entity, pos, name, renderable, crop] : view.each()) {
+        crop.growthClock += deltaTime;
+        if (crop.growthClock >= crop.growthTime) {
+            crop.growthClock = 0.0f;
+            crop.growthStage++;
+            if (crop.growthStage >= crop.growthStageMax) {
+
+                auto& registry = ObjectRegistry::getInstance().getStaticRegistry();
+				entt::entity staticCrop = ObjectRegistry::getInstance().getStaticObject(name.name);
+                if (auto drop = registry.try_get<Harvestable>(staticCrop)) {
+                    registry.emplace_or_replace<Harvestable>(entity, drop->produce, drop->requiredSkill);
+                }
+
+                crop.growthStage = crop.growthStageMax;
+            }
+			renderable.character = crop.growthStages[crop.growthStage].first;
+			renderable.color = crop.growthStages[crop.growthStage].second;
+        }
+    }
+}
+
+void updateProduceSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, ProduceSpawner>();
+    for (auto [entity, pos, produce] : view.each()) {
+        produce.produceClock += deltaTime;
+        if (produce.produceClock >= produce.productionTime) {
+            produce.produceClock = 0.0f;
+			std::vector<std::pair<int, int>> dirs = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
+
+            for (auto& dir : dirs) {
+                int newX = pos.x + dir.first;
+                int newY = pos.y + dir.second;
+
+                if (mainWorld.objectManager.getObjectsAt(newX, newY).empty()) {
+                    getTileRef(newX, newY).addObject(newX, newY, produce.produce);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void updateStructures(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Structure, Position>();
+    std::vector<entt::entity> deadStructures;
+
+    for (auto [entity, structure, pos] : view.each()) {
+        if (structure.health <= 0) {
+            deadStructures.push_back(entity);
+        }
+    }
+
+    for (auto entity : deadStructures) {
+        auto& pos = registry.get<Position>(entity);
+        getTileRef(pos.x, pos.y).removeObject(pos.x, pos.y, entity);
+    }
 }
 
 int main() {
@@ -719,7 +788,8 @@ int main() {
     srand(seed);
 
     // Item setup
-    loadObjects();
+    ObjectRegistry::getInstance().loadObjects();
+    ObjectRegistry::getInstance().loadStaticObjects();
 	loadHarvestRules();
     loadRecipes();
 
@@ -794,15 +864,16 @@ int main() {
 
         // Update creatures
         // Move this to the World class later
-        auto& creatures = mainWorld.getAllCreatures();
+        /*auto& creatures = mainWorld.getAllCreatures();
 
         for (auto& c : creatures) {
             if (!c) continue;
             if (c->dead) {
-                mainWorld.removeCreature(c.get()); continue;
+                mainWorld.removeCreature(c.get()); 
+                continue;
             }
             c->doWork();
-        }
+        }*/
 
         glfwGetCursorPos(window, &mouseX, &mouseY);
 
@@ -839,60 +910,15 @@ int main() {
         }
 
         if (mainWorld.isRendered()) {
-
 			mainWorld.dayCycle.update();
+			updateMovementSystem(mainWorld.registry, mainWorld.objectManager, dt * speed);
+			updateProduceSystem(mainWorld.registry, mainWorld.objectManager, dt * speed);
+			updateCropSystem(mainWorld.registry, mainWorld.objectManager, dt * speed);
+            updateStructures(mainWorld.registry, mainWorld.objectManager, dt * speed);
 
-            // All dynamic tiles need to be added to this list
-            auto it = tiles.begin();
-            while (it != tiles.end()) {
-                Tile& tile = getTileRef(it->first, it->second);
+            updateSquadComponent();
 
-                bool hasActiveComponent = false;
-
-                for (auto& i : mainWorld.objectManager.getObjectsAt(it->first, it->second)) {
-                    if (i->type == Type::Foliage_Crop) {
-                        static_cast<FoliageCrop*>(i.get())->spawnProduce();
-                        hasActiveComponent = true;
-                    }
-                    else if (i->type == Type::Crop) {
-                        static_cast<Crop*>(i.get())->grow();
-                        hasActiveComponent = true;
-                    }
-                    else if (i->type == Type::Spawner) {
-                        static_cast<Spawner*>(i.get())->update();
-                        hasActiveComponent = true;
-                    }
-
-                    else if (i->type == Type::Heat_Emitter) {
-                        std::shared_ptr<HeatEmitter> h = static_pointer_cast<HeatEmitter>(i);
-
-                        if (h->fuelAmount <= 0.0f && !h->addedFuelJob && h->autoRefuel) {
-                            if (auto f = mainWorld.findItemInAllStockpile("Wood")) {
-                                auto fuelItem = f->first->retrieveItem(f->second.first, f->second.second);
-
-                                Job* job = new Refuel(nullptr, nullptr, SkillType::None, fuelItem.value(), h, f->second.first, f->second.second);
-                                job->priority = 40;
-                                JobManager::addJob(job);
-
-                                h->addedFuelJob = true;
-                            }
-                        }
-
-                        h->update();
-
-                        hasActiveComponent = true;
-                    }
-                }
-
-                // Auto removal
-                if (!hasActiveComponent) {
-                    it = tiles.erase(it);
-                }
-                else {
-                    ++it;
-                }
-            }
-
+            VillagerSystem(dt * speed);
             JobManager::update();
 
             // Stockpile item moving
@@ -905,13 +931,14 @@ int main() {
                 int currentX = it->second.first;
                 int currentY = it->second.second;
 
-                auto spotOpt = mainWorld.findStockpileSpotForItem(item->name, currentX, currentY);
+				auto name = mainWorld.registry.get<Name>(item).name;
+                auto spotOpt = mainWorld.findStockpileSpotForItem(name, currentX, currentY);
 
                 if (spotOpt) {
                     auto [stockpile, pos] = *spotOpt;
                     stockpile->addItem(item, pos.first, pos.second);
 
-                    Job* job = new HaulToStockpile(nullptr, nullptr, SkillType::None, item, currentX, currentY, pos.first, pos.second);
+                    Job* job = new HaulToStockpile(entt::null, entt::null, SkillType::None, item, currentX, currentY, pos.first, pos.second);
 
                     job->priority = 10;
                     JobManager::addJob(job);

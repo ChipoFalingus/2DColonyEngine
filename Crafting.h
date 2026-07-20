@@ -1,6 +1,5 @@
 #pragma once
 #include "Item.h"
-#include "Tool.h"
 
 class Recipe {
 
@@ -11,7 +10,7 @@ public:
 	int quantity;
 	int time = 0;
 
-    ToolMaterial material = ToolMaterial::NONE;
+    //ToolMaterial material = ToolMaterial::NONE;
 
 	Recipe() : quantity(0) {}
 

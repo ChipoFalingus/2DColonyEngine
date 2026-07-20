@@ -6,52 +6,70 @@
 
 #include "Pair.h"
 #include "Tile.h"
+#include "ItemComponents.h"
 
-std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, std::function<bool(const Object&, int, int)> filter) {
-    std::queue<std::pair<int, int>> frontier;
-    std::unordered_set<std::pair<int, int>, pair_hash> visited;
-    frontier.push({ xPos, yPos });
-    visited.insert({ xPos, yPos });
-    while (!frontier.empty()) {
-        auto current = frontier.front();
-        frontier.pop();
-        Tile& tile = getTileRef(current.first, current.second);
+std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, std::function<bool(entt::entity, entt::registry&, int, int)> filter) {
+    auto& registry = mainWorld.registry;
 
-        int dx = current.first - xPos;
-        int dy = current.second - yPos;
-        if (dx * dx + dy * dy > radius * radius)
-            continue;
+    auto view = registry.view<Position>();
 
-        for (const auto& item : mainWorld.objectManager.getObjectsAt(current.first, current.second)) {
-            if (filter(*item, current.first, current.second)) {
-                return ItemLocation(current.first, current.second, item);
-            }
+    entt::entity bestEntity = entt::null;
+    float closestDistSq = static_cast<float>(radius * radius);
+    int bestX = -1;
+    int bestY = -1;
+
+    for (auto [entity, pos] : view.each()) {
+        int dx = pos.x - xPos;
+        int dy = pos.y - yPos;
+        float distSq = static_cast<float>(dx * dx + dy * dy);
+
+        if (distSq > closestDistSq) continue;
+
+        if (filter(entity, registry, pos.x, pos.y)) {
+            closestDistSq = distSq;
+            bestEntity = entity;
+            bestX = pos.x;
+            bestY = pos.y;
         }
-        for (auto& neighbor : getNeighbors(current.first, current.second)) {
-            if (visited.count(neighbor) == 0) {
-                visited.insert(neighbor);
-                frontier.push(neighbor);
-            }
-        }
+    }
+
+    if (bestEntity != entt::null) {
+        return ItemLocation(bestX, bestY, bestEntity);
     }
 
     return std::nullopt;
 }
 
-std::optional<std::vector<ItemLocation>> findAllItemInRange(int xPos, int yPos, int radius, std::function<bool(const Object&, int, int)> filter) {
-    std::vector<ItemLocation> foundItems;
-    for (int x = xPos - radius; x <= xPos + radius; x++) {
-        for (int y = yPos - radius; y <= yPos + radius; y++) {
-            Tile& tile = getTileRef(x, y);
-            for (const auto& item : mainWorld.objectManager.getObjectsAt(x, y)) {
-                if (filter(*item, x, y)) {
-                    foundItems.push_back(ItemLocation(x, y, item));
+std::optional<std::vector<ItemLocation>> findAllItemInRange(int xPos, int yPos, int radius, std::function<bool(entt::entity, entt::registry&, int, int)> filter) {
+        std::vector<ItemLocation> foundItems;
+        auto& registry = mainWorld.registry;
+
+        int minX = xPos - radius;
+        int maxX = xPos + radius;
+        int minY = yPos - radius;
+        int maxY = yPos + radius;
+        int radiusSq = radius * radius;
+
+        auto view = registry.view<Position>();
+
+        for (auto entity : view) {
+            const auto& pos = view.get<Position>(entity);
+
+            if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY) {
+
+                int dx = pos.x - xPos;
+                int dy = pos.y - yPos;
+                if (dx * dx + dy * dy <= radiusSq) {
+
+                    if (filter(entity, registry, pos.x, pos.y)) {
+                        foundItems.push_back(ItemLocation(pos.x, pos.y, entity));
+                    }
                 }
             }
         }
+
+        if (foundItems.empty()) {
+            return std::nullopt;
+        }
+        return foundItems;
     }
-    if (foundItems.empty()) {
-        return std::nullopt;
-    }
-    return foundItems;
-}

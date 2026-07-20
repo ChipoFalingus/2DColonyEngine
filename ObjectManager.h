@@ -7,18 +7,17 @@
 class ObjectManager {
 
 private:
-	std::unordered_map<uint64_t, std::vector<std::shared_ptr<Object>>> itemMap;
+	std::unordered_map<uint64_t, std::vector<entt::entity>> itemMap;
 
 public:
     uint64_t getKey(int x, int y) const;
 
-    void addObject(int x, int y, std::string object);
-    void addObject(int x, int y, std::shared_ptr<Object> object);
+    void addObject(int x, int y, entt::entity entity);
 
-    void removeItem(int x, int y, std::string object);
-    void removeItem(int x, int y, std::shared_ptr<Object> targetObject);
+    void removeItem(int x, int y, entt::entity entity);
 
-    const std::vector<std::shared_ptr<Object>>& getObjectsAt(int x, int y);
+    const std::vector<entt::entity>& getObjectsAt(int x, int y);
     void clearTile(int x, int y);
-    bool hasItem(int x, int y, std::string object);
+
+	bool has(int x, int y, const std::string& itemName);
 };
