@@ -1,0 +1,756 @@
+﻿{
+    "objects": [
+        {
+            "name": "Outpost",
+            "visual": {
+                "character": "0",
+                "color": [ 255, 0, 0 ]
+            },
+            "cooldown": 2.0,
+            "radius": 5.0
+        },
+        {
+            "name": "Fire Pit",
+            "visual": {
+                "character": "o",
+                "color": [ 50, 50, 50 ]
+            },
+            "heat_intensity": 50.0,
+            "light_intensity": 1.0
+        },
+        {
+            "name": "Scrap Metal",
+            "visual": {
+                "character": "*",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Path",
+            "visual": {
+                "character": "#",
+                "color": [ 218, 197, 134 ]
+            }
+        },
+        {
+            "name": "Tall Grass",
+            "visual": {
+                "character": "|",
+                "color": [ 121, 208, 33 ]
+            },
+            "drop": {
+                "item": "Carrot Seeds",
+                "skill": "Farming"
+            }
+        },
+        {
+            "name": "Oak Tree",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            }
+        },
+        {
+            "name": "Pine Tree",
+            "visual": {
+                "character": 9824,
+                "color": [ 42, 55, 12 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            }
+        },
+        {
+            "name": "Birch Tree",
+            "visual": {
+                "character": 9827,
+                "color": [ 255, 255, 255 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            }
+        },
+        {
+            "name": "Dead Tree",
+            "visual": {
+                "character": "Y",
+                "color": [ 150, 75, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            }
+        },
+        {
+            "name": "Flower",
+            "visual": {
+                "character": "*",
+                "color": [ 255, 255, 255 ]
+            }
+        },
+        {
+            "name": "Pine Cone",
+            "visual": {
+                "character": "&",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Stick",
+            "visual": {
+                "character": "/",
+                "color": [ 150, 75, 0 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
+            }
+        },
+        {
+            "name": "Wood",
+            "visual": {
+                "character": "O",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Rock",
+            "visual": {
+                "character": "R",
+                "color": [ 128, 128, 128 ]
+            },
+            "drop": {
+                "item": "Rock Chunk",
+                "skill": "Mining"
+            }
+        },
+        {
+            "name": "Rock Chunk",
+            "visual": {
+                "character": "r",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Pebble",
+            "visual": {
+                "character": "o",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Raw Iron",
+            "visual": {
+                "character": "I",
+                "color": [ 217, 201, 147 ]
+            },
+            "drop": {
+                "item": "Raw Iron",
+                "skill": "Mining"
+            }
+        },
+        {
+            "name": "Gold",
+            "visual": {
+                "character": "G",
+                "color": [ 255, 255, 0 ]
+            }
+        },
+        {
+            "name": "Emerald",
+            "visual": {
+                "character": "E",
+                "color": [ 80, 200, 120 ]
+            }
+        },
+        {
+            "name": "Diamond",
+            "visual": {
+                "character": "D",
+                "color": [ 91, 185, 226 ]
+            }
+        },
+        {
+            "name": "Copper",
+            "visual": {
+                "character": "C",
+                "color": [ 184, 115, 51 ]
+            },
+            "drop": {
+                "item": "Copper",
+                "skill": "Mining"
+            }
+        },
+        {
+            "name": "Coal",
+            "visual": {
+                "character": "C",
+                "color": [ 54, 69, 79 ]
+            }
+        },
+        {
+            "name": "Sapphire",
+            "visual": {
+                "character": "S",
+                "color": [ 0, 0, 255 ]
+            }
+        },
+        {
+            "name": "Ruby",
+            "visual": {
+                "character": "R",
+                "color": [ 255, 0, 0 ]
+            }
+        },
+        {
+            "name": "RAINBOW",
+            "visual": {
+                "character": "o",
+                "color": [ 255, 255, 255 ]
+            }
+        },
+        {
+            "name": "Wooden Plank",
+            "visual": {
+                "character": "=",
+                "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wood",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
+            }
+        },
+        {
+            "name": "Stone Brick",
+            "visual": {
+                "character": "=",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Iron Bar",
+            "visual": {
+                "character": "I",
+                "color": [ 203, 205, 205 ]
+            }
+        },
+        {
+            "name": "Stockpile",
+            "visual": {
+                "character": "=",
+                "color": [ 100, 100, 100 ]
+            }
+        },
+        {
+            "name": "Wooden Wall",
+            "structure": "",
+            "visual": {
+                "character": "%",
+                "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "None"
+            }
+        },
+        {
+            "name": "Wooden Gate",
+            "visual": {
+                "character": "#",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Wooden Floor",
+            "visual": {
+                "character": ".",
+                "color": [ 100, 65, 23 ]
+            }
+        },
+        {
+            "name": "Stone Wall",
+            "visual": {
+                "character": "%",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Stone Floor",
+            "visual": {
+                "character": ".",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Bed",
+            "visual": {
+                "character": "B",
+                "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
+            }
+        },
+        {
+            "name": "Furnace",
+            "visual": {
+                "character": "O",
+                "color": [ 128, 128, 128 ]
+            },
+            "heat_intensity": 10.0,
+            "light_intensity": 0.7
+        },
+        {
+            "name": "Oven",
+            "visual": {
+                "character": "H",
+                "color": [ 128, 128, 128 ]
+            },
+            "heat_intensity": 10.0,
+            "light_intensity": 0.5
+        },
+        {
+            "name": "Carpentry Bench",
+            "visual": {
+                "character": 960,
+                "color": [ 117, 66, 12 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wood",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "None"
+            }
+        },
+        {
+            "name": "Stone Cutter",
+            "visual": {
+                "character": 960,
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Anvil",
+            "visual": {
+                "character": "+",
+                "color": [ 46, 46, 46 ]
+            }
+        },
+        {
+            "name": "Gun Bench",
+            "visual": {
+                "character": 960,
+                "color": [ 135, 135, 135 ]
+            }
+        },
+        {
+            "name": "Wooden Chair",
+            "visual": {
+                "character": "h",
+                "color": [ 148, 77, 0 ]
+            },
+            "furniture": {
+                "sittable": true,
+                "has_surface": false
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
+            }
+        },
+        {
+            "name": "Wooden Table",
+            "visual": {
+                "character": "T",
+                "color": [ 148, 77, 0 ]
+            },
+            "furniture": {
+                "sittable": false,
+                "has_surface": true
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 4
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
+            }
+        },
+        {
+            "name": "Stone Chair",
+            "visual": {
+                "character": "h",
+                "color": [ 128, 128, 128 ]
+            }
+        },
+        {
+            "name": "Stone Table",
+            "visual": {
+                "character": "T",
+                "color": [ 128, 128, 128 ]
+            },
+            "furniture": {
+                "sittable": false,
+                "has_surface": true
+            }
+        },
+        {
+            "name": "Torch",
+            "visual": {
+                "character": "|",
+                "color": [ 117, 66, 12 ]
+            }
+        },
+        {
+            "name": "Pickaxe",
+            "visual": {
+                "character": 9935,
+                "color": [ 117, 66, 12 ]
+            }
+        },
+        {
+            "name": "Axe",
+            "visual": {
+                "character": "P",
+                "color": [ 117, 66, 12 ]
+            }
+        },
+
+        {
+            "name": "Wheat",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "crop": {
+                "grow_time": 200.0,
+                "produce": "Bundled Wheat",
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "w",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "W",
+                        "color": [ 147, 196, 125 ]
+                    },
+                    {
+                        "char": "W",
+                        "color": [ 255, 229, 153 ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Wheat Seeds",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grows_into": "Wheat"
+        },
+        {
+            "name": "Bundled Wheat",
+            "visual": {
+                "character": "#",
+                "color": [ 218, 197, 134 ]
+            }
+        },
+
+        {
+            "name": "Carrot Plant",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "crop": {
+                "grow_time": 2.0,
+                "produce": "Carrot",
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "v",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "V",
+                        "color": [ 170, 255, 0 ]
+                    },
+                    {
+                        "char": "V",
+                        "color": [ 255, 145, 0 ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Carrot Seeds",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grows_into": "Carrot Plant"
+        },
+        {
+            "name": "Carrot",
+            "visual": {
+                "character": "V",
+                "color": [ 255, 145, 0 ]
+            },
+            "nutrition": 60
+        },
+        {
+            "name": "Potato Plant",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "crop": {
+                "grow_time": 2.0,
+                "produce": "Potato",
+                "stages": [
+                    {
+                        "char": ",",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "|",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "M",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "o",
+                        "color": [ 183, 146, 104 ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Potato Seeds",
+            "visual": {
+                "character": ".",
+                "color": [ 56, 118, 29 ]
+            },
+            "grows_into": "Potato Plant"
+        },
+        {
+            "name": "Potato",
+            "visual": {
+                "character": "o",
+                "color": [ 183, 146, 104 ]
+            },
+            "nutrition": 140
+        },
+        {
+            "name": "Apple Tree",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            },
+            "produce": "Apple"
+        },
+        {
+            "name": "Orange Tree",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            },
+            "produce": "Orange"
+        },
+        {
+            "name": "Lemon Tree",
+            "visual": {
+                "character": 9827,
+                "color": [ 0, 255, 0 ]
+            },
+            "drop": {
+                "item": "Wood",
+                "skill": "Woodcutting"
+            },
+            "produce": "Lemon"
+        },
+        {
+            "name": "Berry Bush",
+            "visual": {
+                "character": "&",
+                "color": [ 0, 255, 0 ]
+            },
+            "produce": "Berry"
+        },
+
+        {
+            "name": "Apple",
+            "visual": {
+                "character": "Q",
+                "color": [ 255, 0, 0 ]
+            },
+            "nutrition": 52
+        },
+        {
+            "name": "Orange",
+            "visual": {
+                "character": "O",
+                "color": [ 250, 112, 0 ]
+            },
+            "nutrition": 52
+        },
+        {
+            "name": "Lemon",
+            "visual": {
+                "character": "0",
+                "color": [ 250, 250, 0 ]
+            },
+            "nutrition": 52
+        },
+        {
+            "name": "Berry",
+            "visual": {
+                "character": "o",
+                "color": [ 153, 15, 75 ]
+            },
+            "nutrition": 200
+        },
+        {
+            "name": "Bread",
+            "visual": {
+                "character": "8",
+                "color": [ 210, 180, 140 ]
+            },
+            "nutrition": 265
+        },
+        {
+            "name": "Meat",
+            "visual": {
+                "character": "M",
+                "color": [ 165, 42, 42 ]
+            },
+            "nutrition": 250
+        },
+
+        {
+            "name": "Pistol",
+            "visual": {
+                "character": "⌐",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 7,
+            "damage": 10,
+            "range": 10.0,
+            "attack_cooldown": 0.7
+
+        },
+        {
+            "name": "Pepper Gun",
+            "visual": {
+                "character": "-",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 5,
+            "damage": 4,
+            "range": 50.0,
+            "attack_cooldown": 1.0
+
+        },
+        {
+            "name": "Assault Rifle",
+            "visual": {
+                "character": "╬",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 30,
+            "damage": 7,
+            "range": 20.0,
+            "attack_cooldown": 0.1
+
+        },
+        {
+            "name": "Minigun",
+            "visual": {
+                "character": "M",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 200,
+            "damage": 10,
+            "range": 40.0,
+            "attack_cooldown": 0.05
+
+        },
+        {
+            "name": "Sniper",
+            "visual": {
+                "character": "A",
+                "color": [ 135, 135, 135 ]
+            },
+            "max_ammo": 5,
+            "damage": 70,
+            "range": 100.0,
+            "attack_cooldown": 5.0
+
+        },
+        {
+            "name": "Torch",
+            "visual": {
+                "character": "|",
+                "color": [ 150, 75, 0 ]
+            },
+            "heat_intensity": 20.0,
+            "light_intensity": 0.6
+        }
+
+    ]
+}

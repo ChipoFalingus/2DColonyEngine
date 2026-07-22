@@ -76,6 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,6 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -104,7 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <CompileAs>Default</CompileAs>
     </ClCompile>
@@ -123,7 +125,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -136,107 +138,74 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Animal.cpp" />
-    <ClCompile Include="Chunk.cpp" />
-    <ClCompile Include="Crafting.cpp" />
-    <ClCompile Include="Creature.cpp" />
-    <ClCompile Include="CreatureUtils.cpp" />
-    <ClCompile Include="FurnaceRecipes.json" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="Globals.cpp" />
-    <ClCompile Include="HarvestRules.cpp" />
-    <ClCompile Include="Inputs.cpp" />
-    <ClCompile Include="ItemComponents.h" />
-    <ClCompile Include="ItemUtils.cpp" />
-    <ClCompile Include="JobManager.cpp" />
-    <ClCompile Include="Monster.cpp" />
-    <ClCompile Include="Object.cpp" />
-    <ClCompile Include="ObjectManager.cpp" />
-    <ClCompile Include="Pig.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="Source.cpp" />
-    <ClCompile Include="Squad.cpp" />
-    <ClCompile Include="Stockpile.cpp" />
-    <ClCompile Include="Tile.cpp" />
-    <ClCompile Include="Tool.cpp" />
-    <ClCompile Include="UI.cpp" />
-    <ClCompile Include="UIElements.cpp" />
-    <ClCompile Include="Villager.cpp" />
-    <ClCompile Include="mathUtils.cpp" />
-    <ClCompile Include="WaterSimulation.cpp" />
-    <ClCompile Include="World.cpp" />
-    <ClCompile Include="Zombie.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Animal.h" />
-    <ClInclude Include="Brain.h" />
-    <ClInclude Include="Building.h" />
-    <ClInclude Include="Chunk.h" />
-    <ClInclude Include="Clock.h" />
-    <ClInclude Include="Colony.h" />
-    <ClInclude Include="Crafting.h" />
-    <ClInclude Include="Creature.h" />
-    <ClInclude Include="CreatureComponents.h" />
-    <ClInclude Include="DayCycle.h" />
-    <ClInclude Include="Dot.h" />
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="Globals.h" />
-    <ClInclude Include="HarvestRules.h" />
-    <ClInclude Include="Heat.h" />
-    <ClInclude Include="Inputs.h" />
-    <ClInclude Include="Inventory.h" />
-    <ClInclude Include="Item.h" />
-    <ClInclude Include="ItemLocation.h" />
-    <ClInclude Include="ItemUtils.h" />
-    <ClInclude Include="Job.h" />
-    <ClInclude Include="JobCompare.h" />
-    <ClInclude Include="JobType.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="mathUtils.h" />
-    <ClInclude Include="Monster.h" />
-    <ClInclude Include="Object.h" />
-    <ClInclude Include="ObjectManager.h" />
-    <ClInclude Include="Pair.h" />
-    <ClInclude Include="CreatureUtils.h" />
-    <ClInclude Include="Pig.h" />
-    <ClInclude Include="Save.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Squad.h" />
-    <ClInclude Include="SquadManager.h" />
-    <ClInclude Include="Stockpile.h" />
-    <ClInclude Include="ThreadPool.h" />
-    <ClInclude Include="Tile.h" />
-    <ClInclude Include="TileAnimation.h" />
-    <ClInclude Include="TileDisplay.h" />
-    <ClInclude Include="UI.h" />
-    <ClInclude Include="UIElements.h" />
-    <ClInclude Include="UIManager.h" />
-    <ClInclude Include="UITypes.h" />
-    <ClInclude Include="Vec2.h" />
-    <ClInclude Include="Villager.h" />
-    <ClInclude Include="WaterSimulation.h" />
-    <ClInclude Include="World.h" />
-    <ClInclude Include="Zombie.h" />
+    <ClCompile Include="src\Entities\Object.cpp" />
+    <ClCompile Include="src\Entities\ObjectManager.cpp" />
+    <ClCompile Include="src\Entities\Squad.cpp" />
+    <ClCompile Include="src\Entities\Villager.cpp" />
+    <ClCompile Include="src\Inputs.cpp" />
+    <ClCompile Include="src\Jobs\JobManager.cpp" />
+    <ClCompile Include="src\Render\Shader.cpp" />
+    <ClCompile Include="src\Source.cpp" />
+    <ClCompile Include="src\UI\UI.cpp" />
+    <ClCompile Include="src\UI\UIElements.cpp" />
+    <ClCompile Include="src\Utility\CreatureUtils.cpp" />
+    <ClCompile Include="src\Utility\Globals.cpp" />
+    <ClCompile Include="src\Utility\ItemUtils.cpp" />
+    <ClCompile Include="src\Utility\mathUtils.cpp" />
+    <ClCompile Include="src\World\Chunk.cpp" />
+    <ClCompile Include="src\World\Stockpile.cpp" />
+    <ClCompile Include="src\World\Tile.cpp" />
+    <ClCompile Include="src\World\WaterSimulation.cpp" />
+    <ClCompile Include="src\World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Art.txt" />
     <Text Include="FlingGames.txt" />
-    <Text Include="VillagerMenu.txt" />
-    <Text Include="WorldMenu.txt" />
-    <Text Include="Info.txt" />
-    <Text Include="Menu.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Food.json" />
     <None Include="glsl shader.frag" />
     <None Include="glsl shader.vert" />
-    <None Include="HarvestRules.json" />
-    <None Include="Object.json" />
-    <None Include="Visual.json" />
-    <None Include="Recipes.json" />
-    <None Include="shader.frag" />
-    <None Include="shader.vert" />
-    <None Include="Tool.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Entities\CreatureComponents.h" />
+    <ClInclude Include="src\Entities\Inventory.h" />
+    <ClInclude Include="src\Entities\Item.h" />
+    <ClInclude Include="src\Entities\ItemComponents.h" />
+    <ClInclude Include="src\Entities\Object.h" />
+    <ClInclude Include="src\Entities\ObjectManager.h" />
+    <ClInclude Include="src\Entities\Squad.h" />
+    <ClInclude Include="src\Entities\SquadManager.h" />
+    <ClInclude Include="src\Entities\Villager.h" />
+    <ClInclude Include="src\Jobs\Job.h" />
+    <ClInclude Include="src\Jobs\JobCompare.h" />
+    <ClInclude Include="src\Jobs\JobType.h" />
+    <ClInclude Include="src\Render\Shader.h" />
+    <ClInclude Include="src\UI\UI.h" />
+    <ClInclude Include="src\UI\UIElements.h" />
+    <ClInclude Include="src\UI\UIManager.h" />
+    <ClInclude Include="src\UI\UITypes.h" />
+    <ClInclude Include="src\Utility\Clock.h" />
+    <ClInclude Include="src\Utility\CreatureUtils.h" />
+    <ClInclude Include="src\Utility\Dot.h" />
+    <ClInclude Include="src\Utility\Globals.h" />
+    <ClInclude Include="src\Utility\Heat.h" />
+    <ClInclude Include="src\Utility\ItemLocation.h" />
+    <ClInclude Include="src\Utility\ItemUtils.h" />
+    <ClInclude Include="src\Utility\Light.h" />
+    <ClInclude Include="src\Utility\mathUtils.h" />
+    <ClInclude Include="src\Utility\Pair.h" />
+    <ClInclude Include="src\Utility\Save.h" />
+    <ClInclude Include="src\Utility\ThreadPool.h" />
+    <ClInclude Include="src\Utility\Vec2.h" />
+    <ClInclude Include="src\World\Chunk.h" />
+    <ClInclude Include="src\World\DayCycle.h" />
+    <ClInclude Include="src\World\Stockpile.h" />
+    <ClInclude Include="src\World\Tile.h" />
+    <ClInclude Include="src\World\TileAnimation.h" />
+    <ClInclude Include="src\World\TileDisplay.h" />
+    <ClInclude Include="src\World\WaterSimulation.h" />
+    <ClInclude Include="src\World\World.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
