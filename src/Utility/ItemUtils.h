@@ -13,3 +13,5 @@ std::optional<ItemLocation> findClosestItemType
 
 std::optional<std::vector<ItemLocation>> findAllItemInRange
 (int xPos, int yPos, int radius, std::function<bool(entt::entity, entt::registry&, int, int)> filter);
+
+void forEachInRange(int xPos, int yPos, int radius, std::function<void(entt::entity, entt::registry&, int, int)> filter);

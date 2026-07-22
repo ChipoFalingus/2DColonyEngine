@@ -5,11 +5,6 @@
 
 #define BLANK_CHAR L'@'
 
-struct UITile {
-    wchar_t character;
-    sf::Color color;
-};
-
 class UIManager {
 private:
     std::vector<UI> frameStack;

@@ -107,7 +107,7 @@ void spawnSquad(int x, int y) {
     controller.groupTargetPos = { x, y };
     controller.state = SquadState::IDLE;
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 5000; i++) {
         entt::entity member = registry.create();
 
         int spawnX = x + getRandomInt(-10, 10);

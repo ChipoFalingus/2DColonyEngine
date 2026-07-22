@@ -33,18 +33,18 @@ void updateSquadMovement(entt::entity squad) {
 
 void onIdle(entt::entity squad) {
 
-	const int flowSize = 64;
+	const int flowSize = 256;
 	const int half = flowSize / 2;
 
 	auto& registry = mainWorld.registry;
 	auto& squadView = registry.get<SquadController>(squad);
 
 	squadView.idleWanderClock += Clock::deltaTime;
-	if (squadView.macroFlowField.empty() || squadView.idleWanderClock > 6.0f) {
+	if (squadView.macroFlowField.empty() || squadView.idleWanderClock > 20.0f) {
 		squadView.idleWanderClock = 0.0f;
 		auto avg = getAvgPos(squad, registry);
 
-		int range = 25;
+		int range = 128;
 		int randX = getRandomInt(avg.first - range, avg.first + range);
 		int randY = getRandomInt(avg.second - range, avg.second + range);
 
@@ -76,18 +76,16 @@ void onIdle(entt::entity squad) {
 			int sepX = 0;
 			int sepY = 0;
 
-			for (auto other : squadView.members) {
-				if (other == i) continue;
-				auto& otherPos = registry.get<Position>(other);
+			forEachInRange(pos.x, pos.y, 2, [&](entt::entity entity, entt::registry& reg, int x, int y) {
+				if (entity == i) return;
+				auto& otherPos = registry.get<Position>(entity);
 				int dx = pos.x - otherPos.x;
 				int dy = pos.y - otherPos.y;
 				int dist2 = dx * dx + dy * dy;
 
-				if (dist2 > 0 && dist2 <= 4) {
-					sepX += dx;
-					sepY += dy;
-				}
-			}
+				sepX += dx;
+				sepY += dy;
+				});
 
 			int moveX = dir.dx;
 			int moveY = dir.dy;

@@ -19,7 +19,6 @@
 #include "Utility/Pair.h"
 #include "World/Tile.h"
 #include "World/Chunk.h"
-#include "Entities/Item.h"
 #include "Jobs/Job.h"
 #include "Utility/Globals.h"
 #include "UI/UIElements.h"

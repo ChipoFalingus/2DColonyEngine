@@ -1,7 +1,9 @@
 #pragma once
 #include <vector>
 #include <functional>
-#include "Entities/Item.h"
+#include <optional>
+#include <entt/entt.hpp>
+
 #include "Jobs/JobType.h"
 #include "Utility/ItemLocation.h"
 

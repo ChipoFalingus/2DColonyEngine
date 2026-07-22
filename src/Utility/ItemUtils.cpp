@@ -41,35 +41,56 @@ std::optional<ItemLocation> findClosestItemType(int xPos, int yPos, int radius, 
 }
 
 std::optional<std::vector<ItemLocation>> findAllItemInRange(int xPos, int yPos, int radius, std::function<bool(entt::entity, entt::registry&, int, int)> filter) {
-        std::vector<ItemLocation> foundItems;
-        auto& registry = mainWorld.registry;
+    std::vector<ItemLocation> foundItems;
+    auto& registry = mainWorld.registry;
 
-        int minX = xPos - radius;
-        int maxX = xPos + radius;
-        int minY = yPos - radius;
-        int maxY = yPos + radius;
-        int radiusSq = radius * radius;
+    int minX = xPos - radius;
+    int maxX = xPos + radius;
+    int minY = yPos - radius;
+    int maxY = yPos + radius;
+    int radiusSq = radius * radius;
 
-        auto view = registry.view<Position>();
+    auto view = registry.view<Position>();
 
-        for (auto entity : view) {
-            const auto& pos = view.get<Position>(entity);
+    for (auto entity : view) {
+        const auto& pos = view.get<Position>(entity);
 
-            if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY) {
+        if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY) {
 
-                int dx = pos.x - xPos;
-                int dy = pos.y - yPos;
-                if (dx * dx + dy * dy <= radiusSq) {
+            int dx = pos.x - xPos;
+            int dy = pos.y - yPos;
+            if (dx * dx + dy * dy <= radiusSq) {
 
-                    if (filter(entity, registry, pos.x, pos.y)) {
-                        foundItems.push_back(ItemLocation(pos.x, pos.y, entity));
-                    }
+                if (filter(entity, registry, pos.x, pos.y)) {
+                    foundItems.push_back(ItemLocation(pos.x, pos.y, entity));
                 }
             }
         }
-
-        if (foundItems.empty()) {
-            return std::nullopt;
-        }
-        return foundItems;
     }
+
+    if (foundItems.empty()) {
+        return std::nullopt;
+    }
+    return foundItems;
+}
+
+void forEachInRange(int xPos, int yPos, int radius, std::function<void(entt::entity, entt::registry&, int, int)> filter) {
+    auto& objectManager = mainWorld.objectManager;
+    auto& registry = mainWorld.registry;
+
+    int r2 = radius * radius;
+
+    for (int dy = -radius; dy <= radius; dy++) {
+        int y = yPos + dy;
+
+        for (int dx = -radius; dx <= radius; dx++) {
+
+            if (dx * dx + dy * dy > r2) continue;
+
+            int x = xPos + dx;
+            for (auto item : objectManager.getObjectsAt(x, y)) {
+                filter(item, registry, x, y);
+            }
+        }
+    }
+}

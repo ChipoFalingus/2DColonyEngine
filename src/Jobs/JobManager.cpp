@@ -2,6 +2,7 @@
 #include "Utility/CreatureUtils.h"
 #include "Utility/Globals.h"
 #include "Game.h"
+#include "Utility/ItemLocation.h"
 
 #include "Entities/CreatureComponents.h"
 

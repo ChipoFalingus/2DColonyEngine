@@ -148,15 +148,12 @@
     <ClCompile Include="src\Render\Shader.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\UI\UI.cpp" />
-    <ClCompile Include="src\UI\UIElements.cpp" />
     <ClCompile Include="src\Utility\CreatureUtils.cpp" />
     <ClCompile Include="src\Utility\Globals.cpp" />
     <ClCompile Include="src\Utility\ItemUtils.cpp" />
     <ClCompile Include="src\Utility\mathUtils.cpp" />
-    <ClCompile Include="src\World\Chunk.cpp" />
     <ClCompile Include="src\World\Stockpile.cpp" />
     <ClCompile Include="src\World\Tile.cpp" />
-    <ClCompile Include="src\World\WaterSimulation.cpp" />
     <ClCompile Include="src\World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -169,13 +166,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Entities\CreatureComponents.h" />
-    <ClInclude Include="src\Entities\Inventory.h" />
-    <ClInclude Include="src\Entities\Item.h" />
     <ClInclude Include="src\Entities\ItemComponents.h" />
     <ClInclude Include="src\Entities\Object.h" />
     <ClInclude Include="src\Entities\ObjectManager.h" />
     <ClInclude Include="src\Entities\Squad.h" />
-    <ClInclude Include="src\Entities\SquadManager.h" />
     <ClInclude Include="src\Entities\Villager.h" />
     <ClInclude Include="src\Jobs\Job.h" />
     <ClInclude Include="src\Jobs\JobCompare.h" />
@@ -195,7 +189,6 @@
     <ClInclude Include="src\Utility\Light.h" />
     <ClInclude Include="src\Utility\mathUtils.h" />
     <ClInclude Include="src\Utility\Pair.h" />
-    <ClInclude Include="src\Utility\Save.h" />
     <ClInclude Include="src\Utility\ThreadPool.h" />
     <ClInclude Include="src\Utility\Vec2.h" />
     <ClInclude Include="src\World\Chunk.h" />
@@ -204,7 +197,6 @@
     <ClInclude Include="src\World\Tile.h" />
     <ClInclude Include="src\World\TileAnimation.h" />
     <ClInclude Include="src\World\TileDisplay.h" />
-    <ClInclude Include="src\World\WaterSimulation.h" />
     <ClInclude Include="src\World\World.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

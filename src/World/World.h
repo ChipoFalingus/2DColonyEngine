@@ -36,14 +36,12 @@ private:
     std::atomic<bool> currentlyRendering = false;
     std::atomic<int> chunksRendered = 0;
 
-    //std::vector<Colony> worldColonies;
-
     std::unordered_map<std::pair<int, int>, Chunk, pair_hash> chunks;
 
-    // Stockpiles need to be in the colony class
+    // Stockpiles need to be in a colony class
     std::vector<Stockpile> stockpiles;
 	
-    // This needs to be in the colony class too
+    // This needs to be in a colony class too
     std::vector<std::pair<entt::entity, std::pair<int, int>>> itemsToMove;
 
 
@@ -62,8 +60,6 @@ public:
     ObjectManager objectManager;
     
     static World& get();
-
-	//const std::vector<Colony>& getColonies() const { return worldColonies; }
 
     std::vector<entt::entity> getAllVillagers();
 
@@ -182,48 +178,6 @@ public:
         return std::nullopt;
 	}
 
-   /* int countItemInStockpiles(const std::string& item) {
-        int count = 0;
-
-        for (auto& s : stockpiles) {
-            int w = s.getLocation().first;
-            int h = s.getLocation().second;
-            for (int i = w; i < s.getWidth() + w; i++) {
-                for (int j = h; j < s.getHeight() + h; j++) {
-                    if (s.retrieveItem(i, j)->get()->name == item) {
-                        count++;
-                    }
-                }
-            }
-        }
-
-        return count;
-    }*/
-
-    /*void removeStockpile(Stockpile s) {
-
-        auto loc = s.getLocation();
-        int width = s.getWidth();
-        int height = s.getHeight();
-
-        for (int x = loc.first; x < loc.first + width; x++) {
-            for (int y = loc.second; y < loc.second + height; y++) {
-                Tile& tile = getTileRef(x, y);
-                objectManager.removeItem(x, y, "Stockpile");
-
-                if (auto i = s.retrieveItem(x, y)) {
-                    addItemToMove(i.value(), x, y);
-                }
-            }
-        }
-
-        auto it = std::find(stockpiles.begin(), stockpiles.end(), s);
-        if (it != stockpiles.end()) {
-            stockpiles.erase(it);
-        }
-
-    }*/
-
     Chunk& loadOrGenerateChunk(int x, int y);
     void addTileToMinimap(Chunk& chunk);
     Chunk* getChunk(int x, int y);
@@ -234,20 +188,6 @@ public:
     void addItemToMove(entt::entity item, int x, int y) {
         itemsToMove.push_back(std::make_pair(item, std::make_pair(x, y)));
     }
-
-    /*void removeItemToMove(entt::entity* item, int x, int y) {
-        for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
-            if (it->first.get() == item &&
-                it->second.first == x &&
-                it->second.second == y) {
-
-                it = itemsToMove.erase(it);
-            }
-            else {
-                it++;
-            }
-        }
-    }*/
 
     std::vector<std::pair<entt::entity, std::pair<int, int>>>& getItemsToMove() {
         return itemsToMove;

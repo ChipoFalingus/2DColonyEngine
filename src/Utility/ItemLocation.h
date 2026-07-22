@@ -1,5 +1,7 @@
 #pragma once
 
+#include <entt/entt.hpp>
+
 struct ItemLocation {
     int x, y;
     entt::entity item;

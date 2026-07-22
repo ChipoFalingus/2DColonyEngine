@@ -5,18 +5,6 @@ std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> St
     return tileItems;
 }
 
-/*std::unordered_map<std::string, int> getFilteredItemCounts(Type type) {
-    std::unordered_map<std::string, int> result;
-    for (auto& [loc, f] : tileItems) {
-        for (auto& item : f) {
-            if (item && item->type == type) {
-                result[item->name]++;
-            }
-        }
-    }
-    return result;
-}*/
-
 std::unordered_map<std::string, int> Stockpile::getItemCounts() {
     std::unordered_map<std::string, int> result;
     for (auto& [loc, f] : tileItems) {

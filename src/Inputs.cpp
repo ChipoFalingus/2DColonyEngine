@@ -1,13 +1,12 @@
 ﻿#include "Inputs.h"
 #include "Jobs/Job.h"
-#include "Entities/Item.h"
 #include "World/Tile.h"
 #include "World/World.h"
 #include "Game.h"
 #include "UI/UI.h"
-#include "Utility/Save.h"
 #include "Entities/ItemComponents.h"
 #include "Entities/CreatureComponents.h"
+#include "Entities/Squad.h"
 
 double lastTime = glfwGetTime();
 int nbFrames = 0;
@@ -161,7 +160,9 @@ void processInput(GLFWwindow* window) {
     }
 
 	ui.FPS->changeText(std::wstring(fps.begin(), fps.end()));
-	ui.population->changeText(L"Population: null");
+
+    auto squadPop = mainWorld.registry.view<SquadMemberComponent>();
+	ui.population->changeText(L"Squad Size: " + squadPop.size());
 
     int uiX = mouseTileX - (xPlayer - xFrustum / 2);
     int uiY = mouseTileY - (yPlayer - yFrustum / 2);
@@ -232,13 +233,13 @@ void processInput(GLFWwindow* window) {
             }
         }
 
-		auto view = mainWorld.registry.view<Name, Position>();
+		/*auto view = mainWorld.registry.view<Name, Position>();
 
         for (auto [entity, name, position] : view.each()) {
             if (position.x == mouseTileX && position.y == mouseTileY) {
                 itemStr += name.name + " (Registry)|";
             }
-        }
+        }*/
 
         ui.tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
         std::string type = typeToString(tile.type);

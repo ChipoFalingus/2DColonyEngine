@@ -128,134 +128,6 @@ void setSeaLevel(float level) {
 	waterLevel = level;
 }
 
-//void makeLake(int x, int y) {
-//    std::cout << "Make Lake at " << x << ", " << y << std::endl;
-//
-//    struct Node {
-//        int x, y;
-//        float altitude;
-//        bool operator>(const Node& other) const { return altitude > other.altitude; }
-//    };
-//
-//    std::pair<int, int> rimLocation;
-//    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> toCheck;
-//    toCheck.push({ x, y, getTileRef(x, y).altitude });
-//
-//    //float rimHeight = getTileRef(startX, startY).altitude;
-//    float rimHeight = INFINITY;
-//    std::set<std::pair<int, int>> finalLake;
-//
-//    int i = 0;
-//    //Explore tiles until it finds a tile lower 
-//    while (!toCheck.empty()) {
-//        Node current = toCheck.top();
-//        toCheck.pop();
-//
-//
-//        if (finalLake.count({ current.x, current.y })) continue;
-//        finalLake.insert({ current.x, current.y });
-//
-//        for (auto& n : getNeighbors(current.x, current.y)) {
-//            int nx = n.first;
-//            int ny = n.second;
-//
-//            if (finalLake.count({ nx, ny })) {
-//                continue;
-//            }
-//
-//            Tile& neighbor = getTileRef(nx, ny);
-//
-//            // Only update rim if neighbor is higher than current
-//            if (neighbor.altitude > current.altitude && neighbor.altitude < rimHeight) {
-//                toCheck.push({ nx, ny, neighbor.altitude });
-//
-//            }
-//            else {
-//                rimLocation = { nx, ny };
-//                rimHeight = std::min(rimHeight, neighbor.altitude);
-//
-//            }
-//        }
-//
-//        i++;
-//    }
-//
-//
-//
-//    for (auto& i : finalLake) {
-//        Tile& tile = getTileRef(i.first, i.second);
-//        tile.items.clear();
-//        tile.walkable = false;
-//        tile.changeTileType(WATER);
-//        //tile.addItem(std::make_unique<Item>("Lake", L'$', sf::Color::Red));
-//    }
-//
-//    float lowAdj = INFINITY;
-//    std::pair<int, int> lowAdjLocation;
-//    for (auto& i : getNeighbors(rimLocation.first, rimLocation.second)) {
-//        if (getTileRef(i.first, i.second).altitude < lowAdj && getTileRef(i.first, i.second).type == GRASS) {
-//            lowAdj = getTileRef(i.first, i.second).altitude;
-//            lowAdjLocation = { i.first, i.second };
-//        }
-//    }
-//
-//    //makeRiver(rim.first, rim.second);
-//
-//}
-
-
-
-// Inefficient rivers but they do the job
-std::pair<int, int> makeRiver(int x, int y) {
-    //std::cout << "Make River at " << x << ", " << y << std::endl;
-    float currentAlt = getTileRef(x, y).altitude;
-
-    while (currentAlt > -100.0f) {
-        float tempAlt = currentAlt;
-
-        std::vector<std::pair<int, int>> potentialNeighbors;
-
-		float minAlt = currentAlt;
-        for (auto& i : getNeighbors(x, y)) {
-            Tile& neighbor = getTileRef(i.first, i.second);
-
-            if (neighbor.altitude < minAlt) {
-                potentialNeighbors.push_back(i);
-				minAlt = neighbor.altitude;
-            }
-        }
-
-        if (potentialNeighbors.empty()) {
-            //makeLake(x, y);
-			return { x, y };
-            break;
-        }
-
-        auto chosenCoords = potentialNeighbors[getRandomInt(0, potentialNeighbors.size() - 1)];
-        Tile& chosenNeighbor = getTileRef(chosenCoords.first, chosenCoords.second);
-
-        currentAlt = chosenNeighbor.altitude;
-        /*for (auto& i : getNeighbors(x, y)) {
-
-            getTileRef(i.first, i.second).items.clear();
-
-            getTileRef(i.first, i.second).walkable = false;
-            getTileRef(i.first, i.second).changeTileType(WATER);
-        }
-
-		chosenNeighbor.items.clear();
-        chosenNeighbor.walkable = false;
-
-        chosenNeighbor.changeTileType(WATER);*/
-        x = chosenCoords.first;
-        y = chosenCoords.second;
-
-        if (tempAlt == currentAlt) {
-            break;
-        }
-    }
-}
-
 Tile assignTileTypes(int x, int y) {
 
     Tile tile;
@@ -421,16 +293,7 @@ void Tile::getTile(int x, int y) {
 			addObject_Clear(x, y, "Carpentry Bench");
         }
     }
-    if (x == 0 && y == 0) {
-        addObject(x, y, "Wooden Table", true);
-    }
-    if (x == 1 && y == 1) {
-        addObject(x, y, "Wooden Chair", true);
-    }
-    if (x == 3 && y <= 3 && y >= -3) {
-        addObject_Clear(x, y, "Wooden Wall");
-        walkable = false;
-    }
+
     // Sets starting displays, subject to change
     auto display = getTileDisplay(type);
 
@@ -502,7 +365,6 @@ bool getTileWalkable(tileType type) {
     }
 }
 
-// The backbone of everything ever
 Tile& getTileRef(int x, int y) {
 
     int localX = (x % chunkDim + chunkDim) % chunkDim;

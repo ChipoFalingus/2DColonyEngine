@@ -1,6 +1,5 @@
 #pragma once
 #include "UI/UIElements.h"
-#include "Entities/Item.h"
 #include "Utility/Pair.h"
 
 // I'll need to get rid of these at some point, globals are super messy and will spiral out of control
