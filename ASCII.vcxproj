@@ -161,6 +161,7 @@
     <Text Include="FlingGames.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\Object.json" />
     <None Include="glsl shader.frag" />
     <None Include="glsl shader.vert" />
   </ItemGroup>

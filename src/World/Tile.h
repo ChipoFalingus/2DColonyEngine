@@ -24,12 +24,15 @@ enum animType {
     WATER = 6,
     FIRE = 7,
     SPEECH_BUBBLE = 8,
-    Z = 9
+    Z = 9,
+    GUN_SHOT = 10,
 };
 
 struct Animation {
     animType type = animType::NONE;
     bool isOtherChar = false;
+
+    float timer = 0.0f;
 };
 
 enum Biome {

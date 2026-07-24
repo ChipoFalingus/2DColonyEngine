@@ -10,6 +10,7 @@ void VillagerSystem(float deltaTime);
 void updateHunger();
 void updateTiredness();
 void updateWork();
+void updateAttack();
 
 
 enum class ActivityState {

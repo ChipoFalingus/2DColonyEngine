@@ -162,7 +162,7 @@ void processInput(GLFWwindow* window) {
 	ui.FPS->changeText(std::wstring(fps.begin(), fps.end()));
 
     auto squadPop = mainWorld.registry.view<SquadMemberComponent>();
-	ui.population->changeText(L"Squad Size: " + squadPop.size());
+	ui.population->changeText(L"Squad Size: " + static_cast<size_t>(squadPop.size()));
 
     int uiX = mouseTileX - (xPlayer - xFrustum / 2);
     int uiY = mouseTileY - (yPlayer - yFrustum / 2);

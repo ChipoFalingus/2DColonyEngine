@@ -72,6 +72,7 @@ struct Gun {
 	float damage;
 	float fire_rate;
 	float reload_time;
+
 	int ammo_capacity;
 	int current_ammo;
 };

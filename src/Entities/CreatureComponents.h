@@ -21,7 +21,9 @@ struct Movable {
 	std::vector<std::pair<int, int>> path;
 };
 
-struct Hostile {};
+struct Hostile {
+	bool e = false;
+};
 
 struct TiredNeed {
 	int tiredness = 0;
@@ -65,10 +67,15 @@ struct JobComponent {
 };
 
 struct Villager {};
-struct Zombie {};
 
 struct Inventory {
-	std::unordered_map<std::string, int> inventory;
+	entt::entity itemInHand;
+	std::vector<entt::entity> inventory;
+};
+
+struct CanAttack {
+	int base_damage = 1;
+	int base_attack_speed = 1.0f;
 };
 
 //struct ColonyOwner {

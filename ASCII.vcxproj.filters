@@ -81,6 +81,9 @@
   <ItemGroup>
     <None Include="glsl shader.frag" />
     <None Include="glsl shader.vert" />
+    <None Include="assets\Object.json">
+      <Filter>Resource Files\Objects</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Utility\Dot.h">

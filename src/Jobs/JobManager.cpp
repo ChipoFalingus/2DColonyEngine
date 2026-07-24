@@ -567,12 +567,7 @@ void Plant::update() {
 			std::cout << "Planting seed at " << locX << ", " << locY << std::endl;
 			auto s = ObjectRegistry::getInstance().getStaticObject(seed);
 
-			//if (auto seedComp = mainWorld.registry.try_get<Seed>(s)) {
-				tile.addObject(locX, locY, "Wheat");
-			//}
-			/*else {
-				std::cout << "Seed component not found for seed " << seed << std::endl;
-			}*/
+			tile.addObject(locX, locY, seed);
 			state = JobState::Completed;
 			
 		}
@@ -584,67 +579,67 @@ void Plant::update() {
 	}
 }
 
-//void Attack::update() {
-//	attackClock += Clock::deltaTime;
-//
-//	if (!target || target->dead) {
-//		auto c = findClosestCreatureType<Zombie>(villager->xPos, villager->yPos, villager->alertness * 1.5f);
-//		if (c) {
-//			target = c;
-//		} else {
-//			x = villager->xPos;
-//			y = villager->yPos;
-//			state = JobState::Completed;
-//			return;
-//		}
-//	}
-//
-//	float range;
-//	float attackCooldown;
-//	int dmg;
-//
-//
-//	if (villager->itemInHand) {
-//		if (villager->itemInHand->type == Type::Gun) {
-//			Gun* i = static_cast<Gun*>(villager->itemInHand.get());
-//			range = i->getRange();
-//			attackCooldown = i->getAttackCooldown();
-//			dmg = i->getDamage();
-//		}
-//		else {
-//			range = 1.0f;
-//			attackCooldown = 1.0f;
-//			dmg = 1;
-//		}
-//	} else {
-//		range = 1.0f;
-//		attackCooldown = 1.0f;
-//		dmg = 1;
-//	}
-//
-//	float dx = std::abs(target->xPos - villager->xPos);
-//	float dy = std::abs(target->yPos - villager->yPos);
-//	float distSq = dx * dx + dy * dy;
-//	float rangeSq = range * range;
-//
-//
-//	if (distSq > rangeSq) {
-//		x = target->xPos;
-//		y = target->yPos;
-//	}
-//	else {
-//		// Stay in place
-//		x = villager->xPos;
-//		y = villager->yPos;
-//
-//		if (attackClock > attackCooldown) {
-//			attackClock = 0.0f;
-//			std::cout << "shot" << std::endl;
-//			target->takeDamage(dmg, villager);
-//		}
-//	}
-//}
-//
+void Attack::update() {
+	attackClock += Clock::deltaTime;
+
+	float range = 10.0f;
+	float attackCooldown = 0.05f;
+	int dmg = 50;
+
+	if (auto inventory = mainWorld.registry.try_get<Inventory>(villager)) {
+		if (auto gun = mainWorld.registry.try_get<Gun>(inventory->itemInHand)) {
+			range = gun->range;
+			attackCooldown = gun->fire_rate;
+			dmg = gun->damage;
+		}
+	}
+	
+	if (!mainWorld.registry.valid(target)) {
+		state = JobState::Completed;
+		if (auto movable = mainWorld.registry.try_get<Movable>(villager)) {
+			movable->hasTarget = false;
+		}
+		return;
+	}
+
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	auto& targetPos = mainWorld.registry.get<Position>(target);
+
+	float dx = static_cast<float>(targetPos.x - pos.x);
+	float dy = static_cast<float>(targetPos.y - pos.y);
+	float distSq = dx * dx + dy * dy;
+	float rangeSq = range * range;
+
+	auto& movable = mainWorld.registry.get<Movable>(villager);
+
+	if (distSq > rangeSq) {
+		movable.hasTarget = true;
+		x = targetPos.x;
+		y = targetPos.y;
+	}
+	else {
+		// Stay in place
+		movable.hasTarget = false;
+		movable.path.clear();
+		x = pos.x;
+		y = pos.y;
+
+		if (attackClock > attackCooldown) {
+			attackClock -= attackCooldown;
+			
+			if (auto health = mainWorld.registry.try_get<Health>(target)) {
+				health->health -= dmg;
+			}
+
+			auto line = bresenham(pos.x, pos.y, targetPos.x, targetPos.y);
+
+			for (int i = 1; i < line.size() - 1; i++) {
+				getTileRef(line[i].first, line[i].second).setAnimType(GUN_SHOT);
+			}
+		}
+	}
+}
+
 //void Retreat::update() {
 //	// Sees if there is cover nearby (if they dont have a weapon, this part isnt important)
 //

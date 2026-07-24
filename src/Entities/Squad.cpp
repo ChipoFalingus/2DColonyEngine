@@ -32,8 +32,7 @@ void updateSquadMovement(entt::entity squad) {
 }
 
 void onIdle(entt::entity squad) {
-
-	const int flowSize = 256;
+	const int flowSize = 64;
 	const int half = flowSize / 2;
 
 	auto& registry = mainWorld.registry;
@@ -57,8 +56,12 @@ void onIdle(entt::entity squad) {
 	if (squadView.macroFlowField.empty()) return;
 
 	for (auto& i : squadView.members) {
+		if (!registry.valid(i)) continue;
+
 		auto& pos = registry.get<Position>(i);
 		auto& movable = registry.get<Movable>(i);
+
+		movable.hasTarget = false;
 
 		movable.movementClock += Clock::deltaTime;
 		if (movable.movementClock > movable.speed) {
@@ -78,13 +81,16 @@ void onIdle(entt::entity squad) {
 
 			forEachInRange(pos.x, pos.y, 2, [&](entt::entity entity, entt::registry& reg, int x, int y) {
 				if (entity == i) return;
+				if (!reg.try_get<SquadMemberComponent>(entity)) return;
 				auto& otherPos = registry.get<Position>(entity);
 				int dx = pos.x - otherPos.x;
 				int dy = pos.y - otherPos.y;
 				int dist2 = dx * dx + dy * dy;
 
-				sepX += dx;
-				sepY += dy;
+				if (dist2 > 0 && dist2 <= 2) {
+					sepX += dx;
+					sepY += dy;
+				}
 				});
 
 			int moveX = dir.dx;
@@ -122,6 +128,8 @@ void onAttack(entt::entity squad) {
 	auto& squadView = registry.get<SquadController>(squad);
 
 	for (auto& i : squadView.members) {
+		if (!registry.valid(i)) continue;
+
 		auto& memberComponent = registry.get<SquadMemberComponent>(i);
 		memberComponent.target = chooseTarget(squad, i, registry);
 
@@ -139,8 +147,8 @@ void onAttack(entt::entity squad) {
 		movable.targetY = targetPos.y;
 
 		if (pos.x == targetPos.x && pos.y == targetPos.y) {
-			auto& structureHealth = registry.get<Structure>(targetEntity);
-			structureHealth.health--;
+			//auto& structureHealth = registry.get<Structure>(targetEntity);
+			//structureHealth.health--;
 		}
 	}
 }
@@ -160,6 +168,7 @@ SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::regis
 		score += currentTarget.target_population * 200;
 
 		if (!registry.valid(currentTarget.target) || !registry.all_of<Position>(currentTarget.target)) continue;
+		if (!registry.valid(member)) continue;
 
 		auto& targetPos = registry.get<Position>(currentTarget.target);
 

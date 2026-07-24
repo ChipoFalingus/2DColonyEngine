@@ -110,16 +110,18 @@ void spawnSquad(int x, int y) {
     for (int i = 0; i < 5000; i++) {
         entt::entity member = registry.create();
 
-        int spawnX = x + getRandomInt(-10, 10);
-        int spawnY = y + getRandomInt(-10, 10);
+        int spawnX = getRandomInt(-100, 100);
+        int spawnY = getRandomInt(-100, 100);
         registry.emplace<Position>(member, spawnX, spawnY);
 
-        registry.emplace<Movable>(member, 0.2f, 0.2f, 0.0f, spawnX, spawnY);
+        registry.emplace<Movable>(member, 0.5f, 0.5f, 0.0f, spawnX, spawnY);
 
         registry.emplace<SquadMemberComponent>(member, squadEntity);
 
         registry.emplace<Renderable>(member, L'Z', glm::vec3(0.0f, 1.0f, 0.0f));
         registry.emplace<Name>(member, "Zombie");
+        registry.emplace<Hostile>(member);
+        registry.emplace<Health>(member, 100);
 
         controller.members.push_back(member);
     }
@@ -128,7 +130,7 @@ void spawnSquad(int x, int y) {
 // Adds creatures to the world
 void World::addCreatures() {
     int range = 3;
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 3; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
         auto v = spawnVillager(x, y);

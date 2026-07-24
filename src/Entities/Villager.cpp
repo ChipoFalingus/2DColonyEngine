@@ -214,7 +214,8 @@ entt::entity spawnVillager(int x, int y) {
 	registry.emplace<TemperatureNeed>(entity, getRandomFloat(60.0f, 80.0f));
 
 	registry.emplace<JobComponent>(entity, nullptr);
-		
+	registry.emplace<CanAttack>(entity);
+
 	auto skillList = getAllSkillTypes();
 	int rand = getRandomInt(0, skillList.size() - 1); 
 
@@ -255,6 +256,7 @@ void VillagerSystem(float deltaTime) {
 	updateHunger();
 	updateTiredness();
 	updateWork();
+	updateAttack();
 }
 
 void updateTiredness() {
@@ -404,6 +406,25 @@ void updateWork() {
 	}
 }
 
+void updateAttack() {
+	auto& registry = mainWorld.registry;
+	auto view = registry.view<CanAttack, JobComponent, Position>();
+
+	int alertness = 25;
+
+	for (auto [e, attack, job, pos] : view.each()) {
+
+		auto closestThreat = findClosestItemType(pos.x, pos.y, alertness, [&](entt::entity entity, entt::registry& reg, int x, int y) {
+			return reg.try_get<Hostile>(entity) && (entity != e);
+			});
+
+		if (closestThreat.has_value()) {
+			Job* attackJob = new Attack(e, entt::null, SkillType::None, closestThreat.value().item);
+			attackJob->priority = 1000;
+			job.proposeJob(attackJob);
+		}
+	}
+}
 
 std::string activityStateToString(ActivityState state) {
 	switch (state) {
