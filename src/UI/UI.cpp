@@ -11,6 +11,20 @@
 
 std::unordered_map<std::string, int> getFurnitureList();
 
+void setupBuildButton(auto& button, std::string item, PlacementMode mode = PlacementMode::SQUARE) {
+    button->setClickFunction([item, mode]() {
+        setMode(Mode::BUILD);
+        mainWorld.placementMode = mode;
+        Game::getInstance().setBuildItem(item);
+        });
+
+    button->setHoverFunction([item]() {
+        auto& frame = Game::getInstance().getInfoUI();
+        frame.configureInfoFrame(item);
+        Game::getInstance().getUIManager().push(UI::Info);
+        });
+}
+
 // First menu when opening the game
 
 MainMenuUI getMainMenuFrame() {
@@ -60,8 +74,66 @@ SettingsUI getSettingsFrame() {
         uiManager.swapFrame(UI::Settings, UI::Main);
 		});
 
+    ui.v_sync = &frame->addElement<Checkbox>(5, 5, "V-Sync", Anchor::TOP_LEFT);
+
+    int SLIDER_MIN_VALUE = 1;
+    int SLIDER_MAX_VALUE = 25;
+    int START_POSITION = 5;
+    int SEGMENTS = 25;
+    
+    ui.font_size = &frame->addElement<Slider>(5, 7, SLIDER_MIN_VALUE, SLIDER_MAX_VALUE, START_POSITION, SEGMENTS, false, "Font Size 24", Anchor::TOP_LEFT);
+
+    SLIDER_MIN_VALUE = 0;
+    SLIDER_MAX_VALUE = 50;
+    START_POSITION = 16;
+    SEGMENTS = 26;
+
+    ui.x_text_spacing = &frame->addElement<Slider>(5, 9, SLIDER_MIN_VALUE, SLIDER_MAX_VALUE, START_POSITION, SEGMENTS, false, "X Text Spacing 24", Anchor::TOP_LEFT);
+
+    START_POSITION = 22;
+
+    ui.y_text_spacing = &frame->addElement<Slider>(5, 11, SLIDER_MIN_VALUE, SLIDER_MAX_VALUE, START_POSITION, SEGMENTS, false, "Y Text Spacing 24", Anchor::TOP_LEFT);
+
+    SLIDER_MIN_VALUE = 50;
+    SLIDER_MAX_VALUE = 150;
+    START_POSITION = 100;
+    SEGMENTS = 21;
+
+    ui.camera_speed = &frame->addElement<Slider>(5, 13, SLIDER_MIN_VALUE, SLIDER_MAX_VALUE, START_POSITION, SEGMENTS, false, "Camera Speed 100", Anchor::TOP_LEFT);
+
+    ui.apply = &createButton(*frame, 5, 15, L" Apply Changes ", Anchor::TOP_LEFT);
+
+    ui.apply->setClickFunction([ui]() {
+        Settings settings;
+        settings.font_size = (float)ui.font_size->getValue() / 5;
+        settings.xTextSpacing = ui.x_text_spacing->getValue();
+        settings.yTextSpacing = ui.y_text_spacing->getValue();
+        settings.camera_speed = ui.camera_speed->getValue();
+
+        Game::getInstance().getSettingsManager().update(settings);
+
+        xFrustum = scrWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
+        yFrustum = scrHeight / Game::getInstance().getSettingsManager().get().yTextSpacing;
+        std::cout << "Tile dimesions resized to " << xFrustum << "x" << yFrustum << std::endl;
+
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.resize(xFrustum, yFrustum);
+        for (auto& i : uiManager.getAllFrames()) {
+            auto frame = i.second.get();
+            frame->resize(xFrustum, yFrustum);
+
+        }
+        });
+
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
+}
+
+void SettingsUI::update() {
+    font_size->changeText("Font Size " + std::to_string(font_size->getValue()));
+    x_text_spacing->changeText("X Text Spacing " + std::to_string(x_text_spacing->getValue()));
+    y_text_spacing->changeText("Y Text Spacing " + std::to_string(y_text_spacing->getValue()));
+    camera_speed->changeText("Camera Speed " + std::to_string(camera_speed->getValue()));
 }
 
 WorldSettingsUI getWorldSettingsFrame() {
@@ -142,6 +214,7 @@ InGameUI getInGameFrame() {
         auto& uiManager = Game::getInstance().getUIManager();
         uiManager.remove(UI::Structure);
         uiManager.remove(UI::Production);
+        uiManager.remove(UI::Temperature);
         uiManager.addOrRemoveFrame(UI::Build);
         uiManager.remove(UI::Info);
         });
@@ -275,49 +348,10 @@ ProductionUI getProductionFrame() {
 	ui.furnace = &createButton(*frame, 14, -8, L" Furnace ", Anchor::BOTTOM_LEFT);
     ui.anvil = &createButton(*frame, 14, -5, L" Anvil ", Anchor::BOTTOM_LEFT);
 
-    ui.carpentry_bench->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        Game::getInstance().setBuildItem("Carpentry Bench");
-        });
-
-    ui.carpentry_bench->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Carpentry Bench");
-		Game::getInstance().getUIManager().push(UI::Info);
-		});
-
-    ui.stone_cutter->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        Game::getInstance().setBuildItem("Stone Cutter");
-        });
-
-    ui.stone_cutter->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Stone Cutter");
-        Game::getInstance().getUIManager().push(UI::Info);
-        });
-
-    ui.furnace->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        Game::getInstance().setBuildItem("Furnace");
-        });
-
-    ui.furnace->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Furnace");
-        Game::getInstance().getUIManager().push(UI::Info);
-        });
-
-    ui.anvil->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        Game::getInstance().setBuildItem("Anvil");
-        });
-
-    ui.anvil->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Anvil");
-        Game::getInstance().getUIManager().push(UI::Info);
-        });
+    setupBuildButton(ui.carpentry_bench, "Carpentry Bench");
+    setupBuildButton(ui.stone_cutter, "Stone Cutter");
+    setupBuildButton(ui.furnace, "Furnace");
+    setupBuildButton(ui.anvil, "Anvil");
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -337,49 +371,11 @@ StructureUI getStructureFrame() {
     ui.stone_fence = &createButton(*frame, 14, -8, L" Stone Floor ", Anchor::BOTTOM_LEFT);
     ui.wood_floor = &createButton(*frame, 14, -5, L" ? ", Anchor::BOTTOM_LEFT);
 
-    ui.wood_wall->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        mainWorld.placementMode = PlacementMode::SQUARE;
-        Game::getInstance().setBuildItem("Wooden Wall");
-        });
-
-    ui.wood_wall->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Wooden Wall");
-        });
-
-    ui.stone_wall->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        mainWorld.placementMode = PlacementMode::SQUARE;
-        Game::getInstance().setBuildItem("Stone Wall");
-        });
-
-    ui.stone_wall->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Stone Wall");
-        });
-
-    ui.wood_fence->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        mainWorld.placementMode = PlacementMode::SQUARE;
-        Game::getInstance().setBuildItem("Wooden Floor");
-        });
-
-    ui.wood_fence->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Wooden Floor");
-        });
-
-    ui.stone_fence->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        mainWorld.placementMode = PlacementMode::SQUARE;
-        Game::getInstance().setBuildItem("Stone Floor");
-        });
-
-    ui.stone_fence->setHoverFunction([&]() {
-        auto& frame = Game::getInstance().getInfoUI();
-        frame.configureInfoFrame("Stone Floor");
-        });
+    setupBuildButton(ui.wood_wall, "Wooden Wall");
+    setupBuildButton(ui.stone_wall, "Stone Wall");
+    setupBuildButton(ui.wood_fence, "Wooden Floor");
+    setupBuildButton(ui.stone_fence, "Stone Floor");
+    setupBuildButton(ui.wood_floor, "Wooden Wall");
 
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);

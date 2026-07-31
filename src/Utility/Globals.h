@@ -13,28 +13,15 @@ extern bool viewMiniMap;
 extern bool viewHeightMap;
 extern bool viewUI;
 
-extern int xTextSpacing;
-extern int yTextSpacing;
-
 extern int scrWidth;
 extern int scrHeight;
-
-extern float fontSize;
 
 extern double mouseX, mouseY;
 
 extern int xFrustum;
 extern int yFrustum;
 
-extern std::vector<std::pair<int, int>> buildTiles;
-
 extern bool placing;
-extern bool buildMode;
-extern bool plantMode;
-extern bool harvestMode;
-extern bool stockpileMode;
-
-extern bool enableWater;
 
 extern std::pair<int, int> corner;
 
@@ -50,11 +37,3 @@ enum class Mode {
 };
 
 extern Mode currentMode;
-
-extern std::vector<std::pair<int, int>> tiles;
-
-extern std::vector<std::vector<std::pair<int, int>>> field;
-extern int fieldX;
-extern int fieldY;
-
-extern int speed;

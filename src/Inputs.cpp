@@ -14,8 +14,6 @@ std::string fps;
 
 float moveClock = 0.0f;
 
-bool spacePressed = false;
-
 entt::entity viewing = entt::null;
 
 
@@ -31,7 +29,7 @@ void processInput(GLFWwindow* window) {
 
     moveClock += Clock::deltaTime;
 
-    if (moveClock > 0.01f) {
+    if (moveClock > 1.0f / (float)Game::getInstance().getSettingsManager().get().camera_speed) {
         moveClock = 0.0f;
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
@@ -105,15 +103,6 @@ void processInput(GLFWwindow* window) {
         else if (viewHeightMap) viewHeightMap = false;
     }
 
-    bool pressed = false;
-    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !pressed) {
-        enableWater = !enableWater;
-		pressed = true;
-    }
-    else {
-		pressed = false;
-    }
-
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
 		xPlayer = 0;
 		yPlayer = 0;
@@ -160,9 +149,6 @@ void processInput(GLFWwindow* window) {
     }
 
 	ui.FPS->changeText(std::wstring(fps.begin(), fps.end()));
-
-    auto squadPop = mainWorld.registry.view<SquadMemberComponent>();
-	ui.population->changeText(L"Squad Size: " + static_cast<size_t>(squadPop.size()));
 
     int uiX = mouseTileX - (xPlayer - xFrustum / 2);
     int uiY = mouseTileY - (yPlayer - yFrustum / 2);
@@ -229,7 +215,11 @@ void processInput(GLFWwindow* window) {
         for (entt::entity e : list) {
 
             if (registry.valid(e) && registry.all_of<Name>(e)) {
-                itemStr += registry.get<Name>(e).name + " (ObjectManager)|";
+                itemStr += registry.get<Name>(e).name + " (ObjectManager) ";
+                if (auto c = registry.try_get<Claimable>(e)) {
+                    itemStr += std::to_string(c->claimed);
+                }
+                itemStr += "|";
             }
         }
 
@@ -319,18 +309,18 @@ void build(int left, int right, int top, int bottom) {
         std::cout << "Adding build job for " << itemName << " at (" << mouseTileX << ", " << mouseTileY << ")" << std::endl;
         auto staticObject = ObjectRegistry::getInstance().getStaticObject(itemName);
         if (ObjectRegistry::getInstance().getStaticRegistry().all_of<Furniture>(staticObject)) {
-            std::cout << itemName << " IS furniture" << std::endl;
             auto loc = mainWorld.findUnclaimedItemInAllStockpile(itemName);
             if (!loc) {
                 placing = false;
                 return;
             }
 
-            Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->second, loc->first.first, loc->first.second, mouseTileX, mouseTileY);
+            mainWorld.registry.get<Claimable>(loc.value().item).claimed = true;
+
+            Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->item, loc->x, loc->y, mouseTileX, mouseTileY);
             job->priority = 30;
             JobManager::addJob(job);
         } else {
-            std::cout << itemName << " IS NOT furniture" << std::endl;
             Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, mouseTileX, mouseTileY);
             job->priority = 30;
             JobManager::addJob(job);
@@ -361,7 +351,7 @@ void build(int left, int right, int top, int bottom) {
 }
 
 void harvest(int left, int right, int top, int bottom) {
-    ObjectManager* manager = &mainWorld.objectManager;
+    ObjectManager& manager = mainWorld.objectManager;
 
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
@@ -395,10 +385,10 @@ void harvest(int left, int right, int top, int bottom) {
 }
 
 void plant(int left, int right, int top, int bottom) {
-    ObjectManager* manager = &mainWorld.objectManager;
+    ObjectManager& manager = mainWorld.objectManager;
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
-            if (!manager->has(x, y, "Stockpile")) {
+            if (!manager.has(x, y, "Stockpile")) {
                 Job* job = new Plant(entt::null, entt::null, SkillType::Farming, Game::getInstance().selectedPlantItem, x, y);
                 job->priority = 30;
 			    JobManager::JobList.push_back(job);
@@ -412,12 +402,12 @@ void plant(int left, int right, int top, int bottom) {
 
 void stockpile(int left, int right, int top, int bottom) {
 
-    ObjectManager* manager = &mainWorld.objectManager;
+    ObjectManager& manager = mainWorld.objectManager;
 
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
             Tile& tile = getTileRef(x, y);
-           if (/*!tile.walkable ||*/ manager->has(x, y, "Stockpile")) {
+           if (/*!tile.walkable ||*/ manager.has(x, y, "Stockpile")) {
                 std::cout << "Cannot create stockpile: Tile at (" << x << ", " << y << ") is not empty.\n";
                 return;
 			}

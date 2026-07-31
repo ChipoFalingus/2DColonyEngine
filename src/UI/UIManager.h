@@ -22,14 +22,14 @@ public:
         return allFrames;
 	}
 
-    Frame* getFrame(const UI& name) {
+    Frame* getFrame(UI name) {
         auto it = allFrames.find(name);
         if (it != allFrames.end())
             return it->second.get();
         return nullptr;
     }
 
-    bool hasFrame(const UI& name) {
+    bool hasFrame(UI name) {
         return std::find(frameStack.begin(), frameStack.end(), name) != frameStack.end();
     }
    
@@ -54,7 +54,7 @@ public:
         }
     }
 
-    void push(const UI name) {
+    void push(UI name) {
         for (auto& i : frameStack) {
             if (i == name) {
                 return;
@@ -70,14 +70,14 @@ public:
 
     }
 
-    void remove(const UI& name) {
+    void remove(UI name) {
         frameStack.erase(
             std::remove(frameStack.begin(), frameStack.end(), name),
             frameStack.end()
         );
 	}
     // Swaps two different frames, this only works if both aren't active
-    void swapFrame(const UI& name, const UI& name2) {
+    void swapFrame(UI name, UI name2) {
         if (hasFrame(name)) {
 			std::replace(frameStack.begin(), frameStack.end(), name, name2);
         }
@@ -95,18 +95,21 @@ public:
         }
 	}
 
-    void deleteFrame(const UI& name) {
+    void deleteFrame(UI name) {
         frameStack.erase(
             std::remove(frameStack.begin(), frameStack.end(), name),
             frameStack.end()
         );
     }
 
-    void addFrame(std::unique_ptr<Frame> frame, const UI& name) {
+    void addFrame(std::unique_ptr<Frame> frame, UI name) {
         allFrames[name] = std::move(frame);
     }
 
     void resize(int newX, int newY) {
-        masterUI.resize(newY, std::vector<wchar_t>(newX, L' '));
+        masterUI.resize(newY);
+        for (auto& row : masterUI) {
+            row.resize(newX, L' ');
+        }
     }
 };

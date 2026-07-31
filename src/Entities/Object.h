@@ -165,6 +165,7 @@ public:
 
 			if (name == "structure") {
 				targetWorldRegistry.emplace<Structure>(newEntity);
+				targetWorldRegistry.emplace<Health>(newEntity);
 			}
 		}
 

@@ -52,8 +52,7 @@ std::optional<std::vector<ItemLocation>> findAllItemInRange(int xPos, int yPos, 
 
     auto view = registry.view<Position>();
 
-    for (auto entity : view) {
-        const auto& pos = view.get<Position>(entity);
+    for (auto [entity, pos] : view.each()) {
 
         if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY) {
 
@@ -78,14 +77,14 @@ void forEachInRange(int xPos, int yPos, int radius, std::function<void(entt::ent
     auto& objectManager = mainWorld.objectManager;
     auto& registry = mainWorld.registry;
 
-    int r2 = radius * radius;
+    int radiusSq = radius * radius;
 
     for (int dy = -radius; dy <= radius; dy++) {
         int y = yPos + dy;
 
         for (int dx = -radius; dx <= radius; dx++) {
 
-            if (dx * dx + dy * dy > r2) continue;
+            if (dx * dx + dy * dy > radiusSq) continue;
 
             int x = xPos + dx;
             for (auto item : objectManager.getObjectsAt(x, y)) {

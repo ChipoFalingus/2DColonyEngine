@@ -292,6 +292,16 @@ void Tile::getTile(int x, int y) {
         if (x == 1 && y == 0) {
 			addObject_Clear(x, y, "Carpentry Bench");
         }
+
+        if (x == 0 && y == 7) {
+            addObject_Clear(x, y, "Apple Tree");
+        }
+        if (x == -7 && y == 7) {
+            addObject_Clear(x, y, "Orange Tree");
+        }
+        if (x == 7 && y == 7) {
+            addObject_Clear(x, y, "Lemon Tree");
+        }
     }
 
     // Sets starting displays, subject to change

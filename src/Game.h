@@ -3,6 +3,7 @@
 #include "UI/UI.h"
 
 #include "Utility/Heat.h"
+#include "Settings.h"
 #include <entt/entt.hpp>
 
 enum struct Material {
@@ -43,7 +44,7 @@ private:
 	Material selectedMaterial = Material::WOOD;
 
     std::string selectedBuildItem;
-    //Object* selectedCraftItem;
+    SettingsManager settingsManager;
 
 public:
 
@@ -80,6 +81,10 @@ public:
         infoUI = getInfoFrame();
 		harvestUI = getHarvestFrame();
 		plantUI = getPlantFrame();
+    }
+
+    SettingsManager& getSettingsManager() {
+        return settingsManager;
     }
 
     MainMenuUI& getMainMenuUI() {

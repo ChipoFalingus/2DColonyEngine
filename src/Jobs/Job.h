@@ -8,9 +8,6 @@
 #include "Utility/ItemLocation.h"
 
 
-//class Villager;
-//class HeatEmitter;
-//
 enum class JobState {
 	Active,
 	Queued,
@@ -32,9 +29,6 @@ struct Job {
 
 	Job(entt::entity v, entt::entity preferredTool, SkillType skillType)
 		:villager(v), preferredTool(preferredTool), type(skillType) {
-
-		if (preferredTool != entt::null) {
-		}
 	}
 
 	virtual ~Job() = default;
@@ -147,7 +141,7 @@ public:
 	int locX, locY;
 	bool grabbedAllItems = false;
 	bool init = false;
-	std::vector<std::pair<std::pair<int, int>, entt::entity>> reserve;
+	std::vector<ItemLocation> reserve;
 
 	Build(entt::entity v, entt::entity tool, SkillType skillType, std::string itemName, int locX, int locY)
 		: Job(v, tool, skillType), itemName(itemName), locX(locX), locY(locY)
@@ -285,7 +279,7 @@ public:
 	entt::entity staticRecipeEntity = entt::null;
 
 	std::unordered_map<std::string, int> ingredients;
-	std::vector<std::pair<std::pair<int, int>, entt::entity>> reserve;
+	std::vector<ItemLocation> reserve;
 	bool init = false;
 	bool grabbedAllItems = false;
 

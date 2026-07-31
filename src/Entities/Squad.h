@@ -27,6 +27,7 @@ struct SelectedTarget {
 struct SquadMemberComponent {
     entt::entity squadEntity = entt::null;
     SelectedTarget target;
+    float attackClock = 0.0f;
 };
 
 struct SquadController {

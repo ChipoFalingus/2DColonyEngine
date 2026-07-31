@@ -107,11 +107,11 @@ void spawnSquad(int x, int y) {
     controller.groupTargetPos = { x, y };
     controller.state = SquadState::IDLE;
 
-    for (int i = 0; i < 5000; i++) {
+    for (int i = 0; i < 5; i++) {
         entt::entity member = registry.create();
 
-        int spawnX = getRandomInt(-100, 100);
-        int spawnY = getRandomInt(-100, 100);
+        int spawnX = getRandomInt(-20, 20);
+        int spawnY = getRandomInt(-20, 20);
         registry.emplace<Position>(member, spawnX, spawnY);
 
         registry.emplace<Movable>(member, 0.5f, 0.5f, 0.0f, spawnX, spawnY);

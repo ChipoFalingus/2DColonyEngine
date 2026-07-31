@@ -172,10 +172,12 @@
     <ClInclude Include="src\Entities\ObjectManager.h" />
     <ClInclude Include="src\Entities\Squad.h" />
     <ClInclude Include="src\Entities\Villager.h" />
+    <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\Jobs\Job.h" />
     <ClInclude Include="src\Jobs\JobCompare.h" />
     <ClInclude Include="src\Jobs\JobType.h" />
     <ClInclude Include="src\Render\Shader.h" />
+    <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\UI\UI.h" />
     <ClInclude Include="src\UI\UIElements.h" />
     <ClInclude Include="src\UI\UIManager.h" />

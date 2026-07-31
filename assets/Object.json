@@ -15,6 +15,19 @@
                 "character": "o",
                 "color": [ 50, 50, 50 ]
             },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "Stick",
+                        "quantity": 4
+                    }
+                ],
+                "required_bench": "None"
+            },
             "heat_intensity": 50.0,
             "light_intensity": 1.0
         },

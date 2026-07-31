@@ -2,6 +2,7 @@
 #include <string>
 #include "Jobs/Job.h"
 #include "Entities/Villager.h"
+#include "Utility/mathUtils.h"
 
 struct CreatureName {
 	std::string first_name;
@@ -32,6 +33,7 @@ struct TiredNeed {
 
 struct HungerNeed {
 	int hunger = 100;
+	float weight = getRandomFloat(0.0f, 1.0f);
 	float clock;
 	float findFoodClock;
 };
@@ -76,6 +78,9 @@ struct Inventory {
 struct CanAttack {
 	int base_damage = 1;
 	int base_attack_speed = 1.0f;
+
+	ItemLocation target;
+	float checkThreatsClock = 0.0f;
 };
 
 //struct ColonyOwner {

@@ -245,11 +245,13 @@ private:
 	int currentValue;
 	int segments;
 	bool vertical;
+	std::string attachedText;
 public:
-	Slider(int xOffset, int yOffset, int minValue, int maxValue, int currentValue, int segments, bool vertical, Anchor alignment)
+	Slider(int xOffset, int yOffset, int minValue, int maxValue, int currentValue, int segments, bool vertical, std::string attachedText, Anchor alignment)
 		: minValue(minValue), maxValue(maxValue), currentValue(currentValue), segments(segments), vertical(vertical)
 	{
 		this->anchor = anchor;
+		this->attachedText = attachedText;
 		setPosition(xOffset, yOffset);
 	}
 
@@ -279,6 +281,35 @@ public:
 
 			UI[drawY][drawX] = (i == knobIndex) ? L'█' : (vertical ? L'│' : L'─');
 		}
+
+		if (!attachedText.empty()) {
+			if (vertical) {
+				int textY = yOffset + segments;
+				if (textY >= 0 && textY < UI.size()) {
+					for (size_t i = 0; i < attachedText.size(); i++) {
+						int textX = xOffset + i;
+						if (textX >= 0 && textX < UI[textY].size()) {
+							UI[textY][textX] = attachedText[i];
+						}
+					}
+				}
+			}
+			else {
+				int textStartX = xOffset + segments + 1;
+				if (yOffset >= 0 && yOffset < UI.size()) {
+					for (size_t i = 0; i < attachedText.size(); i++) {
+						int textX = textStartX + i;
+						if (textX >= 0 && textX < UI[yOffset].size()) {
+							UI[yOffset][textX] = attachedText[i];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void changeText(std::string newText) {
+		this->attachedText = newText;
 	}
 
 	void update(int mouseX, int mouseY, bool mouseDown) {
@@ -478,13 +509,15 @@ private:
 	bool isChecked = false;
 	bool isClicked = false;
 	bool wasClickedLastFrame = false;
+	std::string attachedText;
 public:
 
-	Checkbox(int xOffset, int yOffset, Anchor anchor)
+	Checkbox(int xOffset, int yOffset, std::string attachedText, Anchor anchor)
 	{
 		this->anchor = anchor;
+		this->attachedText = attachedText;
 		setPosition(xOffset, yOffset);
-		setSize(1, 1);
+		setSize(2 + this->attachedText.size(), 1);
 	}
 
 	bool getChecked() const {
@@ -502,10 +535,17 @@ public:
 	}
 
 	void draw(std::vector<std::vector<wchar_t>>& UI) override {
-		if (yOffset >= 0 && yOffset < UI.size() &&
-			xOffset >= 0 && xOffset < UI[yOffset].size()) {
-			UI[yOffset][xOffset] = isChecked ? 2611 : 2610;
+		for (int i = 0; i < getXLength(); i++) {
+			int currentX = xOffset + i;
+
+			if (yOffset >= 0 && yOffset < UI.size() && currentX >= 0 && currentX < UI[yOffset].size()) {
+				if (i == 0) UI[yOffset][currentX] = isChecked ? 2611 : 2610;
+				else if (i == 1) UI[yOffset][currentX] = L' ';
+				else UI[yOffset][currentX] = attachedText[i - 2];
+				
+			}
 		}
+		
 	}
 
 	void update(int mouseX, int mouseY, bool mouseDown) override {

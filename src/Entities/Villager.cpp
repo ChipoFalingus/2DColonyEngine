@@ -227,7 +227,7 @@ entt::entity spawnVillager(int x, int y) {
 			villagerSkills.setSkillLevel(skillList[i], getRandomInt(10, 13));
 		}
 		else {
-			villagerSkills.setSkillLevel(skillList[i], getRandomInt(1, 3));
+			villagerSkills.setSkillLevel(skillList[i], getRandomInt(10, 13));
 		}
 	}
 
@@ -292,7 +292,7 @@ void updateHunger() {
 	auto view = registry.view<HungerNeed, JobComponent>();
 	for (auto [entity, hunger, jobComponent] : view.each()) {
 		hunger.clock += Clock::deltaTime;
-		if (hunger.clock >= 1.0f) {
+		if (hunger.clock >= 10.0f + (5.0f * hunger.weight)) {
 			hunger.clock = 0.0f;
 			hunger.hunger -= 1;
 			if (hunger.hunger < 0) {
@@ -309,6 +309,10 @@ void updateHunger() {
 			continue;
 		}
 
+		for (Job* i : jobComponent.interrupted) {
+			if (dynamic_cast<FindFood*>(i)) continue;
+		}
+
 		if (hunger.hunger >= 80) continue;
 		auto& pos = mainWorld.registry.get<Position>(entity);
 
@@ -322,8 +326,11 @@ void updateHunger() {
 		if (foodLocation.has_value()) {
 			float score = std::pow(hunger.hunger * 0.01f, 2) * 100.0f;
 
+			if (auto* claim = mainWorld.registry.try_get<Claimable>(foodLocation->item)) {
+				claim->claimed = true;
+			}
+
 			Job* job = new FindFood(entity, entt::null, SkillType::None, foodLocation->x, foodLocation->y, foodLocation->item);
-			auto& c = registry.get<Claimable>(foodLocation->item).claimed = true;
 			
 			job->priority = score;
 
@@ -381,17 +388,12 @@ void updateWork() {
 		}
 
 		if (!work.currentJob) {
-			/*std::cout << "Idle job assigned" << std::endl;
-			Job* job = new Idle(entity, entt::null, SkillType::None);
-			job->priority = 10;
-			work.proposeJob(job);*/
 			continue;
 		}
 
 		work.currentJob->update();
 
 		if (work.currentJob->state == JobState::Completed) {
-			std::cout << "Job completed for villager, deleting job" << std::endl;
 			delete work.currentJob;
 			work.currentJob = nullptr;
 			movable.hasTarget = false;
@@ -402,6 +404,7 @@ void updateWork() {
 			movable.targetX = work.currentJob->x;
 			movable.targetY = work.currentJob->y;
 			movable.hasTarget = true;
+			movable.path.clear();
 		}
 	}
 }
@@ -413,15 +416,18 @@ void updateAttack() {
 	int alertness = 25;
 
 	for (auto [e, attack, job, pos] : view.each()) {
+		attack.checkThreatsClock += Clock::deltaTime;
+		if (attack.checkThreatsClock > 0.5f) {
+			attack.checkThreatsClock = 0.0f;
+			auto closestThreat = findClosestItemType(pos.x, pos.y, alertness, [&](entt::entity entity, entt::registry& reg, int x, int y) {
+				return reg.try_get<Hostile>(entity) && (entity != e);
+				});
 
-		auto closestThreat = findClosestItemType(pos.x, pos.y, alertness, [&](entt::entity entity, entt::registry& reg, int x, int y) {
-			return reg.try_get<Hostile>(entity) && (entity != e);
-			});
-
-		if (closestThreat.has_value()) {
-			Job* attackJob = new Attack(e, entt::null, SkillType::None, closestThreat.value().item);
-			attackJob->priority = 1000;
-			job.proposeJob(attackJob);
+			if (closestThreat.has_value()) {
+				Job* attackJob = new Attack(e, entt::null, SkillType::None, closestThreat.value().item);
+				attackJob->priority = 1000;
+				job.proposeJob(attackJob);
+			}
 		}
 	}
 }

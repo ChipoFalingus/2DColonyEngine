@@ -23,6 +23,17 @@ struct SettingsUI {
 
 	Text* text;
     Button* back;
+
+    Checkbox* v_sync;
+
+    Slider* font_size;
+    Slider* x_text_spacing;
+    Slider* y_text_spacing;
+    Slider* camera_speed;
+
+    Button* apply;
+
+    void update();
 };
 
 SettingsUI getSettingsFrame();

@@ -95,6 +95,4 @@ struct Furniture {
 
 struct Sittable {};
 struct Table {};
-struct Structure {
-	int health = 100;
-};
+struct Structure {};

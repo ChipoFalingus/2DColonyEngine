@@ -23,8 +23,6 @@ void updateSquadMovement(entt::entity squad) {
 		onIdle(squad);
 	}
 	else if (squadView.state == SquadState::ATTACKING) {
-		// do later
-
 		onAttack(squad);
 	}
 
@@ -43,7 +41,7 @@ void onIdle(entt::entity squad) {
 		squadView.idleWanderClock = 0.0f;
 		auto avg = getAvgPos(squad, registry);
 
-		int range = 128;
+		int range = 32;
 		int randX = getRandomInt(avg.first - range, avg.first + range);
 		int randY = getRandomInt(avg.second - range, avg.second + range);
 
@@ -147,8 +145,12 @@ void onAttack(entt::entity squad) {
 		movable.targetY = targetPos.y;
 
 		if (pos.x == targetPos.x && pos.y == targetPos.y) {
-			//auto& structureHealth = registry.get<Structure>(targetEntity);
-			//structureHealth.health--;
+			auto& health = registry.get<Health>(targetEntity);
+			memberComponent.attackClock += Clock::deltaTime;
+			if (memberComponent.attackClock > 0.5f) {
+				memberComponent.attackClock = 0.0f;
+				health.health--;
+			}
 		}
 	}
 }
@@ -156,6 +158,15 @@ void onAttack(entt::entity squad) {
 SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::registry& registry) {
 	auto& squadComponent = registry.get<SquadController>(squad);
 	auto& pos = registry.get<Position>(member);
+
+	auto& memberComponent = registry.get<SquadMemberComponent>(member);
+	if (memberComponent.target.target != entt::null) {
+		SelectedTarget nullTarget;
+		nullTarget.target = entt::null;
+		nullTarget.score = 0;
+		nullTarget.target_population = 0;
+		return nullTarget;
+	};
 
 	int bestScore = 999999;
 	size_t bestIndex = 0;
@@ -265,8 +276,25 @@ std::pair<int, int> getAvgPos(entt::entity entity, entt::registry& registry) {
 }
 
 void updateSquadComponent() {
-	auto view = mainWorld.registry.view<SquadController>();
+	auto& registry = mainWorld.registry;
+	auto view = registry.view<SquadController>();
+	std::vector<entt::entity> empty_squads;
+
+
 	for (auto& i : view) {
 		updateSquadMovement(i);
+		auto& controller = registry.get<SquadController>(i);
+		if (controller.members.empty()) {
+			empty_squads.push_back(i);
+		}
+
+		std::erase_if(controller.members, [&registry](entt::entity e) {
+			auto i = registry.try_get<Health>(e);
+			return !i || i->health <= 0;
+			});
+	}
+
+	for (auto& i : empty_squads) {
+		registry.destroy(i);
 	}
 }

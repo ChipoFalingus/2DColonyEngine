@@ -9,6 +9,7 @@
 #include "Stockpile.h"
 #include "DayCycle.h"
 #include "Entities/ObjectManager.h"
+#include "Utility/ItemLocation.h"
 
 #include "World/Chunk.h"
 #include "Utility/Pair.h"
@@ -165,13 +166,17 @@ public:
         return std::nullopt;
     }
 
-    std::optional<std::pair<std::pair<int, int>, entt::entity>> findUnclaimedItemInAllStockpile(const std::string& name) {
+    std::optional<ItemLocation> findUnclaimedItemInAllStockpile(const std::string& name) {
         for (auto& s : stockpiles) {
             auto it = s.findUnclaimedItemLocation(name);
             if (it) {
                 auto itemEntity = s.retrieveItem(it->first, it->second);
                 if (!registry.try_get<Claimable>(itemEntity)->claimed) {
-					return std::make_pair(*it, itemEntity);
+                    ItemLocation itemLocation;
+                    itemLocation.x = it->first;
+                    itemLocation.y = it->second;
+                    itemLocation.item = itemEntity;
+					return itemLocation;
                 }
             }
         }
