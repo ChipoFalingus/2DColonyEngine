@@ -2,6 +2,7 @@
 #include <iostream>
 #include <random>
 #include <unordered_set>
+#include <glm/glm.hpp>
 
 #include "Vec2.h"
 #include "Dot.h"
@@ -10,6 +11,11 @@ class Creature;
 
 struct Direction {
     int dx, dy;
+};
+
+struct TilePos {
+	int16_t x;
+	int16_t y;
 };
 
 extern std::mt19937 rng;
@@ -33,12 +39,13 @@ std::pair<int, int> findClosestVoronoiDot(std::vector<std::pair<int, int>> dots,
 float hashNoise(int x, int y, int seed);
 
 int heuristic(const std::pair<int, int>& a, const std::pair<int, int>& b);
-std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal, Creature* c = nullptr);
+std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal);
 
 std::vector<std::pair<int, int>> bresenham(int x0, int y0, int x1, int y1);
 bool raycast(int x0, int y0, int x1, int y1);
 
-std::vector<Direction> buildFlowField(int targetX, int targetY, int dim, Creature* c = nullptr);
+std::vector<Direction> buildFlowField(int targetX, int targetY, int dim);
 std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim);
 
 float bellCurve(float current, float preferred, float deviation);
+glm::vec3 normalizeRGB(glm::vec3 v);

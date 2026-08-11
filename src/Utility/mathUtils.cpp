@@ -8,6 +8,7 @@
 #include "Pair.h"
 #include "World/World.h"
 #include "Entities/CreatureComponents.h"
+#include "Utility/ItemUtils.h"
 
 const int PERMUTATION_SIZE = 256;
 int p[PERMUTATION_SIZE * 2];
@@ -109,12 +110,6 @@ std::vector<std::pair<int, int>> createVoronoiMap(int amount, int left, int righ
 	std::vector<std::pair<int, int>> voronoiDots;
 
     for (int i = 0; i < amount; i++) {
-        /*Dot dot;
-        dot.ID = getRandomInt(0, 21000000);
-        dot.pos = { getRandomFloat(-100, 100), getRandomFloat(-100, 100) };
-        dot.direction = { getRandomFloat(-1, 1), getRandomFloat(-1, 1) };
-        dot.speed = { getRandomFloat(0.1f, 1.0f), getRandomFloat(0.1f, 1.0f) };
-        dot.color = sf::Color(getRandomFloat(0.1f, 1.0f), getRandomFloat(0, 255), getRandomFloat(0, 255));*/
 		int x = getRandomInt(left, right);
 		int y = getRandomInt(top, bottom);
 		if (!getTileRef(x, y).walkable) continue;
@@ -163,7 +158,7 @@ int heuristic(const std::pair<int, int>& a, const std::pair<int, int>& b) {
     return abs(a.first - b.first) + abs(a.second - b.second);
 }
 
-std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal, Creature* c) {
+std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int, int> goal) {
 
     if (!getTileRef(goal.first, goal.second).walkable) {
         return {};
@@ -216,23 +211,6 @@ std::vector<std::pair<int, int>> findPath(int startX, int startY, std::pair<int,
 
             Tile& neighborTile = getTileRef(neighborX, neighborY);
             if (!neighborTile.walkable) continue;
-            
-            /*bool isBlockedByGate = false;
-            if (c) {
-                for (auto& i : mainWorld.objectManager.getObjectsAt(neighborX, neighborY)) {
-                    if (i->type == Type::Gate) {
-                        auto g = static_cast<Gate*>(i.get());
-                        if (!g->getWalkability(c)) {
-                            isBlockedByGate = true;
-                            break;
-                        }
-                    }
-                }
-
-            }*/
-
-            //if (isBlockedByGate) continue;
-
 
             int tentativeG = gScore[current] + 1;
 
@@ -325,7 +303,7 @@ char getArrow(int dx, int dy) {
     return '.'; // no direction
 }
 
-std::vector<Direction> buildFlowField(int targetX, int targetY, int dim, Creature* c) {
+std::vector<Direction> buildFlowField(int targetX, int targetY, int dim) {
 
     int half = dim / 2;
 
@@ -446,26 +424,25 @@ std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim
         {1,0}, {-1,0}, {0,1}, {0,-1},
     };
 
-    //for (auto& i : mainWorld.getAllCreatures()) {
+    auto inRange = findAllItemInRange(targetX, targetY, half, [&](entt::entity i, entt::registry& registry, int x, int y) {
+        return registry.any_of<Hostile>(i);
+		});
 
-    //    Zombie* zombie = mainWorld.registry.try_get<Zombie>(i);
-    //    if (!zombie) continue;
+    if (inRange.has_value()) {
+        auto& list = *inRange;
+        for (auto& i : list) {
+            int fx = i.x - cx;
+            int fy = i.y - cy;
 
-    //    auto& pos = 
-
-    //    int fx = z->xPos - cx;
-    //    int fy = z->yPos - cy;
-
-    //    if (fx >= 0 && fy >= 0 && fx < dim && fy < dim) {
-    //        threat[fx][fy] = 100.0f; // max danger
-    //        q.push({ fx, fy });
-    //    }
-    //}
-
-   
+            if (fx >= 0 && fy >= 0 && fx < dim && fy < dim) {
+                threat[fx][fy] = 100.0f;
+                q.push({ fx, fy });
+            }
+        }
+    }
 
     while (!q.empty()) {
-        auto curr = q.front();
+        auto& curr = q.front();
         q.pop();
 
         int x = curr.first;
@@ -498,4 +475,14 @@ std::vector<std::vector<float>> buildThreatMap(int targetX, int targetY, int dim
 
 float bellCurve(float current, float preferred, float deviation) {
     return exp(-pow(current - preferred, 2) / (2 * pow(deviation, 2)));
+}
+
+// Shaders require 0.0f - 1.0f for RGB values
+glm::vec3 normalizeRGB(glm::vec3 v) {
+	v /= 255.0f;
+    return glm::vec3(
+        glm::clamp(v.r, 0.0f, 1.0f),
+        glm::clamp(v.g, 0.0f, 1.0f),
+        glm::clamp(v.b, 0.0f, 1.0f)
+	);
 }

@@ -19,44 +19,23 @@ World& mainWorld = World::get();
 void World::renderWorld() {
     int mapDim = calculateMapSize();
 
-        // Renders all chunks
-        int chunkRadius = (mapDim / chunkDim);
+    // Renders all chunks
+    int chunkRadius = (mapDim / chunkDim);
 
 
-        for (int cy = -chunkRadius; cy < chunkRadius; cy++) {
-            for (int cx = -chunkRadius; cx < chunkRadius; cx++) {
-                loadOrGenerateChunk(cx, cy);
-            }
+    for (int cy = -chunkRadius; cy < chunkRadius; cy++) {
+        for (int cx = -chunkRadius; cx < chunkRadius; cx++) {
+            loadOrGenerateChunk(cx, cy);
         }
+    }
 
-        for (int y = -mapDim; y < mapDim; y++) {
-            for (int x = -mapDim; x < mapDim; x++) {
-                Tile& tile = getTileRef(x, y);
-                tile.getTile(x, y);
-            }
+    for (int y = -mapDim; y < mapDim; y++) {
+        for (int x = -mapDim; x < mapDim; x++) {
+            Tile& tile = getTileRef(x, y);
+            tile.getTile(x, y);
         }
+    }
 }
-
-
-//void addPaths() {
-//	int mapDim = calculateMapSize();
-//    auto points = createVoronoiMap(10, -mapDim, mapDim, -mapDim, mapDim);
-//
-//    for (int i = 0; i < points.size(); i++) {
-//        auto& point1 = points[getRandomInt(0, points.size() - 1)];
-//	    auto& point2 = points[getRandomInt(0, points.size() - 1)];
-//
-//        auto line = findPath(point1.first, point1.second, { point2.first, point2.second });
-//
-//        for (auto& p : line) {
-//            if (!getTileRef(p.first, p.second).containsItem("Path")) {
-//                getTileRef(p.first, p.second).addObject("Path");
-//            }
-//		}
-//	}
-//}
-
-
 
 void createRegions() {
     int size = calculateMapSize();
@@ -107,21 +86,30 @@ void spawnSquad(int x, int y) {
     controller.groupTargetPos = { x, y };
     controller.state = SquadState::IDLE;
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 20; i++) {
         entt::entity member = registry.create();
 
-        int spawnX = getRandomInt(-20, 20);
-        int spawnY = getRandomInt(-20, 20);
-        registry.emplace<Position>(member, spawnX, spawnY);
+        int spawnX = getRandomInt(x-10, x+10);
+        int spawnY = getRandomInt(y-10, y+10);
 
-        registry.emplace<Movable>(member, 0.5f, 0.5f, 0.0f, spawnX, spawnY);
+        if (!getTileRef(spawnX, spawnY).walkable) {
+            i--;
+            continue;
+		}
+
+        registry.emplace<Position>(member, spawnX, spawnY);
+        registry.emplace<Renderable>(member, L'Z', glm::vec3(1.0f, 1.0f, 1.0f));
+
+        registry.emplace<Movable>(member);
 
         registry.emplace<SquadMemberComponent>(member, squadEntity);
 
-        registry.emplace<Renderable>(member, L'Z', glm::vec3(0.0f, 1.0f, 0.0f));
         registry.emplace<Name>(member, "Zombie");
         registry.emplace<Hostile>(member);
-        registry.emplace<Health>(member, 100);
+        registry.emplace<Health>(member, 40);
+
+        registry.emplace<Zombie>(member);
+        mainWorld.objectManager.addObject(spawnX, spawnY, member);
 
         controller.members.push_back(member);
     }
@@ -129,7 +117,7 @@ void spawnSquad(int x, int y) {
 
 // Adds creatures to the world
 void World::addCreatures() {
-    int range = 3;
+    int range = 20;
     for (int i = 0; i < 3; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
@@ -137,11 +125,28 @@ void World::addCreatures() {
         objectManager.addObject(x, y, v);
     }
 
-    for (int i = 0; i < 1; i++) {
-        spawnSquad(getRandomInt(-20, 20), getRandomInt(-20, 20));
+    for (int i = 0; i < 0; i++) {
+        int size = calculateMapSize();
+		int x = getRandomInt(-size, size);
+		int y = getRandomInt(-size, size);
+        if (getTileRef(x,y).walkable)
+            spawnSquad(x, y);
     }
-    
 
+    auto entity = registry.create();
+    registry.emplace<Name>(entity, "Cat");
+    registry.emplace<Position>(entity, 0, 0);
+    registry.emplace<Renderable>(entity, L'c', glm::vec3(0.6f, 0.6f, 0.6f));
+
+    registry.emplace<Movable>(entity, .1f, .1f, 0.0f, 0, 0, false);
+    registry.emplace<Health>(entity, 100);
+    registry.emplace<HungerNeed>(entity, 100);
+    registry.get<HungerNeed>(entity).weight = .0f;
+    registry.emplace<TiredNeed>(entity, 0);
+
+    mainWorld.objectManager.addObject(0, 0, entity);
+
+    registry.emplace<JobComponent>(entity, nullptr);
 }
 
 std::vector<entt::entity> World::getAllVillagers() {
@@ -176,9 +181,7 @@ void World::generateWorld() {
         initLightMap();
         initTemperatureMap();
 
-        auto newMap = Game::getInstance()
-            .getLightManager()
-            .BFSLight();
+        auto newMap = Game::getInstance().getLightManager().BFSLight();
 
         setLightMap(newMap);
 
@@ -277,62 +280,56 @@ void World::addTileToMinimap(Chunk& chunk) {
 // Beefy method that is super slow
 void World::updateMiniMap() {
 
-    for (auto& chunkPair : chunks) {
+    for (auto& [coordinate, chunk] : chunks) {
 
-        std::unordered_map<tileType, int> typeTracker;
-        std::unordered_map<std::string, int> displayTracker;
+        std::map<tileType, int> typeTracker;
+        std::map<std::string, int> displayTracker;
 
         for (int j = 0; j < chunkDim; j++) {
             for (int k = 0; k < chunkDim; k++) {
-                Tile& tile = chunkPair.second.tiles[j][k];
+                Tile& tile = chunk.tiles[j][k];
                 typeTracker[tile.type]++;
 
-                /*if (tile.hasItems) {
-                    const auto& tileObjects = objectManager.getObjectsAt(chunkPair.first.first * chunkDim + j, chunkPair.first.second * chunkDim + k);
-                    if (!tileObjects.empty() && tileObjects[0]) {
-                        std::string display = tileObjects[0]->name;
-                        displayTracker[display]++;
-                    }
-                }*/
-
-                /*if (tile.containsItem("Outpost")) {
-                    displayTracker["Outpost"] = 999;
-                }*/
+                const auto& tileObjects = objectManager.getObjectsAt(coordinate.first * chunkDim + j, coordinate.second * chunkDim + k);
+                if (!tileObjects.empty()) {
+					displayTracker[registry.get<Name>(tileObjects[0]).name]++;
+                }
             }
         }
 
-        tileType type = tileType::GRASS;
-        int maxCount = 0;
-
-        for (auto& pair : typeTracker) {
-            if (pair.second > maxCount) {
-                maxCount = pair.second;
-                type = pair.first;
-            }
-        }
-
-        
         std::string dominantItem = "";
         int maxItemCount = 0;
 
-        for (auto& pair : displayTracker) {
-            if (pair.second > maxItemCount) {
-                maxItemCount = pair.second;
-                dominantItem = pair.first;
+        for (const auto& [string, count] : displayTracker) {
+            if (count > maxItemCount) {
+                maxItemCount = count;
+                dominantItem = string;
             }
         }
 
         int itemThreshold = 16;
 
-        chunkPair.second.dominantDisplay = getTileDisplay(type);
-
-        /*if (maxItemCount > itemThreshold) {
-			auto item = ObjectRegistry::getInstance().get(dominantItem);
-			auto display = VisualRegistry::getInstance().get(dominantItem);
-            chunkPair.second.dominantDisplay = { {display.displayChar}, {display.displayColor} };
+        if (maxItemCount > itemThreshold) {
+			auto display = ObjectRegistry::getInstance().getStaticComponent<Renderable>(dominantItem);
+            if (display) {
+                chunk.dominantDisplay = { {display->character}, {display->color} };
+            }
+            else {
+                chunk.dominantDisplay = { '?', glm::vec3(1.0f, 0.0f, 0.0f)};
+            }
         }
         else {
-            chunkPair.second.dominantDisplay = getTileDisplay(type);
-        }*/
+            tileType dominantTileType{};
+            int maxTileCount = -1;
+
+            for (const auto& [tType, count] : typeTracker) {
+                if (count > maxTileCount) {
+                    maxTileCount = count;
+                    dominantTileType = tType;
+                }
+            }
+
+            chunk.dominantDisplay = getTileDisplay(dominantTileType);
+        }
     }
 }

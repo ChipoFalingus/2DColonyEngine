@@ -15,6 +15,7 @@
 #include "World/TileAnimation.h"
 #include "Entities/CreatureComponents.h"
 #include "Entities/Squad.h"
+#include "Utility/itemUtils.h"
 
 #include "Render/Shader.h"
 #include "Utility/Light.h"
@@ -37,8 +38,6 @@ void setMode(Mode mode);
 
 std::random_device rd;
 int seed;
-
-sf::Clock loadTimer;
 
 static std::vector<float> batchVertices; // flattened: x,y,u,v,r,g,b per vertex
 static const size_t BATCH_VERTEX_SIZE = 7; // floats per vertex
@@ -71,8 +70,6 @@ std::unordered_map<wchar_t, Character> Characters;
 GLuint fontTexture;
 
 std::vector<float> vertices;
-
-std::vector<std::pair<int, int>> activeWater;
 
 struct CustomGlyph {
     FT_ULong codepoint;
@@ -355,7 +352,6 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
             float screenX = (x - numX) * settings.xTextSpacing;
             float screenY = scrHeight - ((y - numY + 1) * settings.yTextSpacing);
 
-            Tile* a = nullptr;
             Chunk* chunk = nullptr;
 
             if (mainWorld.isRendered()) {
@@ -379,12 +375,8 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
                     wchar_t ch = frame[uiY][uiX];
                     if (ch != L'@') {
                         string = ch;
-                        if (ch == L' ') {
-                            color = glm::vec3(0.0f, 0.0f, 0.0f);
-                        }
-                        else {
-                            color = glm::vec3(1.0f, 1.0f, 1.0f);
-                        }
+
+						color = (ch == ' ') ? glm::vec3(0.0f, 0.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
 
                         RenderText(shader, string, screenX, screenY, settings.font_size, color);
                         continue;
@@ -398,22 +390,17 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
             }
             
             if (!viewHeightMap) {
-                charStr = chunk->dominantDisplay.character == L'\0' ? L' ' : chunk->dominantDisplay.character;
-                color = chunk->dominantDisplay.color == sf::Color::White ? glm::vec3(1.0f, 1.0f, 1.0f) :
-                    glm::vec3(
-                        chunk->dominantDisplay.color.r / 255.0f,
-                        chunk->dominantDisplay.color.g / 255.0f,
-                        chunk->dominantDisplay.color.b / 255.0f
-                    );
+                charStr = chunk->dominantDisplay.character;
+                color = chunk->dominantDisplay.color;
             }
             else {
                 charStr = L'■';
-                color = chunk->dominantDisplay.color == sf::Color::White ? glm::vec3(1.0f, 1.0f, 1.0f) :
-                    glm::vec3(
-                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).r / 255.0f,
-                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).g / 255.0f,
-                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).b / 255.0f
-                    );
+                color = chunk->dominantDisplay.color == glm::vec3(1.0f) ? glm::vec3(1.0f, 1.0f, 1.0f) :
+                    normalizeRGB(glm::vec3(
+                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).r,
+                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).g,
+                        altitudeToColor(chunk->avgHeight, -100.0f, 100.0f).b
+                    ));
             }
             
             RenderText(shader, charStr, screenX, screenY, settings.font_size, color);
@@ -421,7 +408,7 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
     }
 }
 
-sf::Color regionColor(int region) {
+glm::vec3 regionColor(int region) {
     // deterministic pseudo-random based on region id
     unsigned int x = static_cast<unsigned int>(region);
 
@@ -434,7 +421,7 @@ sf::Color regionColor(int region) {
     sf::Uint8 g = 80 + (x & 0x7F);         x >>= 8;
     sf::Uint8 b = 80 + (x & 0x7F);
 
-    return sf::Color(r, g, b);
+    return normalizeRGB(glm::vec3(r, g, b));
 }
 
 void drawMap(Shader& shader, const Settings& settings)
@@ -481,7 +468,7 @@ void drawMap(Shader& shader, const Settings& settings)
                     wchar_t ch = frame[uiY][uiX];
                     if (ch != L'@') {
                         //string = std::wstring(1, ch);
-						string = ch;
+                        string = ch;
                         if (ch == L' ') {
                             color = glm::vec3(0.0f, 0.0f, 0.0f);
                         }
@@ -518,15 +505,14 @@ void drawMap(Shader& shader, const Settings& settings)
 
             if (!entityDrawn) {
                 string = tile.character;
-                color = glm::vec3(tile.color.r / 255.0f, tile.color.g / 255.0f, tile.color.b / 255.0f);
+                color = tile.color;
             }
 
-			if (tile.anim.type != animType::NONE) applyAnimation(tile, color, string);
-            
-        
+            if (tile.anim.type != animType::NONE) applyAnimation(tile, color, string);
 
             if (placing) {
-                if (mainWorld.placementMode == PlacementMode::SQUARE) {
+                switch (mainWorld.placementMode) {
+                case (PlacementMode::SQUARE): {
                     int left = std::min(corner.first, mouseTileX);
                     int right = std::max(corner.first, mouseTileX);
                     int top = std::min(corner.second, mouseTileY);
@@ -537,29 +523,36 @@ void drawMap(Shader& shader, const Settings& settings)
                             string = L'+';
                             color = glm::vec3(1.0f, 0.0f, 0.0f);
                         }
-                        /*if (mainWorld.atStockpile(x, y) || !tile.walkable) {
-                            string = L'X';
-                            color = glm::vec3(1.0f, 0.0f, 0.0f);
-                        }
-                        else {
-                            if (y == top || y == bottom || x == left || x == right) {
-                                string = L'+';
-                                color = glm::vec3(1.0f, 0.0f, 0.0f);
-                            }
-                        }*/
                     }
+                    break;
                 }
-                if (mainWorld.placementMode == PlacementMode::LINE) {
-                    if (lineTiles.find(std::make_pair(x, y)) != lineTiles.end()) {
-                        string = L'+';
-                        color = glm::vec3(1.0f, 0.0f, 0.0f);
-                    }
-                }
-                if (mainWorld.placementMode == PlacementMode::SINGLE) {
+                case (PlacementMode::SINGLE): {
                     if (x == mouseTileX && y == mouseTileY) {
                         string = L'X';
                         color = glm::vec3(1.0f, 0.0f, 0.0f);
                     }
+                    break;
+                }
+                case (PlacementMode::LINE): {
+                    if (lineTiles.find(std::make_pair(x, y)) != lineTiles.end()) {
+                        string = L'+';
+                        color = glm::vec3(1.0f, 0.0f, 0.0f);
+                    }
+                    break;
+
+                }
+                case (PlacementMode::FILLED_SQUARE): {
+                    int left = std::min(corner.first, mouseTileX);
+                    int right = std::max(corner.first, mouseTileX);
+                    int top = std::min(corner.second, mouseTileY);
+                    int bottom = std::max(corner.second, mouseTileY);
+
+                    if (x >= left && x <= right && y >= top && y <= bottom) {
+                        string = L'+';
+                        color = glm::vec3(1.0f, 0.0f, 0.0f);
+                    }
+                    break;
+                }
                 }
             }
 
@@ -589,8 +582,49 @@ void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager
     auto view = registry.view<Position, Movable>();
 
     for (auto [entity, pos, movable] : view.each()) {
-        if (!movable.hasTarget) continue;
 
+        if (movable.dirX != 0 || movable.dirY != 0) {
+			movable.hasTarget = false;
+            movable.movementClock += deltaTime;
+
+            if (movable.movementClock >= movable.currentSpeed) {
+                movable.movementClock = 0.0f;
+                int sepX = 0, sepY = 0;
+                forEachInRange(pos.x, pos.y, 3, [&](entt::entity otherEntity, entt::registry& reg, int x, int y) {
+                    if (otherEntity == entity) return;
+                    if (!reg.try_get<SquadMemberComponent>(otherEntity)) return;
+                    auto& otherPos = reg.get<Position>(otherEntity);
+                    int dx = pos.x - otherPos.x;
+                    int dy = pos.y - otherPos.y;
+                    if (dx * dx + dy * dy <= 3) {
+                        sepX += dx;
+                        sepY += dy;
+                    }
+                    });
+
+                int pushX = (sepX > 0) - (sepX < 0);
+                int pushY = (sepY > 0) - (sepY < 0);
+
+                int stepX = std::clamp(movable.dirX + pushX, -1, 1);
+                int stepY = std::clamp(movable.dirY + pushY, -1, 1);
+
+                int newX = pos.x + stepX;
+                int newY = pos.y + stepY;
+
+                if (getTileRef(newX, newY).walkable) {
+                    objectManager.removeItem(pos.x, pos.y, entity);
+                    objectManager.addObject(newX, newY, entity);
+                    pos.x = newX;
+                    pos.y = newY;
+                }
+
+                movable.dirX = 0;
+                movable.dirY = 0;
+                continue;
+            }
+        }
+
+        if (!movable.hasTarget) continue;
         movable.movementClock += deltaTime;
 
         if (movable.movementClock >= movable.currentSpeed) {
@@ -608,9 +642,6 @@ void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager
             if (!movable.path.empty()) {
                 int newX = movable.path[0].first;
                 int newY = movable.path[0].second;
-
-                //int newX = pos.x + dx;
-                //int newY = pos.y + dy;
 
                 objectManager.removeItem(pos.x, pos.y, entity);
                 objectManager.addObject(newX, newY, entity);
@@ -638,10 +669,9 @@ void updateCropSystem(entt::registry& registry, ObjectManager& objectManager, fl
             crop.growthStage++;
             if (crop.growthStage >= crop.growthStageMax) {
 
-                auto& registry = ObjectRegistry::getInstance().getStaticRegistry();
-				entt::entity staticCrop = ObjectRegistry::getInstance().getStaticObject(name.name);
-                if (auto drop = registry.try_get<Harvestable>(staticCrop)) {
-                    registry.emplace_or_replace<Harvestable>(entity, drop->produce, drop->requiredSkill);
+				auto* staticCrop = ObjectRegistry::getInstance().getStaticComponent<Harvestable>(name.name);
+                if (staticCrop) {
+                    registry.emplace_or_replace<Harvestable>(entity, staticCrop->produce, staticCrop->requiredSkill);
                 }
 
                 crop.growthStage = crop.growthStageMax;
@@ -684,8 +714,25 @@ void updateHealth(entt::registry& registry, ObjectManager& objectManager, float 
     }
 
     for (auto entity : dead) {
+        if (auto job_component = registry.try_get<JobComponent>(entity)) {
+            if (job_component->currentJob) {
+                job_component->currentJob->villager = entt::null;
+            }
+			job_component->clearInterruptedJobs();
+        }
+
         auto& pos = registry.get<Position>(entity);
         getTileRef(pos.x, pos.y).removeObject(pos.x, pos.y, entity);
+    }
+}
+
+void updateLightSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, LightEmitter>();
+    for (auto [entity, pos, light] : view.each()) {
+        if (!light.addedToLightMap) {
+			light.addedToLightMap = true;
+			Game::getInstance().getLightManager().addLight(glm::vec2(pos.x, pos.y), glm::vec3(1.0f), 10.0f, light.light_intensity, -1.0f);
+        }
     }
 }
 
@@ -773,7 +820,7 @@ int main() {
 
     sf::Music music;
 
-    if (!music.openFromFile("assets/menumusic.mp3")) {
+    if (!music.openFromFile("assets/music.mp3")) {
         std::cout << "Music failed to load!" << std::endl;
     }
 
@@ -847,6 +894,7 @@ int main() {
 
         if (mainWorld.isCurrentlyRendering()) {
             LoadingUI& ui = Game::getInstance().getLoadingUI();
+            ui.panel->setSize(xFrustum, yFrustum);
             int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
 
             if (numChunks > mainWorld.getChunksRendered()) {
@@ -875,6 +923,7 @@ int main() {
 			updateProduceSystem(mainWorld.registry, mainWorld.objectManager, dt);
 			updateCropSystem(mainWorld.registry, mainWorld.objectManager, dt);
             updateHealth(mainWorld.registry, mainWorld.objectManager, dt);
+			updateLightSystem(mainWorld.registry, mainWorld.objectManager, dt);
 
             updateSquadComponent();
 

@@ -60,7 +60,7 @@ class Tile {
 private:
 public:
     wchar_t character;
-    sf::Color color;
+    glm::vec3 color;
 
     uint8_t water;
 
@@ -70,8 +70,6 @@ public:
     bool walkable = false;
     bool blocked = false;
 	bool markedForHarvest = false;
-
-    bool hasItems = false;
 
     tileType type;
 

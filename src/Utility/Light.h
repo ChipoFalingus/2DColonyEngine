@@ -5,11 +5,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include "Globals.h"
-#include "mathUtils.h"
-#include "Tile.h"
-#include "World.h"
-
 // Needs to be optimized and more robust
 
 // Types of lights:
@@ -105,7 +100,7 @@ public:
         }
     }
 
-    glm::vec3 calculateLightLevel(int x, int y) {
+    /*glm::vec3 calculateLightLevel(int x, int y) {
         glm::vec3 lightColor(0.1f);
 
         for (auto& light : lights) {
@@ -143,7 +138,7 @@ public:
         }
 
         return glm::min(lightColor, glm::vec3(1.0f));
-    }
+    }*/
 
 
     // This should update a global light map

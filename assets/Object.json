@@ -1,15 +1,6 @@
 ﻿{
     "objects": [
         {
-            "name": "Outpost",
-            "visual": {
-                "character": "0",
-                "color": [ 255, 0, 0 ]
-            },
-            "cooldown": 2.0,
-            "radius": 5.0
-        },
-        {
             "name": "Fire Pit",
             "visual": {
                 "character": "o",
@@ -101,13 +92,6 @@
             }
         },
         {
-            "name": "Flower",
-            "visual": {
-                "character": "*",
-                "color": [ 255, 255, 255 ]
-            }
-        },
-        {
             "name": "Pine Cone",
             "visual": {
                 "character": "&",
@@ -174,27 +158,6 @@
             }
         },
         {
-            "name": "Gold",
-            "visual": {
-                "character": "G",
-                "color": [ 255, 255, 0 ]
-            }
-        },
-        {
-            "name": "Emerald",
-            "visual": {
-                "character": "E",
-                "color": [ 80, 200, 120 ]
-            }
-        },
-        {
-            "name": "Diamond",
-            "visual": {
-                "character": "D",
-                "color": [ 91, 185, 226 ]
-            }
-        },
-        {
             "name": "Copper",
             "visual": {
                 "character": "C",
@@ -210,27 +173,10 @@
             "visual": {
                 "character": "C",
                 "color": [ 54, 69, 79 ]
-            }
-        },
-        {
-            "name": "Sapphire",
-            "visual": {
-                "character": "S",
-                "color": [ 0, 0, 255 ]
-            }
-        },
-        {
-            "name": "Ruby",
-            "visual": {
-                "character": "R",
-                "color": [ 255, 0, 0 ]
-            }
-        },
-        {
-            "name": "RAINBOW",
-            "visual": {
-                "character": "o",
-                "color": [ 255, 255, 255 ]
+            },
+            "drop": {
+                "item": "Coal",
+                "skill": "Mining"
             }
         },
         {
@@ -243,7 +189,7 @@
                 "ingredients": [
                     {
                         "item": "Wood",
-                        "quantity": 2
+                        "quantity": 1
                     }
                 ],
                 "required_bench": "Carpentry Bench"
@@ -272,7 +218,10 @@
         },
         {
             "name": "Wooden Wall",
-            "structure": "",
+            "structure": {
+                "health": 15,
+                "flammable": true
+            },
             "visual": {
                 "character": "%",
                 "color": [ 100, 65, 23 ]
@@ -299,6 +248,15 @@
             "visual": {
                 "character": ".",
                 "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -320,6 +278,11 @@
             "visual": {
                 "character": "B",
                 "color": [ 100, 65, 23 ]
+            },
+            "furniture": {
+                "sittable": false,
+                "has_surface": false,
+                "can_sleep_on": true
             },
             "recipe": {
                 "ingredients": [
@@ -370,6 +333,15 @@
             "visual": {
                 "character": 960,
                 "color": [ 128, 128, 128 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 6
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -377,6 +349,15 @@
             "visual": {
                 "character": "+",
                 "color": [ 46, 46, 46 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 6
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -384,6 +365,15 @@
             "visual": {
                 "character": 960,
                 "color": [ 135, 135, 135 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Carpentry Bench"
             }
         },
         {
@@ -394,7 +384,8 @@
             },
             "furniture": {
                 "sittable": true,
-                "has_surface": false
+                "has_surface": false,
+                "can_sleep_on": false
             },
             "recipe": {
                 "ingredients": [
@@ -414,7 +405,8 @@
             },
             "furniture": {
                 "sittable": false,
-                "has_surface": true
+                "has_surface": true,
+                "can_sleep_on": false
             },
             "recipe": {
                 "ingredients": [
@@ -431,6 +423,20 @@
             "visual": {
                 "character": "h",
                 "color": [ 128, 128, 128 ]
+            },
+            "furniture": {
+                "sittable": true,
+                "has_surface": false,
+                "can_sleep_on": false
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Stone Cutter"
             }
         },
         {
@@ -441,7 +447,17 @@
             },
             "furniture": {
                 "sittable": false,
-                "has_surface": true
+                "has_surface": true,
+                "can_sleep_on": false
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 4
+                    }
+                ],
+                "required_bench": "Stone Cutter"
             }
         },
         {
@@ -701,6 +717,15 @@
                 "character": "⌐",
                 "color": [ 135, 135, 135 ]
             },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Gun Bench"
+            },
             "max_ammo": 7,
             "damage": 10,
             "range": 10.0,
@@ -712,6 +737,15 @@
             "visual": {
                 "character": "-",
                 "color": [ 135, 135, 135 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Gun Bench"
             },
             "max_ammo": 5,
             "damage": 4,
@@ -725,6 +759,15 @@
                 "character": "╬",
                 "color": [ 135, 135, 135 ]
             },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Gun Bench"
+            },
             "max_ammo": 30,
             "damage": 7,
             "range": 20.0,
@@ -737,6 +780,15 @@
                 "character": "M",
                 "color": [ 135, 135, 135 ]
             },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Gun Bench"
+            },
             "max_ammo": 200,
             "damage": 10,
             "range": 40.0,
@@ -748,6 +800,15 @@
             "visual": {
                 "character": "A",
                 "color": [ 135, 135, 135 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "required_bench": "Gun Bench"
             },
             "max_ammo": 5,
             "damage": 70,
@@ -762,7 +823,16 @@
                 "color": [ 150, 75, 0 ]
             },
             "heat_intensity": 20.0,
-            "light_intensity": 0.6
+            "light_intensity": 0.6,
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Stick",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "None"
+            }
         }
 
     ]

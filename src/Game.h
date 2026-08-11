@@ -73,9 +73,9 @@ public:
         temperatureUI = getTemperatureFrame();
         structureUI = getStructureFrame();
         carpentryBenchUI = getCarpentryBenchFrame();
-		/*stoneCutterUI = getStoneCutterFrame();
-		anvilUI = getAnvilFrame();
-		gunBenchUI = getGunBenchFrame();*/
+		stoneCutterUI = getStoneCutterFrame();
+        anvilUI = getAnvilFrame();
+        gunBenchUI = getGunBenchFrame();
         stockpileUI = getStockpileFrame();
         villagerInfoUI = getVillagerInfoFrame();
         infoUI = getInfoFrame();

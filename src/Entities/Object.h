@@ -49,6 +49,15 @@ public:
 		return entt::null;
 	}
 
+	template<typename T>
+	T* getStaticComponent(const std::string& name) {
+		auto entity = getStaticObject(name);
+		if (entity == entt::null) {
+			return nullptr;
+		}
+		return &staticRegistry.get<T>(entity);
+	}
+
 	entt::entity createInstance(const std::string& name, entt::registry& targetWorldRegistry) {
 		auto it = blueprintMap.find(name);
 		if (it == blueprintMap.end()) {
@@ -161,11 +170,26 @@ public:
 				if (data.at("has_surface").get<bool>()) {
 					targetWorldRegistry.emplace<Table>(newEntity);
 				}
+				if (data.at("can_sleep_on").get<bool>()) {
+					targetWorldRegistry.emplace<Bed>(newEntity);
+				}
 			}
 
 			if (name == "structure") {
+				int health = data.at("health").get<int>();
+				bool isFlammable = data.at("flammable").get<bool>();
 				targetWorldRegistry.emplace<Structure>(newEntity);
-				targetWorldRegistry.emplace<Health>(newEntity);
+				targetWorldRegistry.emplace<Health>(newEntity, health);
+			}
+
+			if (name == "heat_intensity") {
+				float heatIntensity = data.get<float>();
+				targetWorldRegistry.emplace<HeatEmitter>(newEntity, heatIntensity);
+			}
+
+			if (name == "light_intensity") {
+				float lightIntensity = data.get<float>();
+				targetWorldRegistry.emplace<LightEmitter>(newEntity, lightIntensity);
 			}
 		}
 

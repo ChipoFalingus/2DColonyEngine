@@ -39,7 +39,9 @@ struct Nutritional {
 struct ProduceSpawner {
 	std::string produce;
 	float produceClock;
-	float productionTime = 5.0f;	
+	float productionTime = 5.0f;
+
+	bool isProducing = false;
 };
 
 struct Crop {
@@ -51,7 +53,6 @@ struct Crop {
 
 	int growthStage;
 	int growthStageMax;
-
 };
 
 struct HeatEmitter {
@@ -60,6 +61,7 @@ struct HeatEmitter {
 
 struct LightEmitter {
 	float light_intensity;
+	bool addedToLightMap = false;
 };
 
 struct FuelBurner {
@@ -96,3 +98,8 @@ struct Furniture {
 struct Sittable {};
 struct Table {};
 struct Structure {};
+struct Bed {
+	bool i;
+};
+
+struct BlueprintTag {};

@@ -14,6 +14,8 @@ std::vector<Job*> JobManager::JobList;
 bool isAtTile(int xPos, int yPos, int xLoc, int yLoc);
 std::pair<int, int> findClosestAdjTile(int xPos, int yPos, int xTile, int yTile);
 std::vector<ItemLocation> findIngredientsForJob(const std::unordered_map<std::string, int>& ingredients);
+void removeBlueprint(int x, int y);
+
 
 struct Bid {
 	Job* job;
@@ -35,6 +37,9 @@ void JobManager::assignJobs() {
 				continue;
 
 			if (job->state != JobState::Queued)
+				continue;
+
+			if (job_component.panicClock < job_component.panicDuration)
 				continue;
 
 			int score = 0;
@@ -87,7 +92,7 @@ void JobManager::update() {
 	for (Job* job : JobList) {
 		if (!job) continue;
 		if (job->state == JobState::Waiting) {
-			//job->waitingUpdate();
+			evaluateJobDanger(job);
 		}
 	}
 
@@ -112,7 +117,6 @@ void JobManager::update() {
 				jobComponent->currentJob = nullptr;
 			}
 
-			//delete job;
 			JobList.erase(JobList.begin() + i);
 		}
 		else {
@@ -205,11 +209,7 @@ void Build::update() {
 		y = adjLoc.second;
 
 		if (isAtTile(pos->x, pos->y, xPos, yPos)) {
-			if (auto s = mainWorld.atStockpile(xPos, yPos)) {
-				//villager->pickUpItem(itemObj.second, xPos, yPos, s);
-				getTileRef(xPos, yPos).removeObject(xPos, yPos, itemObj.item);
-			}
-
+			getTileRef(xPos, yPos).removeObject(xPos, yPos, itemObj.item);
 			reserve.erase(reserve.begin());
 
 			if (reserve.empty()) {
@@ -227,10 +227,8 @@ void Build::update() {
 
 		if (isAtTile(pos->x, pos->y, loc.first, loc.second)) {
 
-			auto name = ObjectRegistry::getInstance().getStaticRegistry().try_get<Name>(staticRecipeEntity);
-
-			getTileRef(loc.first, loc.second).addObject(loc.first, loc.second, name->name);
-
+			removeBlueprint(loc.first, loc.second);
+			getTileRef(loc.first, loc.second).addObject(loc.first, loc.second, itemName);
 			state = JobState::Completed;
 		}
 	}
@@ -307,7 +305,7 @@ void Idle::update() {
 	int range = 10;
 
 	if (!initialized) {
-		movable.currentSpeed = movable.speed * 5.0f;
+		//movable.currentSpeed = movable.speed * 5.0f;
 
 		int nx = getRandomInt(pos.x - range, pos.x + range);
 		int ny = getRandomInt(pos.y - range, pos.y + range);
@@ -393,9 +391,6 @@ void Plant::update() {
 		plantClock += Clock::deltaTime;
 
 		if (plantClock > 3.0f && pos->x == x && pos->y == y) {
-			std::cout << "Planting seed at " << locX << ", " << locY << std::endl;
-			auto s = ObjectRegistry::getInstance().getStaticObject(seed);
-
 			tile.addObject(locX, locY, seed);
 			state = JobState::Completed;
 			
@@ -411,12 +406,14 @@ void Plant::update() {
 void Attack::update() {
 	attackClock += Clock::deltaTime;
 
-	float range = 10.0f;
-	float attackCooldown = 0.7f;
-	int dmg = 10;
+	auto& attackComponent = mainWorld.registry.get<CombatComponent>(villager);
 
-	if (auto inventory = mainWorld.registry.try_get<Inventory>(villager)) {
-		if (auto gun = mainWorld.registry.try_get<Gun>(inventory->itemInHand)) {
+	float range;
+	float attackCooldown;
+	int dmg;
+
+	if (attackComponent.equippedWeapon != entt::null) {
+		if (auto gun = mainWorld.registry.try_get<Gun>(attackComponent.equippedWeapon)) {
 			range = gun->range;
 			attackCooldown = gun->fire_rate;
 			dmg = gun->damage;
@@ -481,109 +478,88 @@ void Attack::update() {
 	}
 }
 
-//void Retreat::update() {
-//	// Sees if there is cover nearby (if they dont have a weapon, this part isnt important)
-//
-//	// Sees if there are safe spaces (basically looking for cover for colonists with no weapon)
-//
-//	// Sees if there are nearby allies with good weapons and health (tune to make colonists not so clingy, also this is a last last last resort)
-//
-//	// Extra stuff:
-//	// Could have them search for a weapon to join the fight
-//
-//
-//	int safeScore = -1;
-//
-//	if (!villager->threat || villager->threat->dead) {
-//		state = JobState::Completed;
-//		return;
-//
-//	}
-//
-//
-//	float dx = villager->xPos - villager->threat->xPos;
-//	float dy = villager->yPos - villager->threat->yPos;
-//
-//	float distance = sqrt(dx * dx + dy * dy);
-//	int dim = 64;
-//
-//	auto threatMap = buildThreatMap(villager->xPos, villager->yPos, dim);
-//
-//	int startX = villager->xPos - dim / 2;
-//	int startY = villager->yPos - dim / 2;
-//
-//	float bestScore = 99999.0f;
-//	std::pair<int, int> bestMove = { 0, 0 };
-//
-//	std::vector<std::pair<int, int>> dirs = {
-//		{1,0}, {0,1}, {-1,0}, {0,-1}
-//	};
-//
-//	std::shuffle(dirs.begin(), dirs.end(), rng);
-//
-//	bool foundMove = false;
-//	int cx = villager->xPos - startX;
-//	int cy = villager->yPos - startY;
-//
-//	for (auto& i : dirs) {
-//		int nx = villager->xPos + i.first;
-//		int ny = villager->yPos + i.second;
-//
-//		int fx = nx - startX;
-//		int fy = ny - startY;
-//
-//		if (fx < 0 || fy < 0 || fx >= dim || fy >= dim)
-//			continue;
-//
-//		if (!getTileRef(nx, ny).walkable)
-//			continue;
-//
-//		float score = threatMap[fx][fy];
-//
-//		if (villager->lastMove != i) {
-//			score += 0.5f;
-//		}
-//
-//		score += (villager->xPos + villager->yPos) / 10.0f;
-//
-//		if (score < bestScore) {
-//			bestScore = score;
-//			bestMove = i;
-//			foundMove = true;
-//		}
-//	}
-//
-//	float stayScore = threatMap[cx][cy];
-//
-//	if (stayScore < bestScore) {
-//		bestMove = { 0,0 };
-//	}
-//
-//	if (foundMove && villager->moveClock > villager->speed) {
-//		villager->lastTargetX = villager->xPos;
-//		villager->lastTargetY = villager->yPos;
-//
-//		villager->xPos += bestMove.first;
-//		villager->yPos += bestMove.second;
-//
-//		villager->lastMove = bestMove;
-//		villager->moveClock = 0.0f;
-//	}
-//
-//	if (!villager->threat || villager->threat->dead) {
-//		//std::cout << "Retreated" << std::endl;
-//		state = JobState::Completed;
-//	}
-//}
-//
+void Retreat::update() {
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	
+	if (!init) {
+		auto& jobComponent = mainWorld.registry.get<JobComponent>(villager);
+		jobComponent.panicClock = 0.0f;
+		jobComponent.panicDuration = 10.0f;
 
+		jobComponent.clearInterruptedJobs();
+
+		init = true;
+	}
+
+	if (!foundPath) {
+		auto& combatComponent = mainWorld.registry.get<CombatComponent>(villager);
+
+		int dim = 64;
+		int half = dim / 2;
+		std::vector<std::vector<float>> threatMap = buildThreatMap(pos.x, pos.y, dim);
+
+		float bestScore = std::numeric_limits<float>::max();
+		std::pair<int, int> bestLocation = { pos.x, pos.y };
+
+		for (int i = -half; i < half; i++) {
+			for (int j = -half; j < half; j++) {
+				int worldX = pos.x + i;
+				int worldY = pos.y + j;
+
+				int localX = i + half;
+				int localY = j + half;
+
+				int dx = std::abs(worldX - pos.x);
+				int dy = std::abs(worldY - pos.y);
+
+				auto& targetPos = mainWorld.registry.get<Position>(threat);
+				int distToThreat = std::abs(targetPos.x - worldX) + std::abs(targetPos.y - worldY);
+
+				int distFromSelf = std::abs(i) + std::abs(j);
+
+				float score = threatMap[localX][localY];
+				score -= distToThreat * 0.5f;  
+				score += distFromSelf * 0.05f;
+
+				if (score < bestScore) {
+					bestScore = score;
+					bestLocation = { worldX, worldY };
+				}
+			}
+		}
+
+		x = bestLocation.first;
+		y = bestLocation.second;
+
+		foundPath = true;
+	}
+
+	if (pos.x == x && pos.y == y) {
+		foundPath = false;
+	}
+
+	auto closestThreat = findClosestItemType(pos.x, pos.y, 50, [&](entt::entity entity, entt::registry& reg, int x, int y) {
+		return reg.try_get<Hostile>(entity) && (entity != villager);
+		});
+
+	if (!closestThreat.has_value()) {
+		state = JobState::Completed;
+	}
+}
 
 void Sleep::update() {
 	mainWorld.registry.get<JobComponent>(villager).activity_state = ActivityState::Sleeping;
+	auto& tiredComponent = mainWorld.registry.get<TiredNeed>(villager);
 
 	auto& pos = mainWorld.registry.get<Position>(villager);
-	x = pos.x;
-	y = pos.y;
+	if (tiredComponent.bedLocation.has_value()) {
+		x = tiredComponent.bedLocation->first;
+		y = tiredComponent.bedLocation->second;
+	}
+	else {
+		x = pos.x;
+		y = pos.y;
+	}
 
 	Tile& tile = getTileRef(x, y - 1);
 
@@ -596,7 +572,7 @@ void Sleep::update() {
 		tile.setAnimType(NONE);
 
 		sleeping = false;
-		mainWorld.registry.get<TiredNeed>(villager).tiredness = 0;
+		tiredComponent.tiredness = 0;
 		state = JobState::Completed;
 	}
 }
@@ -769,7 +745,6 @@ void FindFood::update() {
 		y = closestAdj.second;
 
 		if (isAtTile(pos.x, pos.y, tX, tY)) {
-			//getTileRef(tX, tY).removeObject(tX, tY, food);
 			mainWorld.registry.remove<Position>(food);
 			mainWorld.objectManager.removeItem(tX, tY, food);
 
@@ -890,6 +865,80 @@ std::vector<ItemLocation> findIngredientsForJob(const std::unordered_map<std::st
 }
 
 
+void Talk::update() {
+
+	if (!mainWorld.registry.valid(other)) {
+		state = JobState::Completed;
+		return;
+	}
+	auto& jobComponent = mainWorld.registry.get<JobComponent>(villager);
+	auto& otherJobComponent = mainWorld.registry.get<JobComponent>(other);
+
+	jobComponent.activity_state = ActivityState::Socializing;
+	otherJobComponent.activity_state = ActivityState::Socializing;
+
+	if (!dynamic_cast<Talk*>(otherJobComponent.currentJob)) {
+		state = JobState::Completed;
+		return;
+	}
+
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	auto& otherPos = mainWorld.registry.get<Position>(other);
+
+	switch (talkState) {
+	case (State::WalkTo): {
+		int dx = std::abs(pos.x - otherPos.x);
+		int dy = std::abs(pos.y - otherPos.y);
+
+		if (dx + dy <= 4) {
+			x = pos.x;
+			y = pos.y;
+
+			talkState = State::TalkTo;
+		}
+		else {
+			auto adj = findClosestAdjTile(pos.x, pos.y, otherPos.x, otherPos.y);
+			x = adj.first;
+			y = adj.second;
+		}
+
+		break;
+	}
+	case (State::TalkTo): {
+		Tile& tile = getTileRef(pos.x, pos.y - 1);
+		Tile& otherTile = getTileRef(otherPos.x, otherPos.y - 1);
+		tile.setAnimType(SPEECH_BUBBLE);
+
+		clock += Clock::deltaTime;
+
+		auto& socialNeed = mainWorld.registry.get<Social>(villager);
+		auto& otherSocialNeed = mainWorld.registry.get<Social>(other);
+
+		if (!dynamic_cast<Talk*>(otherJobComponent.currentJob)) {
+			otherTile.setAnimType(NONE);
+			tile.setAnimType(NONE);
+
+			socialNeed.social = 100;
+			state = JobState::Completed;
+		}
+
+		if (clock > 10.0f) {
+			clock = 0.0f;
+			socialNeed.social = 100;
+			otherSocialNeed.social = 100;
+
+			otherTile.setAnimType(NONE);
+			tile.setAnimType(NONE);
+
+			otherJobComponent.currentJob->state = JobState::Completed;
+			state = JobState::Completed;
+		}
+
+		break;
+	}
+	}
+}
+
 bool isAtTile(int xPos, int yPos, int xLoc, int yLoc) {
     int dx = xPos - xLoc;
     int dy = yPos - yLoc;
@@ -912,4 +961,29 @@ std::pair<int, int> findClosestAdjTile(int xPos, int yPos, int xTile, int yTile)
 	}
 
 	return closestAdj;
+}
+
+void removeBlueprint(int x, int y) {
+	Tile& tile = getTileRef(x, y);
+	for (auto& item : mainWorld.objectManager.getObjectsAt(x, y)) {
+		if (mainWorld.registry.any_of<BlueprintTag>(item)) {
+			mainWorld.registry.remove<Position>(item);
+			mainWorld.objectManager.removeItem(x, y, item);
+			tile.removeObject(x, y, item);
+			std::cout << "Removed blueprint at " << x << ", " << y << std::endl;
+			break;
+		}
+	}
+}
+
+void evaluateJobDanger(Job* job) {
+	auto closestThreat = findClosestItemType(job->x, job->y, 50, [&](entt::entity entity, entt::registry& reg, int x, int y) {
+		return reg.try_get<Hostile>(entity) && (entity != job->villager);
+		});
+	if (closestThreat.has_value()) {
+		job->state = JobState::Waiting;
+	}
+	else {
+		job->state = JobState::Queued;
+	}
 }

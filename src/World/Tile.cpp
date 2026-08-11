@@ -177,9 +177,6 @@ void Tile::addObject_Clear(int x, int y, const std::string item) {
     auto i = ObjectRegistry::getInstance().createInstance(item, mainWorld.registry);
     mainWorld.registry.emplace<Position>(i, x, y);
     mainWorld.objectManager.addObject(x, y, i);
-
-    hasItems = true;
-    //topItem = i;
 }
 
 void Tile::addObject(int x, int y, const std::string item, bool addToMove) {
@@ -190,9 +187,6 @@ void Tile::addObject(int x, int y, const std::string item, bool addToMove) {
     if (addToMove) {
 		mainWorld.addItemToMove(i, x, y);
 	}
-
-    hasItems = true;
-    //topItem = i;
 }
 
 void Tile::removeObject(int x, int y, entt::entity item) {
@@ -203,27 +197,15 @@ void Tile::removeObject(int x, int y, entt::entity item) {
         s->removeItem(x, y, item);
     }
 
-    auto itemsOnTile = mainWorld.objectManager.getObjectsAt(x, y);
-    if (itemsOnTile.empty()) {
-        hasItems = false;
-    }
+    auto& itemsOnTile = mainWorld.objectManager.getObjectsAt(x, y);
 }
 
 void Tile::getTile(int x, int y) {
-    //ObjectManager* manager = &mainWorld.objectManager;
-
-    // Item adders
-
-    // Probably a better way than a giant if-else chain
 	float scale = 0.01f;
 
-	float emeraldNoise = perlin(x * scale + 200.0f, y * scale + 200.0f);
-    float goldNoise = perlin(x * scale + 400.0f, y * scale + 400.0f);
-    float rubyNoise = perlin(x * scale + 600.0f, y * scale + 600.0f);
-    float sapphireNoise = perlin(x * scale + 800.0f, y * scale + 800.0f);
-    float rainbowNoise = perlin(x * scale + 1000.0f, y * scale + 1000.0f);
-
-    float ironNoise = perlin(x * scale, y * scale);
+	float coalNoise = perlin(x * scale + 200.0f, y * scale + 200.0f);
+    float ironNoise = perlin(x * scale + 400.0f, y * scale + 400.0f);
+    float copperNoise = perlin(x * scale + 600.0f, y * scale + 600.0f);
 
 	float oakNoise = perlin(x * 0.005f + 5000.0f, y * 0.005f + 5000.0f);
     float spruceNoise = perlin(x * 0.005f + 50000.0f, y * 0.005f + 50000.0f);
@@ -241,12 +223,18 @@ void Tile::getTile(int x, int y) {
         }
 
         if (oakNoise > 0.3f || spruceNoise > 0.3f) {
-            if (oakNoise > 0.3f /*&& altitude < waterLevel + 70.0f*/) {
+            if (oakNoise > 0.3f) {
                 if (r < 0.1f) {
                     addObject_Clear(x, y, "Oak Tree");
                 }
                 else if (r < 0.101f) {
                     addObject_Clear(x, y, "Apple Tree");
+                }
+                else if (r < 0.102f) {
+                    addObject_Clear(x, y, "Orange Tree");
+                }
+                else if (r < 0.103f) {
+                    addObject_Clear(x, y, "Lemon Tree");
                 }
                 else if (r < 0.13f) {
                     addObject_Clear(x, y, "Pebble");
@@ -255,6 +243,9 @@ void Tile::getTile(int x, int y) {
             if (spruceNoise > 0.3f) {
                 if (r < 0.1f) {
                     addObject_Clear(x, y, "Pine Tree");
+                }
+                else if (r < 0.101f) {
+                    addObject_Clear(x, y, "Berry Bush");
                 }
                 else if (r < 0.11f) {
                     addObject_Clear(x, y, "Stick");
@@ -265,20 +256,18 @@ void Tile::getTile(int x, int y) {
             }
         }
         else {
-            float oreThreshold = 0.5f;
+            float oreThreshold = 0.4f;
             float oreSprinkler = hashNoise(x + 500.0f, y + 500.0f, seed);
 
             if (oreSprinkler < 0.6f) {
-                if (ironNoise > oreThreshold - 0.1f) {
+                if (ironNoise > oreThreshold) {
                     addObject_Clear(x, y, "Raw Iron");
                 }
-                if (rubyNoise > oreThreshold - 0.1f) {
+                if (copperNoise > oreThreshold) {
                     addObject_Clear(x, y, "Copper");
-                    anim.type = WHITE_BREATHE;
                 }
-                if (sapphireNoise > oreThreshold) {
+                if (coalNoise > oreThreshold) {
                     addObject_Clear(x, y, "Coal");
-                    anim.type = NONE;
                 }
             }
         }
@@ -289,22 +278,11 @@ void Tile::getTile(int x, int y) {
             addObject_Clear(x, y, "Rock");
         }
 
-        if (x == 1 && y == 0) {
-			addObject_Clear(x, y, "Carpentry Bench");
-        }
-
-        if (x == 0 && y == 7) {
-            addObject_Clear(x, y, "Apple Tree");
-        }
-        if (x == -7 && y == 7) {
-            addObject_Clear(x, y, "Orange Tree");
-        }
-        if (x == 7 && y == 7) {
-            addObject_Clear(x, y, "Lemon Tree");
+       if (x == 0 && y == 0) {
+            addObject(x, y, "Apple Tree");
         }
     }
 
-    // Sets starting displays, subject to change
     auto display = getTileDisplay(type);
 
     character = display.character;
@@ -325,12 +303,11 @@ tileDisplay getTileDisplay(tileType type) {
     switch (type) {
     case tileType::GRASS: {
         static const sf::String grass = L",.'~`";
-        const std::vector<sf::Color> colors = {
-            {95,195,20},
-            {121,208,33},
-            {161,223,80},
-            {55, 174, 15}
-
+        const std::vector<glm::vec3> colors = {
+			normalizeRGB(glm::vec3(95.0f, 195.0f, 20.0f)),
+			normalizeRGB(glm::vec3(121.0f, 208.0f, 33.0f)),
+			normalizeRGB(glm::vec3(161.0f, 223.0f, 80.0f)),
+			normalizeRGB(glm::vec3(55.0f, 174.0f, 15.0f))
         };
         int index = getRandomInt(0, grass.getSize() - 1);
         int shade = getRandomInt(100, 255);
@@ -338,26 +315,26 @@ tileDisplay getTileDisplay(tileType type) {
 
 		c = grass[index];
 
-        sf::Color color = colors[getRandomInt(0, colors.size() - 1)];
+        glm::vec3 color = colors[getRandomInt(0, colors.size() - 1)];
         return { c, color };
     }
     case tileType::SOIL:
         c = L'=';
-		return { c, sf::Color(84, 30, 0) };
+		return { c, normalizeRGB(glm::vec3(84.0f, 30.0f, 0.0f)) };
     case tileType::WATER:
-		return { L'≈', sf::Color(0, 0, 255) };
+		return { L'≈', glm::vec3(0.0f, 0.0f, 1.0f) };
 	case tileType::SAND:
 		c = L':';
-        return { c, sf::Color(255, 255, 0)};
+        return { c, glm::vec3(1.0f, 1.0f, 0.0f) };
     case tileType::MOUNTAIN:
         c = L'Δ';
-        return { c, sf::Color(128,128,128)};
+        return { c, normalizeRGB(glm::vec3(128.0f, 128.0f, 128.0f))  };
 	case tileType::MOUNTAIN_PEAK:
 		c = L'▲';
-		return { c, sf::Color(200,200,200) };
+		return { c, normalizeRGB(glm::vec3(200.0f, 200.0f, 200.0f)) };
     default:
         c = L'?';
-        return { c, sf::Color::Red };
+        return { c, glm::vec3(1.0f, 0.0f, 0.0f) };
     }
 }
 

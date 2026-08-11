@@ -5,6 +5,7 @@
 #include "Jobs/Job.h"
 
 #include <thread>
+#include <GLFW/glfw3.h>
 
 
 // There's probably a better way to format this but its miles better than the nested stuff i had before
@@ -131,9 +132,11 @@ SettingsUI getSettingsFrame() {
 
 void SettingsUI::update() {
     font_size->changeText("Font Size " + std::to_string(font_size->getValue()));
-    x_text_spacing->changeText("X Text Spacing " + std::to_string(x_text_spacing->getValue()));
-    y_text_spacing->changeText("Y Text Spacing " + std::to_string(y_text_spacing->getValue()));
-    camera_speed->changeText("Camera Speed " + std::to_string(camera_speed->getValue()));
+    x_text_spacing->changeText("X Text Spacing " + std::to_string(x_text_spacing->getValue()) + "px");
+    y_text_spacing->changeText("Y Text Spacing " + std::to_string(y_text_spacing->getValue()) + "px");
+    camera_speed->changeText("Camera Speed " + std::to_string(camera_speed->getValue()) + " tiles/s");
+
+    glfwSwapInterval((v_sync->getChecked()) ? 1 : 0);
 }
 
 WorldSettingsUI getWorldSettingsFrame() {
@@ -238,7 +241,7 @@ InGameUI getInGameFrame() {
     ui.stockpileButton = &createButton(*frame, 60, 0, L"   == Stockpile   ", Anchor::BOTTOM_LEFT);
 
     ui.stockpileButton->setClickFunction([]() {
-        mainWorld.placementMode = PlacementMode::SQUARE;
+        mainWorld.placementMode = PlacementMode::FILLED_SQUARE;
         setMode(Mode::STOCKPILE);
         });
 
@@ -343,15 +346,17 @@ ProductionUI getProductionFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.carpentry_bench = &createButton(*frame, 14, -14, L" Carpentry Bench ", Anchor::BOTTOM_LEFT);
-	ui.stone_cutter = &createButton(*frame, 14, -11, L" Stone Cutter ", Anchor::BOTTOM_LEFT);
-	ui.furnace = &createButton(*frame, 14, -8, L" Furnace ", Anchor::BOTTOM_LEFT);
-    ui.anvil = &createButton(*frame, 14, -5, L" Anvil ", Anchor::BOTTOM_LEFT);
+    ui.carpentry_bench = &createButton(*frame, 14, -17, L" Carpentry Bench ", Anchor::BOTTOM_LEFT);
+	ui.stone_cutter = &createButton(*frame, 14, -14, L" Stone Cutter ", Anchor::BOTTOM_LEFT);
+	ui.furnace = &createButton(*frame, 14, -11, L" Furnace ", Anchor::BOTTOM_LEFT);
+    ui.anvil = &createButton(*frame, 14, -8, L" Anvil ", Anchor::BOTTOM_LEFT);
+    ui.gun_bench = &createButton(*frame, 14, -5, L" Gun Bench ", Anchor::BOTTOM_LEFT);
 
     setupBuildButton(ui.carpentry_bench, "Carpentry Bench");
     setupBuildButton(ui.stone_cutter, "Stone Cutter");
     setupBuildButton(ui.furnace, "Furnace");
     setupBuildButton(ui.anvil, "Anvil");
+    setupBuildButton(ui.gun_bench, "Gun Bench");
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -373,7 +378,7 @@ StructureUI getStructureFrame() {
 
     setupBuildButton(ui.wood_wall, "Wooden Wall");
     setupBuildButton(ui.stone_wall, "Stone Wall");
-    setupBuildButton(ui.wood_fence, "Wooden Floor");
+    setupBuildButton(ui.wood_fence, "Wooden Floor", PlacementMode::FILLED_SQUARE);
     setupBuildButton(ui.stone_fence, "Stone Floor");
     setupBuildButton(ui.wood_floor, "Wooden Wall");
 
@@ -389,18 +394,10 @@ TemperatureUI getTemperatureFrame() {
     frame->setType(ui.type);
 
     ui.firepit = &createButton(*frame, 14, -5, L"Fire Pit", Anchor::BOTTOM_LEFT);
-
-    ui.firepit->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        Game::getInstance().setBuildItem("Fire Pit");
-        });
-
     ui.torch = &createButton(*frame, 14, -8, L"Torch", Anchor::BOTTOM_LEFT);
 
-    ui.torch->setClickFunction([&]() {
-        setMode(Mode::BUILD);
-        Game::getInstance().setBuildItem("Torch");
-        });
+    setupBuildButton(ui.firepit, "Fire Pit");
+    setupBuildButton(ui.torch, "Torch");
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
@@ -543,6 +540,205 @@ CarpentryBenchUI getCarpentryBenchFrame() {
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
+
+StoneCutterUI getStoneCutterFrame() {
+    StoneCutterUI ui;
+
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+
+    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_LEFT);
+
+    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_LEFT);
+    ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_LEFT);
+
+    int num = 0;
+
+    auto& registry = ObjectRegistry::getInstance().getStaticRegistry();
+    auto view = registry.view<Craftable>();
+
+    for (auto i : view) {
+        auto& name = registry.get<Name>(i);
+        const auto& recipe = view.get<Craftable>(i);
+
+        if (recipe.benchRequired != "Stone Cutter") continue;
+
+        auto button = &createButton(*frame,
+            ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
+            std::wstring(name.name.begin(), name.name.end()), Anchor::TOP_LEFT);
+
+
+        button->setClickFunction([name] {
+            Job* job = new Craft(entt::null, entt::null, SkillType::Masonry, name.name);
+            job->priority = 25;
+            JobManager::addJob(job);
+            });
+
+        button->setHoverFunction([ui, recipe, name] {
+            std::string infoStr = "Ingredients:|";
+            for (auto& j : recipe.ingredients) {
+                std::string ingredientStr = j.first + ": x" + std::to_string(j.second);
+                infoStr += ingredientStr + "|";
+
+            }
+            infoStr += "|";
+            infoStr += "Produces:|";
+            infoStr += "x" + std::to_string(recipe.quantity) + " " + name.name;
+            ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
+            });
+
+        button->setAnchorPosition(xFrustum, yFrustum);
+
+        ui.craftable_items.push_back(button);
+        num++;
+    }
+
+    ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 31, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_LEFT);
+
+
+    ui.closeButton->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.remove(UI::StoneCutter);
+        });
+
+    ui.panel->setSize(35, std::max(num * 3 + 3, 5));
+
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
+AnvilUI getAnvilFrame() {
+    AnvilUI ui;
+
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+
+    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_LEFT);
+
+    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_LEFT);
+    ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_LEFT);
+
+    int num = 0;
+
+    auto& registry = ObjectRegistry::getInstance().getStaticRegistry();
+    auto view = registry.view<Craftable>();
+
+    for (auto i : view) {
+        auto& name = registry.get<Name>(i);
+        const auto& recipe = view.get<Craftable>(i);
+
+        if (recipe.benchRequired != "Anvil") continue;
+
+        auto button = &createButton(*frame,
+            ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
+            std::wstring(name.name.begin(), name.name.end()), Anchor::TOP_LEFT);
+
+
+        button->setClickFunction([name] {
+            Job* job = new Craft(entt::null, entt::null, SkillType::Masonry, name.name);
+            job->priority = 25;
+            JobManager::addJob(job);
+            });
+
+        button->setHoverFunction([ui, recipe, name] {
+            std::string infoStr = "Ingredients:|";
+            for (auto& j : recipe.ingredients) {
+                std::string ingredientStr = j.first + ": x" + std::to_string(j.second);
+                infoStr += ingredientStr + "|";
+
+            }
+            infoStr += "|";
+            infoStr += "Produces:|";
+            infoStr += "x" + std::to_string(recipe.quantity) + " " + name.name;
+            ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
+            });
+
+        button->setAnchorPosition(xFrustum, yFrustum);
+
+        ui.craftable_items.push_back(button);
+        num++;
+    }
+
+    ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 31, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_LEFT);
+
+
+    ui.closeButton->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.remove(UI::Anvil);
+        });
+
+    ui.panel->setSize(35, std::max(num * 3 + 3, 5));
+
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
+GunBenchUI getGunBenchFrame() {
+    GunBenchUI ui;
+
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+
+    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_LEFT);
+
+    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to craft:", Anchor::TOP_LEFT);
+    ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_LEFT);
+
+    int num = 0;
+
+    auto& registry = ObjectRegistry::getInstance().getStaticRegistry();
+    auto view = registry.view<Craftable>();
+
+    for (auto i : view) {
+        auto& name = registry.get<Name>(i);
+        const auto& recipe = view.get<Craftable>(i);
+
+        if (recipe.benchRequired != "Gun Bench") continue;
+
+        auto button = &createButton(*frame,
+            ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
+            std::wstring(name.name.begin(), name.name.end()), Anchor::TOP_LEFT);
+
+
+        button->setClickFunction([name] {
+            Job* job = new Craft(entt::null, entt::null, SkillType::Masonry, name.name);
+            job->priority = 25;
+            JobManager::addJob(job);
+            });
+
+        button->setHoverFunction([ui, recipe, name] {
+            std::string infoStr = "Ingredients:|";
+            for (auto& j : recipe.ingredients) {
+                std::string ingredientStr = j.first + ": x" + std::to_string(j.second);
+                infoStr += ingredientStr + "|";
+
+            }
+            infoStr += "|";
+            infoStr += "Produces:|";
+            infoStr += "x" + std::to_string(recipe.quantity) + " " + name.name;
+            ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
+            });
+
+        button->setAnchorPosition(xFrustum, yFrustum);
+
+        ui.craftable_items.push_back(button);
+        num++;
+    }
+
+    ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 31, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_LEFT);
+
+
+    ui.closeButton->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.remove(UI::Gun);
+        });
+
+    ui.panel->setSize(35, std::max(num * 3 + 3, 5));
+
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
 
 StockpileUI getStockpileFrame() {
     StockpileUI ui;

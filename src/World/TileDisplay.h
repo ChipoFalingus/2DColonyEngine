@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
-#include <SFML/Graphics/Color.hpp>
+#include <glm/glm.hpp>
 
 struct tileDisplay {
     wchar_t character;
-    sf::Color color;
+    glm::vec3 color;
 
-	tileDisplay(wchar_t character, sf::Color color) : character(character), color(color) {}
+	tileDisplay(wchar_t character, glm::vec3 color) : character(character), color(color) {}
 };

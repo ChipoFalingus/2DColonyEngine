@@ -138,6 +138,7 @@ struct ProductionUI {
 	Button* stone_cutter;
 	Button* furnace;
     Button* anvil;
+    Button* gun_bench;
 };
 
 ProductionUI getProductionFrame();
@@ -198,17 +199,18 @@ struct StoneCutterUI {
     Button* closeButton;
 };
 
-//StoneCutterUI getStoneCutterFrame();
+StoneCutterUI getStoneCutterFrame();
 
 struct AnvilUI {
     UI type = UI::Anvil;
     Text* text;
+    Text* ingredients;
     Panel* panel;
     std::vector<Button*> craftable_items;
     Button* closeButton;
 };
 
-//AnvilUI getAnvilFrame();
+AnvilUI getAnvilFrame();
 
 struct GunBenchUI {
     UI type = UI::Gun;
@@ -219,7 +221,7 @@ struct GunBenchUI {
     Button* closeButton;
 };
 
-//GunBenchUI getGunBenchFrame();
+GunBenchUI getGunBenchFrame();
 
 struct StockpileUI {
     UI type = UI::Stockpile;

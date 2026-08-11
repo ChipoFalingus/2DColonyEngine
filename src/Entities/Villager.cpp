@@ -185,6 +185,8 @@ std::vector<std::string> lastnames = {
 
 };
 
+void updateSocialNeeds();
+
 entt::entity spawnVillager(int x, int y) {
 	auto& registry = mainWorld.registry;
 	auto entity = registry.create();
@@ -207,14 +209,15 @@ entt::entity spawnVillager(int x, int y) {
 	int initTargetY = y;
 
 	registry.emplace<Name>(entity, name);
-	registry.emplace<Movable>(entity, moveSpeed, moveSpeed, clock, initTargetX, initTargetY, true);
+	registry.emplace<Movable>(entity, moveSpeed, moveSpeed, clock, initTargetX, initTargetY, false);
 	registry.emplace<Health>(entity, 100);
 	registry.emplace<HungerNeed>(entity, 100);
 	registry.emplace<TiredNeed>(entity, 0);
 	registry.emplace<TemperatureNeed>(entity, getRandomFloat(60.0f, 80.0f));
 
 	registry.emplace<JobComponent>(entity, nullptr);
-	registry.emplace<CanAttack>(entity);
+	registry.emplace<CombatComponent>(entity);
+	registry.emplace<Social>(entity);
 
 	auto skillList = getAllSkillTypes();
 	int rand = getRandomInt(0, skillList.size() - 1); 
@@ -257,12 +260,13 @@ void VillagerSystem(float deltaTime) {
 	updateTiredness();
 	updateWork();
 	updateAttack();
+	updateSocialNeeds();
 }
 
 void updateTiredness() {
 	auto& registry = mainWorld.registry;
-	auto view = registry.view<TiredNeed, JobComponent>();
-	for (auto [entity, tiredness, jobComponent] : view.each()) {
+	auto view = registry.view<TiredNeed, Position, JobComponent>();
+	for (auto [entity, tiredness, pos, jobComponent] : view.each()) {
 		tiredness.clock += Clock::deltaTime;
 		if (tiredness.clock >= 10.0f) {
 			tiredness.clock = 0.0f;
@@ -272,12 +276,35 @@ void updateTiredness() {
 			}
 		}
 
-		if (tiredness.tiredness <= 20) continue;
+		if (jobComponent.currentJob && dynamic_cast<Sleep*>(jobComponent.currentJob)) {
+			continue;
+		}
+
+
+		if (tiredness.tiredness <= 5) continue;
 		if (mainWorld.dayCycle.getTimePeriod() != TimePeriod::Night) continue;
 		float score = std::pow(tiredness.tiredness * 0.01f, 3) * 100.0f;
 
 		if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
-			score *= 4.0f;
+			score *= 2.0f;
+		}
+
+		if (!tiredness.bedLocation.has_value()) {
+			auto bedLocation = findClosestItemType(pos.x, pos.y, 50, [](entt::entity entity, entt::registry& reg, int x, int y) {
+				auto* bed = reg.try_get<Bed>(entity);
+				auto* claim = reg.try_get<Claimable>(entity);
+
+				return bed && (claim ? !claim->claimed : true);
+				});
+
+			if (bedLocation.has_value()) {
+				tiredness.bedLocation = {bedLocation.value().x, bedLocation.value().y};
+				mainWorld.registry.get<Claimable>(bedLocation->item).claimed = true;
+				score *= 2.0f;
+			}
+		}
+		else {
+			score *= 1.5f;
 		}
 
 		Job* job = new Sleep(entity, entt::null, SkillType::None);
@@ -309,9 +336,12 @@ void updateHunger() {
 			continue;
 		}
 
+		bool queued = false;
 		for (Job* i : jobComponent.interrupted) {
-			if (dynamic_cast<FindFood*>(i)) continue;
+			if (dynamic_cast<FindFood*>(i)) queued = true;
 		}
+
+		if (queued) continue;
 
 		if (hunger.hunger >= 80) continue;
 		auto& pos = mainWorld.registry.get<Position>(entity);
@@ -339,27 +369,69 @@ void updateHunger() {
 	}
 }
 
-void updateTempNeed() {
+void updateSocialNeeds() {
 	auto& registry = mainWorld.registry;
-	auto view = registry.view<JobComponent, Position, TemperatureNeed>();
-	for (auto [entity, work, pos, tempNeed] : view.each()) {
+	auto view = registry.view<JobComponent, Movable, Social>();
 
-		tempNeed.clock += Clock::deltaTime;
-		if (tempNeed.clock < 5.0f) continue;
-		tempNeed.clock = 0.0f;
-
-		float deviation = bellCurve(mainWorld.getTemperatureMapIndex(pos.x, pos.y), tempNeed.preferredTemp, 8);
-		float score = deviation * 10.0f;
-
-		if (work.activity_state != ActivityState::None) {
-			score *= 0.5f;
+	for (auto [entity, jobComponent, movable, social] : view.each()) {
+		social.clock += Clock::deltaTime;
+		if (social.clock >= 2.0f) {
+			social.clock = 0.0f;
+			social.social -= 1;
+			if (social.social < 0) {
+				social.social = 0;
+			}
 		}
 
-		if (0.5f > deviation) {
-			//return { UtilityType::WARMING_UP, score};
-		}
-		else {
+		if (jobComponent.currentJob && dynamic_cast<Talk*>(jobComponent.currentJob)) {
 			continue;
+		}
+
+		bool queued = false;
+		for (Job* i : jobComponent.interrupted) {
+			if (dynamic_cast<Talk*>(i)) queued = true;
+		}
+
+		if (queued) continue;
+
+		if (social.social >= 80) continue;
+
+		social.searchClock += Clock::deltaTime;
+		if (social.searchClock < 0.5f) continue;
+		social.searchClock = 0.0f;
+
+		auto& pos = mainWorld.registry.get<Position>(entity);
+
+		auto other = findClosestItemType(pos.x, pos.y, 50, [entity](entt::entity e, entt::registry& reg, int x, int y) {
+			if (e == entity) return false;
+			auto* job = reg.try_get<JobComponent>(e);
+			if (job && (job->currentJob || dynamic_cast<Talk*>(job->currentJob))) {
+				return false;
+			}
+			auto* social = reg.try_get<Social>(e);
+			return social != nullptr;
+			});
+
+		if (other.has_value()) {
+			auto* otherJobComp = mainWorld.registry.try_get<JobComponent>(other->item);
+			auto* otherSocial = mainWorld.registry.try_get<Social>(other->item);
+
+			if (!otherJobComp || !otherSocial) continue;
+
+			float myNeedScore = std::pow((100.0f - social.social) * 0.01f, 2) * 100.0f;
+			float otherNeedScore = std::pow((100.0f - otherSocial->social) * 0.01f, 2) * 100.0f;
+
+			float combinedScore = myNeedScore + otherNeedScore;
+
+			if (combinedScore > 10.0f) {
+				Job* myJob = new Talk(entity, entt::null, SkillType::None, other->item);
+				myJob->priority = combinedScore;
+				jobComponent.proposeJob(myJob);
+
+				Job* otherJob = new Talk(other->item, entt::null, SkillType::None, entity);
+				otherJob->priority = combinedScore;
+				otherJobComp->proposeJob(otherJob);
+			}
 		}
 	}
 }
@@ -369,6 +441,7 @@ void updateWork() {
 	auto& registry = mainWorld.registry;
 	auto view = registry.view<JobComponent, Movable, HungerNeed>();
 	for (auto [entity, work, movable, hunger] : view.each()) {
+		work.panicClock += Clock::deltaTime;
 		if (!work.interrupted.empty()) {
 			std::sort(work.interrupted.begin(), work.interrupted.end(), [](const Job* a, const Job* b) {
 				return a->priority > b->priority;
@@ -388,6 +461,9 @@ void updateWork() {
 		}
 
 		if (!work.currentJob) {
+			Job* job = new Idle(entity, entt::null, SkillType::None);
+			job->priority = 10;
+			work.proposeJob(job);
 			continue;
 		}
 
@@ -411,11 +487,16 @@ void updateWork() {
 
 void updateAttack() {
 	auto& registry = mainWorld.registry;
-	auto view = registry.view<CanAttack, JobComponent, Position>();
+	auto view = registry.view<CombatComponent, JobComponent, Position>();
 
 	int alertness = 25;
 
 	for (auto [e, attack, job, pos] : view.each()) {
+
+		if (job.currentJob && dynamic_cast<Retreat*>(job.currentJob)) {
+			continue;
+		}
+
 		attack.checkThreatsClock += Clock::deltaTime;
 		if (attack.checkThreatsClock > 0.5f) {
 			attack.checkThreatsClock = 0.0f;
@@ -424,9 +505,16 @@ void updateAttack() {
 				});
 
 			if (closestThreat.has_value()) {
-				Job* attackJob = new Attack(e, entt::null, SkillType::None, closestThreat.value().item);
-				attackJob->priority = 1000;
-				job.proposeJob(attackJob);
+				if (attack.bravery < 0.9f) {
+					Job* newJob = new Retreat(e, entt::null, SkillType::None, closestThreat.value().item);
+					newJob->priority = 1000;
+					job.proposeJob(newJob);
+
+				} else {
+					Job* newJob = new Attack(e, entt::null, SkillType::None, closestThreat.value().item);
+					newJob->priority = 1000;
+					job.proposeJob(newJob);
+				}
 			}
 		}
 	}

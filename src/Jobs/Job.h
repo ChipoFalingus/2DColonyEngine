@@ -20,7 +20,6 @@ enum class JobState {
 struct Job {
 	entt::entity villager = entt::null; // Who is assigned to the job
 	entt::entity preferredTool = entt::null;
-	std::string preferredToolName;
 	SkillType type;
 	JobState state = JobState::Queued;
 
@@ -39,7 +38,7 @@ struct Job {
 	//virtual void onFail() {}
 };
 
-
+void evaluateJobDanger(Job* job);
 
 class JobManager {
 public:
@@ -245,6 +244,8 @@ class Retreat : public Job {
 public:
 
 	entt::entity threat;
+	bool foundPath = false;
+	bool init = false;
 
 	Retreat(entt::entity v, entt::entity tool, SkillType skillType, entt::entity threat)
 		: Job(v, tool, skillType), threat(threat)
@@ -426,5 +427,6 @@ public:
 	Talk(entt::entity v, entt::entity tool, SkillType skillType, entt::entity other)
 		: Job(v, tool, skillType), other(other)
 	{}
+
 	void update();
 };

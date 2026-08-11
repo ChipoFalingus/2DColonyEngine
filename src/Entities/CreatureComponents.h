@@ -9,17 +9,37 @@ struct CreatureName {
 	std::string last_name;
 };
 
+enum class MovementMode : uint8_t {
+	Idle,
+	Directional,
+	Path
+};
+
 struct Movable {
-	float speed = 0.2f;
+	float speed = 0.8f;
 	float currentSpeed = 0.2f;
 
 	float movementClock = 0.0f;
 
 	int targetX = 0;
 	int targetY = 0;
-	bool hasTarget = true;
+	bool hasTarget = false;
 
 	std::vector<std::pair<int, int>> path;
+
+	MovementMode movementMode = MovementMode::Idle;
+
+	// Squad movement
+	int dirX = 0;
+	int dirY = 0;
+
+	bool ignoreSeparation = false;
+
+	void newPath(int newX, int newY) {
+		path.clear();
+		targetX = newX;
+		targetY = newY;
+	}
 };
 
 struct Hostile {
@@ -29,6 +49,8 @@ struct Hostile {
 struct TiredNeed {
 	int tiredness = 0;
 	float clock;
+
+	std::optional<std::pair<int, int>> bedLocation;
 };
 
 struct HungerNeed {
@@ -49,6 +71,9 @@ struct JobComponent {
 	std::vector<Job*> interrupted;
 	ActivityState activity_state = ActivityState::None;
 
+	float panicClock = 0.0f;
+	float panicDuration = 0.0f;
+
 	void proposeJob(Job* newJob) {
 		if (!currentJob) {
 			currentJob = newJob;
@@ -66,21 +91,40 @@ struct JobComponent {
 			delete newJob;
 		}
 	}
+
+	void clearInterruptedJobs() {
+		for (Job* job : interrupted) {
+			job->villager = entt::null;
+			evaluateJobDanger(job);
+		}
+		interrupted.clear();
+	}
 };
 
 struct Villager {};
+struct Zombie {};
 
 struct Inventory {
 	entt::entity itemInHand;
 	std::vector<entt::entity> inventory;
 };
 
-struct CanAttack {
+struct CombatComponent {
+	entt::entity equippedWeapon;
 	int base_damage = 1;
 	int base_attack_speed = 1.0f;
 
 	ItemLocation target;
 	float checkThreatsClock = 0.0f;
+
+	float bravery = getRandomFloat(0.0f, 1.0f);
+};
+
+struct Social {
+	int social = getRandomInt(85, 100);
+
+	float searchClock = 0.0f;
+	float clock = 0.0f;
 };
 
 //struct ColonyOwner {

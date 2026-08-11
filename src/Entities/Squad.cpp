@@ -41,7 +41,7 @@ void onIdle(entt::entity squad) {
 		squadView.idleWanderClock = 0.0f;
 		auto avg = getAvgPos(squad, registry);
 
-		int range = 32;
+		int range = 20;
 		int randX = getRandomInt(avg.first - range, avg.first + range);
 		int randY = getRandomInt(avg.second - range, avg.second + range);
 
@@ -59,65 +59,19 @@ void onIdle(entt::entity squad) {
 		auto& pos = registry.get<Position>(i);
 		auto& movable = registry.get<Movable>(i);
 
-		movable.hasTarget = false;
+		int localX = (pos.x - squadView.groupTargetPos.first) + half;
+		int localY = (pos.y - squadView.groupTargetPos.second) + half;
 
-		movable.movementClock += Clock::deltaTime;
-		if (movable.movementClock > movable.speed) {
-			movable.movementClock = 0.0f;
-
-			int localX = pos.x - (squadView.groupTargetPos.first - half);
-			int localY = pos.y - (squadView.groupTargetPos.second - half);
-
-			if (localX < 0 || localX >= flowSize || localY < 0 || localY >= flowSize) {
-				continue;
-			}
-
-			auto& dir = squadView.macroFlowField[(localY * flowSize) + localX];
-
-			int sepX = 0;
-			int sepY = 0;
-
-			forEachInRange(pos.x, pos.y, 2, [&](entt::entity entity, entt::registry& reg, int x, int y) {
-				if (entity == i) return;
-				if (!reg.try_get<SquadMemberComponent>(entity)) return;
-				auto& otherPos = registry.get<Position>(entity);
-				int dx = pos.x - otherPos.x;
-				int dy = pos.y - otherPos.y;
-				int dist2 = dx * dx + dy * dy;
-
-				if (dist2 > 0 && dist2 <= 2) {
-					sepX += dx;
-					sepY += dy;
-				}
-				});
-
-			int moveX = dir.dx;
-			int moveY = dir.dy;
-
-			int pushX = (sepX > 0) - (sepX < 0);
-			int pushY = (sepY > 0) - (sepY < 0);
-
-			moveX += pushX;
-			moveY += pushY;
-
-			moveX = std::clamp(moveX, -1, 1);
-			moveY = std::clamp(moveY, -1, 1);
-
-			int newX = pos.x + moveX;
-			int newY = pos.y + moveY;
-
-			if (!getTileRef(newX, newY).walkable) {
-				newX = pos.x + dir.dx;
-				newY = pos.y + dir.dy;
-				if (!getTileRef(newX, newY).walkable) continue;
-			}
-
-			mainWorld.objectManager.removeItem(pos.x, pos.y, i);
-			mainWorld.objectManager.addObject(newX, newY, i);
-
-			pos.x = newX;
-			pos.y = newY;
+		if (localX < 0 || localX >= flowSize || localY < 0 || localY >= flowSize) {
+			movable.dirX = 0;
+			movable.dirY = 0;
+			continue;
 		}
+
+		auto& dir = squadView.macroFlowField[(localY * flowSize) + localX];
+
+		movable.dirX = dir.dx;
+		movable.dirY = dir.dy;
 	}
 }
 
@@ -132,25 +86,53 @@ void onAttack(entt::entity squad) {
 		memberComponent.target = chooseTarget(squad, i, registry);
 
 		auto targetEntity = memberComponent.target.target;
-
-		if (targetEntity == entt::null) continue;
+		if (targetEntity == entt::null) {
+            continue;
+        }
 
 		auto& movable = registry.get<Movable>(i);
 		auto& pos = registry.get<Position>(i);
 
 		auto& targetPos = registry.get<Position>(targetEntity);
+		
 
-		movable.hasTarget = true;
-		movable.targetX = targetPos.x;
-		movable.targetY = targetPos.y;
-
-		if (pos.x == targetPos.x && pos.y == targetPos.y) {
+		if (std::abs(pos.x - targetPos.x) <= 1 && std::abs(pos.y - targetPos.y) <= 1) {
 			auto& health = registry.get<Health>(targetEntity);
 			memberComponent.attackClock += Clock::deltaTime;
 			if (memberComponent.attackClock > 0.5f) {
 				memberComponent.attackClock = 0.0f;
 				health.health--;
 			}
+		}
+		else {
+			memberComponent.attackClock = 0.0f;
+
+			int dx = targetPos.x - pos.x;
+			int dy = targetPos.y - pos.y;
+
+			int moveX = (dx > 0) - (dx < 0);
+			int moveY = (dy > 0) - (dy < 0);
+
+			int newX = pos.x + moveX;
+			int newY = pos.y + moveY;
+
+			/*if (!getTileRef(newX, newY).walkable) {
+				if (moveX != 0 && getTileRef(pos.x + moveX, pos.y).walkable) {
+					newX = pos.x + moveX;
+					newY = pos.y;
+				}
+				else if (moveY != 0 && getTileRef(pos.x, pos.y + moveY).walkable) {
+					newX = pos.x;
+					newY = pos.y + moveY;
+				}
+				else {
+					newX = pos.x;
+					newY = pos.y;
+				}
+			}*/
+
+			movable.dirX = moveX;
+			movable.dirY = moveY;
 		}
 	}
 }
@@ -204,7 +186,7 @@ SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::regis
 		return nullTarget;
 	}
 
-	squadComponent.targets[bestIndex].target_population++;
+	//squadComponent.targets[bestIndex].target_population++;
 	return squadComponent.targets[bestIndex];
 }
 
@@ -220,28 +202,14 @@ void findTargets(entt::entity entity, entt::registry& registry) {
 		auto center = getAvgPos(entity, registry);
 		const int scanRadius = 32;
 
-		auto structures = findAllItemInRange(center.first, center.second, scanRadius, [](entt::entity entity, entt::registry& registry, int x, int y) {
-			return registry.all_of<Structure>(entity);
+		auto entities = findAllItemInRange(center.first, center.second, scanRadius, [](entt::entity entity, entt::registry& registry, int x, int y) {
+			return registry.all_of<Structure>(entity) || registry.all_of<Villager>(entity);
 			});
 
-		if (structures.has_value()) {
-			for (auto& s : structures.value()) {
+		if (entities.has_value()) {
+			for (auto& s : entities.value()) {
 				SelectedTarget selected;
 				selected.target = s.item;
-				selected.score = 1;
-
-				squad.targets.push_back(selected);
-			}
-		}
-
-		auto creatures = findAllItemInRange(center.first, center.second, scanRadius, [](entt::entity entity, entt::registry& registry, int x, int y) {
-			return registry.all_of<Villager>(entity);
-			});
-
-		if (creatures.has_value()) {
-			for (auto& c : creatures.value()) {
-				SelectedTarget selected;
-				selected.target = c.item;
 				selected.score = 1;
 
 				squad.targets.push_back(selected);

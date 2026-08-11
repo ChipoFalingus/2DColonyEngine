@@ -112,11 +112,6 @@ void processInput(GLFWwindow* window) {
     }
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
         mainWorld.updateMiniMap();
-        
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-        //save();
     }
 
     if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS) {
@@ -186,16 +181,6 @@ void processInput(GLFWwindow* window) {
 
         std::string activity = activityStateToString(mainWorld.registry.get<JobComponent>(viewing).activity_state);
         i.hunger->changeText(std::wstring(activity.begin(), activity.end()));
-
-        /*std::string log = "Log:|";
-
-        for (auto& i : viewing->action_log) {
-            log += i + "|";
-        }*/
-
-        /*i.log->changeText(std::wstring(log.begin(), log.end()));
-
-        i.infoPanel->setSize(std::max(str.size(), jobStr.size()) + 8, 18);*/
 
         Game::getInstance().getUIManager().push(UI::Villager);
     }
@@ -272,7 +257,6 @@ void handleClickedItem(int x, int y) {
     for (auto& i : manager->getObjectsAt(mouseTileX, mouseTileY)) {
         if (auto j = mainWorld.registry.try_get<Skills>(i)) {
             viewing = i;
-            //i->printJobQueue();
             break;
         }
     }
@@ -299,16 +283,47 @@ void handleClickedItem(int x, int y) {
     }
 }
 
+void addBlueprint(int x, int y, std::string item) {
+
+    auto display = ObjectRegistry::getInstance().getStaticComponent<Renderable>(item);
+    auto name = ObjectRegistry::getInstance().getStaticComponent<Name>(item);
+
+    if (!display || !name) return;
+
+	auto& registry = mainWorld.registry;
+    auto blueprint = registry.create();
+
+    registry.emplace<Position>(blueprint, x, y);
+    registry.emplace<Name>(blueprint, name->name + " Blueprint");
+
+    registry.emplace<Renderable>(blueprint, display->character, normalizeRGB(glm::vec3(0, 65, 186)));
+    registry.emplace<BlueprintTag>(blueprint);
+
+    mainWorld.objectManager.addObject(x, y, blueprint);
+}
+
+bool hasBlueprint(int x, int y) {
+    auto& objects = mainWorld.objectManager.getObjectsAt(x, y);
+    for (auto& obj : objects) {
+        if (mainWorld.registry.all_of<BlueprintTag>(obj)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void build(int left, int right, int top, int bottom) {
 
     std::string itemName = Game::getInstance().getBuildItem();
 
-	std::cout << "Building: " << itemName << std::endl;
-
     if (mainWorld.placementMode == PlacementMode::SINGLE) {
-        std::cout << "Adding build job for " << itemName << " at (" << mouseTileX << ", " << mouseTileY << ")" << std::endl;
-        auto staticObject = ObjectRegistry::getInstance().getStaticObject(itemName);
-        if (ObjectRegistry::getInstance().getStaticRegistry().all_of<Furniture>(staticObject)) {
+        if (hasBlueprint(mouseTileX, mouseTileY)) {
+            std::cout << "Tile (" << mouseTileX << ", " << mouseTileY << ") already has a blueprint. Skipping build job." << std::endl;
+            return;
+        }
+
+        auto staticObject = ObjectRegistry::getInstance().getStaticComponent<Furniture>(itemName);
+        if (staticObject) {
             auto loc = mainWorld.findUnclaimedItemInAllStockpile(itemName);
             if (!loc) {
                 placing = false;
@@ -321,29 +336,47 @@ void build(int left, int right, int top, int bottom) {
             job->priority = 30;
             JobManager::addJob(job);
         } else {
+			addBlueprint(mouseTileX, mouseTileY, itemName);
+
             Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, mouseTileX, mouseTileY);
             job->priority = 30;
             JobManager::addJob(job);
         }
     }
 
-    /*else if (mainWorld.placementMode == PlacementMode::LINE) {
-        auto line = bresenham(top, left, bottom, right);
-        for (auto& i : line) {
-            Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, i.first, i.second);
-            job->priority = 30;
-            JobManager::addJob(job);
-        }
-	}*/
-
     else if (mainWorld.placementMode == PlacementMode::SQUARE) {
         for (int x = left; x <= right; x++) {
             for (int y = top; y <= bottom; y++) {
                 if (x == left || x == right || y == top || y == bottom) {
+
+                    if (hasBlueprint(x, y)) {
+                        std::cout << "Tile (" << x << ", " << y << ") already has a blueprint. Skipping build job." << std::endl;
+                        continue;
+					}
+
+					addBlueprint(x, y, itemName);
+
                     Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, x, y);
                     job->priority = 30;
                     JobManager::addJob(job);
                 }
+            }
+        }
+    }
+    else if (mainWorld.placementMode == PlacementMode::FILLED_SQUARE) {
+        for (int x = left; x <= right; x++) {
+            for (int y = top; y <= bottom; y++) {
+
+                if (hasBlueprint(x, y)) {
+                    std::cout << "Tile (" << x << ", " << y << ") already has a blueprint. Skipping build job." << std::endl;
+                    continue;
+                }
+
+                addBlueprint(x, y, itemName);
+
+                Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, x, y);
+                job->priority = 30;
+                JobManager::addJob(job);
             }
         }
     }
@@ -367,18 +400,11 @@ void harvest(int left, int right, int top, int bottom) {
             if (auto* i = mainWorld.registry.try_get<Harvestable>(objectList[0])) {
                 tile.markedForHarvest = true;
                 tile.anim.type = animType::RED_X;
-                
-				std::cout << "Adding harvest job for " << mainWorld.registry.get<Name>(objectList[0]).name << " at (" << x << ", " << y << ")" << std::endl;
-
-				std::cout << "Required skill: " << skillTypeToString(i->requiredSkill) << std::endl;
 
                 Job* job = new HarvestTile(entt::null, entt::null, i->requiredSkill, objectList[0], x, y);
                 job->priority = 40;
                 JobManager::JobList.push_back(job);
 
-            }
-            else {
-				std::cout << "Selected item is not harvestable. Cannot harvest at (" << x << ", " << y << ").\n";
             }
         }
     }
@@ -407,8 +433,7 @@ void stockpile(int left, int right, int top, int bottom) {
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
             Tile& tile = getTileRef(x, y);
-           if (/*!tile.walkable ||*/ manager.has(x, y, "Stockpile")) {
-                std::cout << "Cannot create stockpile: Tile at (" << x << ", " << y << ") is not empty.\n";
+           if (!tile.walkable || manager.has(x, y, "Stockpile")) {
                 return;
 			}
         }
@@ -417,13 +442,10 @@ void stockpile(int left, int right, int top, int bottom) {
     int locX = std::min(left, right);
     int locY = std::min(top, bottom);
 
-    std::cout << "Creating stockpile at (" << locX << ", " << locY << ")\n";
-
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
 
             Tile& tile = getTileRef(x, y);
-
 			tile.addObject_Clear(x, y, "Stockpile");
         }
     }
