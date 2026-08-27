@@ -149,7 +149,6 @@
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\UI\UI.cpp" />
     <ClCompile Include="src\Utility\CreatureUtils.cpp" />
-    <ClCompile Include="src\Utility\Globals.cpp" />
     <ClCompile Include="src\Utility\ItemUtils.cpp" />
     <ClCompile Include="src\Utility\mathUtils.cpp" />
     <ClCompile Include="src\World\Stockpile.cpp" />
@@ -166,6 +165,7 @@
     <None Include="glsl shader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameState.h" />
     <ClInclude Include="src\Entities\CreatureComponents.h" />
     <ClInclude Include="src\Entities\ItemComponents.h" />
     <ClInclude Include="src\Entities\Object.h" />
@@ -185,7 +185,6 @@
     <ClInclude Include="src\Utility\Clock.h" />
     <ClInclude Include="src\Utility\CreatureUtils.h" />
     <ClInclude Include="src\Utility\Dot.h" />
-    <ClInclude Include="src\Utility\Globals.h" />
     <ClInclude Include="src\Utility\Heat.h" />
     <ClInclude Include="src\Utility\ItemLocation.h" />
     <ClInclude Include="src\Utility\ItemUtils.h" />

@@ -9,6 +9,7 @@
 #include <entt/entt.hpp>
 
 #include "ItemComponents.h"
+#include "Utility/mathUtils.h"
 
 using json = nlohmann::json;
 
@@ -104,15 +105,22 @@ public:
 				targetWorldRegistry.emplace<Name>(newEntity, name);
 			}
 
-			if (name == "drop") {
-				std::string dropName = data.at("item").get<std::string>();
+			if (name == "drop_table") {
+				std::vector<Drop> drops;
+				for (const auto& itemData : data.at("drop")) {
+					Drop drop;
+					drop.item = itemData.at("item");
+					drop.odds = itemData.at("odds");
+
+					drops.push_back(drop);
+				}
+
 				SkillType requiredSkill = stringToSkillType(data.at("skill").get<std::string>());
-				targetWorldRegistry.emplace<Harvestable>(newEntity, dropName, requiredSkill);
+				targetWorldRegistry.emplace<Harvestable>(newEntity, drops, requiredSkill);
 			}
 
 			if (name == "crop") {
 				float growthTime = data.at("grow_time").get<float>();
-				std::string produce = data.at("produce").get<std::string>();
 
 				std::vector<std::pair<wchar_t, glm::vec3>> growthStages;
 				for (auto& stage : data.at("stages")) {
@@ -129,7 +137,9 @@ public:
 					growthStages.push_back({ ch, color });
 				}
 
-				targetWorldRegistry.emplace<Crop>(newEntity, growthStages, produce, growthTime, 0.0f, 0, static_cast<int>(growthStages.size() - 1));
+				float currentGrowthTime = growthTime + (getRandomFloat(0.0f, 1.0f) * growthTime * 0.25f);
+
+				targetWorldRegistry.emplace<Crop>(newEntity, growthStages, growthTime, currentGrowthTime, 0.0f, 0, static_cast<int>(growthStages.size() - 1));
 
 			}
 

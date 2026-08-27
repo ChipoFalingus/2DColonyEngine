@@ -210,7 +210,9 @@ void findTargets(entt::entity entity, entt::registry& registry) {
 			for (auto& s : entities.value()) {
 				SelectedTarget selected;
 				selected.target = s.item;
+
 				selected.score = 1;
+				if (mainWorld.registry.all_of<Villager>(s.item)) selected.score = 1;
 
 				squad.targets.push_back(selected);
 			}

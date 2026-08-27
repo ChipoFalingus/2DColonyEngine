@@ -8,7 +8,6 @@
 #include "World/World.h"
 
 std::vector<std::string> names = {
-    //Male
     "Wyatt",
     "Caleb",
     "Dylan",
@@ -19,7 +18,6 @@ std::vector<std::string> names = {
     "Nick",
     "Noah",
     "Ryan",
-
     "James",
     "Michael",
     "Robert",
@@ -125,10 +123,6 @@ std::vector<std::string> names = {
 	"Diane",
 	"Catherine",
 	"Julie",
-
-	//Fun names
-
-
 };
 
 std::vector<std::string> lastnames = {
@@ -141,7 +135,6 @@ std::vector<std::string> lastnames = {
     "Lombardo",
     "Yim",
     "Krikorian",
-
 	"Patel",
 	"Garcia",
 	"Smith",
@@ -180,9 +173,7 @@ std::vector<std::string> lastnames = {
 	"Wright",
 	"Scott",
 	"Torres",
-
 	"Coomer",
-
 };
 
 void updateSocialNeeds();
@@ -230,7 +221,7 @@ entt::entity spawnVillager(int x, int y) {
 			villagerSkills.setSkillLevel(skillList[i], getRandomInt(10, 13));
 		}
 		else {
-			villagerSkills.setSkillLevel(skillList[i], getRandomInt(10, 13));
+			villagerSkills.setSkillLevel(skillList[i], getRandomInt(1, 3));
 		}
 	}
 
@@ -279,6 +270,13 @@ void updateTiredness() {
 		if (jobComponent.currentJob && dynamic_cast<Sleep*>(jobComponent.currentJob)) {
 			continue;
 		}
+
+		bool queued = false;
+		for (Job* i : jobComponent.interrupted) {
+			if (dynamic_cast<FindFood*>(i)) queued = true;
+		}
+
+		if (queued) continue;
 
 
 		if (tiredness.tiredness <= 5) continue;
@@ -431,6 +429,8 @@ void updateSocialNeeds() {
 				Job* otherJob = new Talk(other->item, entt::null, SkillType::None, entity);
 				otherJob->priority = combinedScore;
 				otherJobComp->proposeJob(otherJob);
+				
+				std::cout << "assigned talk jobs" << std::endl;
 			}
 		}
 	}
@@ -470,7 +470,6 @@ void updateWork() {
 		work.currentJob->update();
 
 		if (work.currentJob->state == JobState::Completed) {
-			delete work.currentJob;
 			work.currentJob = nullptr;
 			movable.hasTarget = false;
 			continue;

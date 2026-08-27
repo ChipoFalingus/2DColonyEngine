@@ -56,7 +56,7 @@ void createRegions() {
             };
 
             while (!q.empty()) {
-                auto [cx, cy] = q.front();
+                auto& [cx, cy] = q.front();
                 q.pop();
 
                 for (auto [dx, dy] : directions) {
@@ -117,10 +117,16 @@ void spawnSquad(int x, int y) {
 
 // Adds creatures to the world
 void World::addCreatures() {
-    int range = 20;
+    int range = 3;
     for (int i = 0; i < 3; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
+
+        if (!getTileRef(x, y).walkable) {
+            i--;
+            continue;
+        }
+
         auto v = spawnVillager(x, y);
         objectManager.addObject(x, y, v);
     }
@@ -133,29 +139,33 @@ void World::addCreatures() {
             spawnSquad(x, y);
     }
 
-    auto entity = registry.create();
-    registry.emplace<Name>(entity, "Cat");
-    registry.emplace<Position>(entity, 0, 0);
-    registry.emplace<Renderable>(entity, L'c', glm::vec3(0.6f, 0.6f, 0.6f));
+    for (int i = 0; i < 0; i++) {
+        auto entity = registry.create();
+        registry.emplace<Name>(entity, "Cat");
+        registry.emplace<Position>(entity, 0, 0);
+        registry.emplace<Renderable>(entity, L'C', glm::vec3(0.6f, 0.6f, 0.6f));
 
-    registry.emplace<Movable>(entity, .1f, .1f, 0.0f, 0, 0, false);
-    registry.emplace<Health>(entity, 100);
-    registry.emplace<HungerNeed>(entity, 100);
-    registry.get<HungerNeed>(entity).weight = .0f;
-    registry.emplace<TiredNeed>(entity, 0);
+        registry.emplace<Movable>(entity, .1f, .1f, 0.0f, 0, 0, false);
+        registry.emplace<Health>(entity, 100);
+        registry.emplace<HungerNeed>(entity, 100);
+        registry.get<HungerNeed>(entity).weight = .0f;
+        registry.emplace<TiredNeed>(entity, 0);
 
-    mainWorld.objectManager.addObject(0, 0, entity);
+        mainWorld.objectManager.addObject(0, 0, entity);
 
-    registry.emplace<JobComponent>(entity, nullptr);
+        registry.emplace<JobComponent>(entity, nullptr);
+    }
+
+    //spawnSquad(20, 20);
 }
 
 std::vector<entt::entity> World::getAllVillagers() {
     std::vector<entt::entity> result;
 
-	auto view = registry.view<Movable>();
+	auto view = registry.view<Villager>();
 
     for (auto entity : view) {
-        if (registry.any_of<Movable>(entity)) {
+        if (registry.any_of<Villager>(entity)) {
             result.push_back(entity);
         }
     }

@@ -42,8 +42,13 @@
                 "character": "|",
                 "color": [ 121, 208, 33 ]
             },
-            "drop": {
-                "item": "Wheat Seeds",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wheat Seeds",
+                        "odds": 0.1
+                    }
+                ],
                 "skill": "Farming"
             }
         },
@@ -53,8 +58,13 @@
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             }
         },
@@ -64,8 +74,13 @@
                 "character": 9824,
                 "color": [ 42, 55, 12 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             }
         },
@@ -75,8 +90,13 @@
                 "character": 9827,
                 "color": [ 255, 255, 255 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             }
         },
@@ -86,8 +106,13 @@
                 "character": "Y",
                 "color": [ 150, 75, 0 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             }
         },
@@ -127,8 +152,13 @@
                 "character": "R",
                 "color": [ 128, 128, 128 ]
             },
-            "drop": {
-                "item": "Rock Chunk",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Rock Chunk",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Mining"
             }
         },
@@ -152,8 +182,13 @@
                 "character": "I",
                 "color": [ 217, 201, 147 ]
             },
-            "drop": {
-                "item": "Raw Iron",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Raw Iron",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Mining"
             }
         },
@@ -163,8 +198,13 @@
                 "character": "C",
                 "color": [ 184, 115, 51 ]
             },
-            "drop": {
-                "item": "Copper",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Copper",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Mining"
             }
         },
@@ -174,8 +214,13 @@
                 "character": "C",
                 "color": [ 54, 69, 79 ]
             },
-            "drop": {
-                "item": "Coal",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Coal",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Mining"
             }
         },
@@ -200,6 +245,15 @@
             "visual": {
                 "character": "=",
                 "color": [ 128, 128, 128 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "Stone Cutter"
             }
         },
         {
@@ -261,9 +315,22 @@
         },
         {
             "name": "Stone Wall",
+            "structure": {
+                "health": 15,
+                "flammable": true
+            },
             "visual": {
                 "character": "%",
                 "color": [ 128, 128, 128 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Stone Brick",
+                        "quantity": 2
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -271,6 +338,15 @@
             "visual": {
                 "character": ".",
                 "color": [ 128, 128, 128 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "None"
             }
         },
         {
@@ -373,7 +449,7 @@
                         "quantity": 3
                     }
                 ],
-                "required_bench": "Carpentry Bench"
+                "required_bench": "None"
             }
         },
         {
@@ -488,9 +564,21 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Bundled Wheat",
+                        "odds": 1.0
+                    },
+                    {
+                        "item": "Wheat Seeds",
+                        "odds": 0.5
+                    }
+                ],
+                "skill": "Farming"
+            },
             "crop": {
                 "grow_time": 200.0,
-                "produce": "Bundled Wheat",
                 "stages": [
                     {
                         "char": ".",
@@ -533,9 +621,17 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Carrot",
+                        "odds": 1.0
+                    }
+                ],
+                "skill": "Farming"
+            },
             "crop": {
                 "grow_time": 2.0,
-                "produce": "Carrot",
                 "stages": [
                     {
                         "char": ".",
@@ -578,9 +674,17 @@
                 "character": ".",
                 "color": [ 56, 118, 29 ]
             },
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Potato",
+                        "odds": 1.0
+                    }
+                ],
+                "skill": "Farming"
+            },
             "crop": {
                 "grow_time": 2.0,
-                "produce": "Potato",
                 "stages": [
                     {
                         "char": ",",
@@ -623,8 +727,13 @@
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             },
             "produce": "Apple"
@@ -635,8 +744,13 @@
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             },
             "produce": "Orange"
@@ -647,8 +761,13 @@
                 "character": 9827,
                 "color": [ 0, 255, 0 ]
             },
-            "drop": {
-                "item": "Wood",
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "Wood",
+                        "odds": 1.0
+                    }
+                ],
                 "skill": "Woodcutting"
             },
             "produce": "Lemon"

@@ -4,6 +4,7 @@
 
 #include "Utility/Heat.h"
 #include "Settings.h"
+#include "GameState.h"
 #include <entt/entt.hpp>
 
 enum struct Material {
@@ -49,6 +50,8 @@ private:
 public:
 
     std::string selectedPlantItem;
+
+    GameState gameState;
 
     static Game& getInstance() {
         static Game instance;

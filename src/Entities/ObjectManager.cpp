@@ -59,3 +59,8 @@ bool ObjectManager::has(int x, int y, const std::string& itemName) {
     }
     return false;
 }
+
+bool ObjectManager::isEmpty(int x, int y) {
+    uint64_t key = getKey(x, y);
+    return itemMap.find(key) == itemMap.end();
+}

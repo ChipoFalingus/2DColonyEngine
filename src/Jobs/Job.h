@@ -108,21 +108,24 @@ class Plant : public Job {
 public:
 
 	enum State {
-		GettingSeed,
+		GetSeed,
+		Move,
 		Tilling,
 		Planting
 	};
 
+	ItemLocation itemLocation;
+
 	int locX, locY;
 	std::string seed;
 
-	float plantClock;
-	float tillClock;
+	float plantClock = 0.0f;
+	float tillClock = 0.0f;
 
-	State plantState = State::GettingSeed;
+	State plantState = State::GetSeed;
 
-	Plant(entt::entity v, entt::entity tool, SkillType skillType, std::string seed, int locX, int locY)
-		: Job(v, tool, skillType), seed(seed), locX(locX), locY(locY)
+	Plant(entt::entity v, entt::entity tool, SkillType skillType, std::string seed, ItemLocation itemLocation, int locX, int locY)
+		: Job(v, tool, skillType), seed(seed), itemLocation(itemLocation), locX(locX), locY(locY)
 	{
 		x = locX;
 		y = locY;
@@ -399,19 +402,6 @@ public:
 	void pickNewTarget();
 };
 
-
-class Meditate : public Job {
-public:
-	int tX;
-	int tY;
-	bool hasTarget = false;
-	Meditate(entt::entity v, entt::entity tool, SkillType skillType)
-		: Job(v, tool, skillType)
-	{}
-	void update();
-	void pickNewTarget();
-};
-
 class Talk : public Job {
 public:
 	enum State {
@@ -420,7 +410,7 @@ public:
 	};
 
 	entt::entity other;
-	float clock;
+	float clock = 0.0f;
 
 	State talkState = State::WalkTo;
 

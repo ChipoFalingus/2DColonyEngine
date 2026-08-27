@@ -20,4 +20,5 @@ public:
     void clearTile(int x, int y);
 
 	bool has(int x, int y, const std::string& itemName);
+    bool isEmpty(int x, int y);
 };

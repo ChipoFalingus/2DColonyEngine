@@ -9,7 +9,6 @@
 #include "Tile.h"
 #include "Chunk.h"
 #include "Utility/Light.h"
-#include "Utility/Globals.h"
 #include "Game.h"
 #include "Entities/ItemComponents.h"
 #include "Entities/CreatureComponents.h"
@@ -197,10 +196,13 @@ void Tile::removeObject(int x, int y, entt::entity item) {
         s->removeItem(x, y, item);
     }
 
-    auto& itemsOnTile = mainWorld.objectManager.getObjectsAt(x, y);
+    walkable = true;
 }
 
 void Tile::getTile(int x, int y) {
+
+    walkable = getTileWalkable(type);
+
 	float scale = 0.01f;
 
 	float coalNoise = perlin(x * scale + 200.0f, y * scale + 200.0f);
@@ -278,17 +280,17 @@ void Tile::getTile(int x, int y) {
             addObject_Clear(x, y, "Rock");
         }
 
-       if (x == 0 && y == 0) {
-            addObject(x, y, "Apple Tree");
-        }
+        //int radius = 5;
+        //if (std::abs(x) <= radius && std::abs(y) <= radius && (std::abs(x) == radius || std::abs(y) == radius) /*&& !(y == -5 && x == 0)*/) {
+        //    addObject_Clear(x, y, "Stone Wall");
+        //    walkable = false;
+        //}
     }
 
     auto display = getTileDisplay(type);
 
     character = display.character;
     color = display.color;
-
-	walkable = getTileWalkable(type);
 }
 
 void Tile::changeTileType(tileType newType) {

@@ -29,69 +29,71 @@ void processInput(GLFWwindow* window) {
 
     moveClock += Clock::deltaTime;
 
+    GameState& gameState = Game::getInstance().gameState;
+
     if (moveClock > 1.0f / (float)Game::getInstance().getSettingsManager().get().camera_speed) {
         moveClock = 0.0f;
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
         }
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            yPlayer--;
+            gameState.cameraState.yPlayer--;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            yPlayer++;
+            gameState.cameraState.yPlayer++;
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            xPlayer--;
+            gameState.cameraState.xPlayer--;
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            xPlayer++;
+            gameState.cameraState.xPlayer++;
         }
     }
 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !clicked) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !gameState.inputState.clicked) {
 
         viewing = entt::null;
 
-        if (currentMode != Mode::NONE) {
-            if (!placing) {
-                corner = { mouseTileX, mouseTileY };
-                placing = true;
+        if (gameState.placingState.currentMode != Mode::NONE) {
+            if (!gameState.placingState.placing) {
+                gameState.placingState.corner = { gameState.inputState.mouseTileX, gameState.inputState.mouseTileY };
+                gameState.placingState.placing = true;
             }
             else {
                 handleMode();
 
                 if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
                 {
-                    placing = false;
-                    currentMode = Mode::NONE;
+                    gameState.placingState.placing = false;
+                    gameState.placingState.currentMode = Mode::NONE;
                 }
             }
         }
         else {
 
             if (mainWorld.isRendered()) {
-                placing = false;
-                handleClickedItem(mouseTileX, mouseTileY);
+                gameState.placingState.placing = false;
+                handleClickedItem(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
             }
         }
 
-        clicked = true;
+        gameState.inputState.clicked = true;
     }
     else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_RELEASE) {
-        clicked = false;
+        gameState.inputState.clicked = false;
     }
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS) {
-        placing = false;
+        gameState.placingState.placing = false;
         setMode(Mode::NONE);
     }
 
     if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
-        if (!viewMiniMap) {
-			viewMiniMap = true;
+        if (!gameState.viewState.viewMiniMap) {
+            gameState.viewState.viewMiniMap = true;
         }
-        else if (viewMiniMap) {
-			viewMiniMap = false;
+        else if (gameState.viewState.viewMiniMap) {
+            gameState.viewState.viewMiniMap = false;
         }
 
         auto& UIManager = Game::getInstance().getUIManager();
@@ -99,16 +101,15 @@ void processInput(GLFWwindow* window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-        if (!viewHeightMap) viewHeightMap = true;
-        else if (viewHeightMap) viewHeightMap = false;
+        gameState.viewState.viewHeightMap = !gameState.viewState.viewHeightMap;
     }
 
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
-		xPlayer = 0;
-		yPlayer = 0;
+        gameState.cameraState.xPlayer = 0;
+        gameState.cameraState.yPlayer = 0;
     }
     if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
-		viewUI = !viewUI;
+        gameState.viewState.viewUI = !gameState.viewState.viewUI;
     }
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
         mainWorld.updateMiniMap();
@@ -133,7 +134,7 @@ void processInput(GLFWwindow* window) {
     ui.day->changeText(std::wstring(dayStr.begin(), dayStr.end()));
 
 	//ui.playerPos->changeText(L"Player Position: (" + std::to_wstring(xPlayer) + L"," + std::to_wstring(yPlayer) + L")");
-    ui.playerPos->changeText(L"Mouse Position: (" + std::to_wstring(mouseTileX) + L"," + std::to_wstring(mouseTileY) + L")");
+    ui.playerPos->changeText(L"Mouse Position: (" + std::to_wstring(gameState.inputState.mouseTileX) + L"," + std::to_wstring(gameState.inputState.mouseTileY) + L")");
 
     double currentTime = glfwGetTime();
     nbFrames++;
@@ -145,17 +146,17 @@ void processInput(GLFWwindow* window) {
 
 	ui.FPS->changeText(std::wstring(fps.begin(), fps.end()));
 
-    int uiX = mouseTileX - (xPlayer - xFrustum / 2);
-    int uiY = mouseTileY - (yPlayer - yFrustum / 2);
+    int uiX = gameState.inputState.mouseTileX - (gameState.cameraState.xPlayer - gameState.cameraState.xFrustum / 2);
+    int uiY = gameState.inputState.mouseTileY - (gameState.cameraState.yPlayer - gameState.cameraState.yFrustum / 2);
 
-    if (placing && mainWorld.placementMode == PlacementMode::SQUARE) {
-        std::string xStr = std::to_string(std::abs(corner.first - mouseTileX) + 1);
-        std::string yStr = std::to_string(std::abs(corner.second - mouseTileY) + 1);
+    if (gameState.placingState.placing && (mainWorld.placementMode == PlacementMode::SQUARE || mainWorld.placementMode == PlacementMode::FILLED_SQUARE)) {
+        std::string xStr = std::to_string(std::abs(gameState.placingState.corner.first - gameState.inputState.mouseTileX) + 1);
+        std::string yStr = std::to_string(std::abs(gameState.placingState.corner.second - gameState.inputState.mouseTileY) + 1);
         std::string dim = xStr + "x" + yStr;
 
 		ui.placingDims->changeText(std::wstring(dim.begin(), dim.end()));
 		ui.placingDims->setPosition(uiX - (dim.size() >> 1), uiY - 1);
-        ui.placingDims->setAnchorPosition(xFrustum, yFrustum);
+        ui.placingDims->setAnchorPosition(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
     }
     else {
         ui.placingDims->changeText(L"");
@@ -191,10 +192,10 @@ void processInput(GLFWwindow* window) {
     }
 
     if (mainWorld.isRendered()) {
-        Tile& tile = getTileRef(mouseTileX, mouseTileY);
+        Tile& tile = getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
         std::string itemStr = "";
 
-        auto& list = mainWorld.objectManager.getObjectsAt(mouseTileX, mouseTileY);
+        auto& list = mainWorld.objectManager.getObjectsAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
         auto& registry = mainWorld.registry;
 
         for (entt::entity e : list) {
@@ -208,6 +209,7 @@ void processInput(GLFWwindow* window) {
             }
         }
 
+        // Debugging purposes, halves FPS
 		/*auto view = mainWorld.registry.view<Name, Position>();
 
         for (auto [entity, name, position] : view.each()) {
@@ -220,7 +222,7 @@ void processInput(GLFWwindow* window) {
         std::string type = typeToString(tile.type);
         ui.tileType->changeText(std::wstring(type.begin(), type.end()));
 
-        std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(mouseTileX, mouseTileY).altitude));
+        std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).altitude));
 
         ui.waterLevel->changeText(lightLevel);
     }
@@ -230,31 +232,36 @@ void processInput(GLFWwindow* window) {
 
 void handleMode() {
 
-    int left = std::min(corner.first, mouseTileX);
-    int right = std::max(corner.first, mouseTileX);
-    int top = std::min(corner.second, mouseTileY);
-    int bottom = std::max(corner.second, mouseTileY);
+    GameState& gameState = Game::getInstance().gameState;
 
-    if (currentMode == Mode::BUILD) {
+    int left = std::min(gameState.placingState.corner.first, gameState.inputState.mouseTileX);
+    int right = std::max(gameState.placingState.corner.first, gameState.inputState.mouseTileX);
+    int top = std::min(gameState.placingState.corner.second, gameState.inputState.mouseTileY);
+    int bottom = std::max(gameState.placingState.corner.second, gameState.inputState.mouseTileY);
+
+    if (gameState.placingState.currentMode == Mode::BUILD) {
 		build(left, right, top, bottom);
     }
-    else if (currentMode == Mode::HARVEST) {
+    else if (gameState.placingState.currentMode == Mode::HARVEST) {
 		harvest(left, right, top, bottom);
     }
-    else if (currentMode == Mode::PLANT) {
+    else if (gameState.placingState.currentMode == Mode::PLANT) {
 		plant(left, right, top, bottom);
     }
-    else if (currentMode == Mode::STOCKPILE) {
+    else if (gameState.placingState.currentMode == Mode::STOCKPILE) {
 		stockpile(left, right, top, bottom);
 	}
 }
 
 void handleClickedItem(int x, int y) {
+
+    GameState& gameState = Game::getInstance().gameState;
+
     ObjectManager* manager = &mainWorld.objectManager;
     auto& uiManager = Game::getInstance().getUIManager();
 
 
-    for (auto& i : manager->getObjectsAt(mouseTileX, mouseTileY)) {
+    for (auto& i : manager->getObjectsAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
         if (auto j = mainWorld.registry.try_get<Skills>(i)) {
             viewing = i;
             break;
@@ -280,6 +287,9 @@ void handleClickedItem(int x, int y) {
         auto s = mainWorld.atStockpile(x, y);
         Game::getInstance().getStockpileUI().updateStockpileUI(*s);
         Game::getInstance().getUIManager().addOrRemoveFrame(UI::Stockpile);
+
+        auto& frame = Game::getInstance().getStockpileUI();
+        frame.infoPanel->setPosition(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
     }
 }
 
@@ -314,11 +324,13 @@ bool hasBlueprint(int x, int y) {
 
 void build(int left, int right, int top, int bottom) {
 
+    GameState& gameState = Game::getInstance().gameState;
+
     std::string itemName = Game::getInstance().getBuildItem();
 
     if (mainWorld.placementMode == PlacementMode::SINGLE) {
-        if (hasBlueprint(mouseTileX, mouseTileY)) {
-            std::cout << "Tile (" << mouseTileX << ", " << mouseTileY << ") already has a blueprint. Skipping build job." << std::endl;
+        if (hasBlueprint(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+            std::cout << "Tile (" << gameState.inputState.mouseTileX << ", " << gameState.inputState.mouseTileY << ") already has a blueprint. Skipping build job." << std::endl;
             return;
         }
 
@@ -326,19 +338,19 @@ void build(int left, int right, int top, int bottom) {
         if (staticObject) {
             auto loc = mainWorld.findUnclaimedItemInAllStockpile(itemName);
             if (!loc) {
-                placing = false;
+                gameState.placingState.placing = false;
                 return;
             }
 
             mainWorld.registry.get<Claimable>(loc.value().item).claimed = true;
 
-            Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->item, loc->x, loc->y, mouseTileX, mouseTileY);
+            Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->item, loc->x, loc->y, gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
             job->priority = 30;
             JobManager::addJob(job);
         } else {
-			addBlueprint(mouseTileX, mouseTileY, itemName);
+			addBlueprint(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, itemName);
 
-            Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, mouseTileX, mouseTileY);
+            Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
             job->priority = 30;
             JobManager::addJob(job);
         }
@@ -397,6 +409,10 @@ void harvest(int left, int right, int top, int bottom) {
             if (objectList.empty()) continue;
 			if (tile.markedForHarvest) continue;
 
+            if (auto* i = mainWorld.registry.try_get<Crop>(objectList[0])) {
+                if (!i->mature) continue;
+            }
+
             if (auto* i = mainWorld.registry.try_get<Harvestable>(objectList[0])) {
                 tile.markedForHarvest = true;
                 tile.anim.type = animType::RED_X;
@@ -415,9 +431,19 @@ void plant(int left, int right, int top, int bottom) {
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
             if (!manager.has(x, y, "Stockpile")) {
-                Job* job = new Plant(entt::null, entt::null, SkillType::Farming, Game::getInstance().selectedPlantItem, x, y);
-                job->priority = 30;
-			    JobManager::JobList.push_back(job);
+
+                auto itemLocation = mainWorld.findUnclaimedItemInAllStockpile(Game::getInstance().selectedPlantItem);
+
+                if (itemLocation) {
+
+                    mainWorld.registry.get<Claimable>(itemLocation->item).claimed = true;
+
+                    addBlueprint(x, y, Game::getInstance().selectedPlantItem);
+                    Job* job = new Plant(entt::null, entt::null, SkillType::Farming, Game::getInstance().selectedPlantItem, itemLocation.value(), x, y);
+                    job->priority = 30;
+                    JobManager::JobList.push_back(job);
+
+                }
             }
             else {
 				std::cout << "Selected item is not a crop. Cannot plant at (" << x << ", " << y << ").\n";

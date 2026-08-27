@@ -22,9 +22,13 @@ struct Position {
 	int x, y;
 };
 
+struct Drop {
+	std::string item;
+	float odds;
+};
+
 struct Harvestable {
-	std::string produce;
-	//int quantity;
+	std::vector<Drop> drops;
 	SkillType requiredSkill;
 };
 
@@ -39,20 +43,23 @@ struct Nutritional {
 struct ProduceSpawner {
 	std::string produce;
 	float produceClock;
-	float productionTime = 5.0f;
+	float productionTime = 10.0f;
 
 	bool isProducing = false;
+	bool canProduce = true;
 };
 
 struct Crop {
 	std::vector<std::pair<wchar_t, glm::vec3>> growthStages;
-	std::string produce;
 
 	float growthTime;
+	float currentGrowthTime;
 	float growthClock;
 
 	int growthStage;
 	int growthStageMax;
+
+	bool mature = false;
 };
 
 struct HeatEmitter {
@@ -67,6 +74,11 @@ struct LightEmitter {
 struct FuelBurner {
 	float fuel_amount;
 	float burn_rate;
+};
+
+// Requires FuelBurner component
+struct Furnace {
+	entt::entity itemToCook;
 };
 
 struct Gun {

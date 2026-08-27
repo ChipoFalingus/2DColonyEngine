@@ -1,6 +1,7 @@
 #pragma once
 #include "UI/UIElements.h"
 #include "World/Stockpile.h"
+#include "GameState.h"
 
 struct MainMenuUI {
     UI type = UI::Main;

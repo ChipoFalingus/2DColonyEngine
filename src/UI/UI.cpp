@@ -36,6 +36,11 @@ MainMenuUI getMainMenuFrame() {
 
 	ui.title = &frame->addElement<Text>(0, -10, L"Fling's Colony", Anchor::CENTER);
 
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
+
 	std::cout << ui.title->getAnchorPosition(xFrustum, yFrustum).first << ", " << ui.title->getAnchorPosition(xFrustum, yFrustum).second << std::endl;
 
     ui.new_game = &createButton(*frame, 0, 0, L"           New Game           ", Anchor::CENTER);
@@ -112,16 +117,17 @@ SettingsUI getSettingsFrame() {
         settings.camera_speed = ui.camera_speed->getValue();
 
         Game::getInstance().getSettingsManager().update(settings);
+        GameState& gameState = Game::getInstance().gameState;
 
-        xFrustum = scrWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
-        yFrustum = scrHeight / Game::getInstance().getSettingsManager().get().yTextSpacing;
-        std::cout << "Tile dimesions resized to " << xFrustum << "x" << yFrustum << std::endl;
+        gameState.cameraState.xFrustum = gameState.cameraState.scrWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
+        gameState.cameraState.yFrustum = gameState.cameraState.scrHeight / Game::getInstance().getSettingsManager().get().yTextSpacing;
+        std::cout << "Tile dimesions resized to " << gameState.cameraState.xFrustum << "x" << gameState.cameraState.yFrustum << std::endl;
 
         auto& uiManager = Game::getInstance().getUIManager();
-        uiManager.resize(xFrustum, yFrustum);
+        uiManager.resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
         for (auto& i : uiManager.getAllFrames()) {
             auto frame = i.second.get();
-            frame->resize(xFrustum, yFrustum);
+            frame->resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
 
         }
         });
@@ -153,7 +159,12 @@ WorldSettingsUI getWorldSettingsFrame() {
         uiManager.swapFrame(UI::WorldSettings, UI::Main);
         });
 
-    ui.panel = &frame->addElement<Panel>(0, 3, xFrustum, yFrustum - 3, Anchor::TOP_CENTER);
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
+
+    ui.panel = &frame->addElement<Panel>(0, 3, xFrustum, yFrustum - 7, Anchor::TOP_CENTER);
 
     ui.begin = &createButton(*frame, -1, -1, L" Begin! ", Anchor::BOTTOM_RIGHT);
 
@@ -174,6 +185,12 @@ LoadingUI getLoadingFrame() {
     LoadingUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
+
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
+
     ui.panel = &frame->addElement<Panel>(0, 0, xFrustum, yFrustum, Anchor::TOP_CENTER);
 
     ui.text = &frame->addElement<Text>(1, -2, L"Loading...", Anchor::CENTER_LEFT);
@@ -379,7 +396,7 @@ StructureUI getStructureFrame() {
     setupBuildButton(ui.wood_wall, "Wooden Wall");
     setupBuildButton(ui.stone_wall, "Stone Wall");
     setupBuildButton(ui.wood_fence, "Wooden Floor", PlacementMode::FILLED_SQUARE);
-    setupBuildButton(ui.stone_fence, "Stone Floor");
+    setupBuildButton(ui.stone_fence, "Stone Floor", PlacementMode::FILLED_SQUARE);
     setupBuildButton(ui.wood_floor, "Wooden Wall");
 
 
@@ -437,14 +454,20 @@ void FurnitureUI::configureFurnitureFrame() {
             14, -5 + offset * 3,
             std::wstring(j.begin(), j.end()), Anchor::BOTTOM_LEFT);
 
+
         button->setClickFunction([this, string]() {
             setMode(Mode::BUILD);
             mainWorld.placementMode = PlacementMode::SINGLE;
             std::cout << string << std::endl;
             Game::getInstance().setBuildItem(string);
             Game::getInstance().getUIManager().remove(UI::Furniture);
-            placing = true;
+            Game::getInstance().gameState.placingState.placing = true;
             });
+
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
 
         button->setAnchorPosition(xFrustum, yFrustum);
         buttons.push_back(button);
@@ -521,6 +544,11 @@ CarpentryBenchUI getCarpentryBenchFrame() {
 			ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
 			});
 
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
+
 		button->setAnchorPosition(xFrustum, yFrustum);
 
         ui.craftable_items.push_back(button);
@@ -586,6 +614,11 @@ StoneCutterUI getStoneCutterFrame() {
             infoStr += "x" + std::to_string(recipe.quantity) + " " + name.name;
             ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
             });
+
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
 
         button->setAnchorPosition(xFrustum, yFrustum);
 
@@ -653,6 +686,11 @@ AnvilUI getAnvilFrame() {
             ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
             });
 
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
+
         button->setAnchorPosition(xFrustum, yFrustum);
 
         ui.craftable_items.push_back(button);
@@ -718,6 +756,11 @@ GunBenchUI getGunBenchFrame() {
             infoStr += "x" + std::to_string(recipe.quantity) + " " + name.name;
             ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
             });
+
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
 
         button->setAnchorPosition(xFrustum, yFrustum);
 
@@ -836,7 +879,10 @@ void PlantUI::configurePlantFrame() {
         for (auto& [loc, f] : list) {
             for (auto& item : f) {
                 if (auto s = mainWorld.registry.try_get<Seed>(item)) {
-                    result[s->produce]++;
+                    if (!mainWorld.registry.get<Claimable>(item).claimed) {
+                        auto& name = mainWorld.registry.get<Name>(item);
+                        result[name.name]++;
+                    }
                 }
             }
         }
@@ -863,6 +909,11 @@ void PlantUI::configurePlantFrame() {
 			Game::getInstance().selectedPlantItem = name;
             });
 
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
+
 		button->setAnchorPosition(xFrustum, yFrustum);
 
         seeds.push_back(button);
@@ -886,6 +937,11 @@ void InfoUI::configureInfoFrame(std::string obj) {
 
     auto staticObject = ObjectRegistry::getInstance().getStaticObject(obj);
     auto& name = ObjectRegistry::getInstance().getStaticRegistry().get<Name>(staticObject).name;
+
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
 
     std::wstring wname = std::wstring(name.begin(), name.end());
     itemName->changeText(wname);
@@ -929,11 +985,16 @@ Button& createButton(Frame& frame, int x, int y, const std::wstring& label, Anch
 }
 
 void setMode(Mode mode) {
+
+    GameState& gameState = Game::getInstance().gameState;
+
+    Mode& currentMode = gameState.placingState.currentMode;
+
     if (currentMode == mode) {
         currentMode = Mode::NONE;
     }
     else {
         currentMode = mode;
     }
-    placing = false;
+    gameState.placingState.placing = false;
 }

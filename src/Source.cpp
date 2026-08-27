@@ -79,25 +79,6 @@ struct CustomGlyph {
     const unsigned char* bitmap;
 };
 
-unsigned char pickaxeBitmap[256] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0, 255, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 255, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 255, 0, 0, 255, 0,
-  0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 255, 0,
-  0, 0, 0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 255, 0, 255, 0,
-  0, 0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 255, 0, 255, 0,
-  0, 0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 0, 255, 0, 255, 0,
-  0, 0, 0, 255, 255, 0, 255, 255, 0, 0, 0, 0, 0, 255, 255, 0,
-  0, 0, 255, 255, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 255, 0,
-  0, 255, 255, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 255, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-
 unsigned char checkboxBitmap[256] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0,
@@ -139,7 +120,6 @@ unsigned char checkedboxBitmap[256] = {
 
 
 std::unordered_map<FT_ULong, CustomGlyph> customGlyphs = {
-    {0x26CF, {0x26CF, 16, 16, 0, 16, 16, pickaxeBitmap}},
     {0xA32, {0xA32, 16, 16, 0, 16, 16, checkboxBitmap}},
     {0xA33, {0xA33, 16, 16, 0, 16, 16, checkedboxBitmap}},
 };
@@ -166,12 +146,14 @@ void generateFontAtlas(const std::string& fontPath, int fontSize) {
         FT_Bitmap& bmp = face->glyph->bitmap;
 
         if (x + bmp.width >= atlasWidth) { x = 0; y += rowHeight; rowHeight = 0; }
-        if (y + bmp.rows >= atlasHeight) { std::cerr << "Atlas too small!\n"; break; }
+        if (y + bmp.rows >= atlasHeight) { std::cerr << "Atlas too small\n"; break; }
 
-        for (int row = 0; row < bmp.rows; row++)
-            for (int col = 0; col < bmp.width; col++)
+        for (int row = 0; row < bmp.rows; row++) {
+            for (int col = 0; col < bmp.width; col++) {
                 atlasData[(y + row) * atlasWidth + (x + col)] = bmp.buffer[row * bmp.pitch + col];
-
+            }
+        }
+        
         Character character;
         character.Size = glm::ivec2(bmp.width, bmp.rows);
         character.Bearing = glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top);
@@ -187,11 +169,13 @@ void generateFontAtlas(const std::string& fontPath, int fontSize) {
     for (const auto& h : customGlyphs) {
 		auto& g = h.second;
         if (x + g.width >= atlasWidth) { x = 0; y += rowHeight; rowHeight = 0; }
-        if (y + g.height >= atlasHeight) { std::cerr << "Atlas too small for custom glyphs!\n"; break; }
+        if (y + g.height >= atlasHeight) { std::cerr << "Atlas too small for custom glyphs\n"; break; }
 
-        for (int row = 0; row < g.height; row++)
-            for (int col = 0; col < g.width; col++)
+        for (int row = 0; row < g.height; row++) {
+            for (int col = 0; col < g.width; col++) {
                 atlasData[(y + row) * atlasWidth + (x + col)] = g.bitmap[row * g.width + col];
+            }
+        }
 
         Character character;
         character.Size = glm::ivec2(g.width, g.height);
@@ -255,14 +239,16 @@ static void ClearBatch() {
 static void FlushBatch(Shader& shader) {
     if (batchVertices.empty()) return;
 
+    GameState& gameState = Game::getInstance().gameState;
+
     float zoom = 1.0f;
-    glm::mat4 projection = glm::ortho(0.0f, (float)scrWidth * zoom, 0.0f, (float)scrHeight * zoom);
+    glm::mat4 projection = glm::ortho(0.0f, (float)gameState.cameraState.scrWidth * zoom, 0.0f, (float)gameState.cameraState.scrHeight * zoom);
     shader.use();
     shader.setMat4("projection", projection);
     shader.setInt("text", 0);
 
-    int width = xFrustum;
-    int height = yFrustum;
+    int width = gameState.cameraState.xFrustum;
+    int height = gameState.cameraState.yFrustum;
    
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, fontTexture);
@@ -293,7 +279,6 @@ void RenderText(Shader& shader, const wchar_t& text, float x, float y, float sca
     float u0 = ch.UV0.x, v0 = ch.UV0.y;
     float u1 = ch.UV1.x, v1 = ch.UV1.y;
 
-    // six vertices (two triangles). Each vertex: x,y,u,v,r,g,b
     float r = color.r, g = color.g, b = color.b;
 
     float quad[6][7] = {
@@ -344,13 +329,21 @@ sf::Color altitudeToColor(float altitude, float minAlt, float maxAlt) {
 }
 
 void drawMiniMap(Shader& shader, const Settings& settings) {
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
+
+    int xPlayer = gameState.cameraState.xPlayer;
+    int yPlayer = gameState.cameraState.yPlayer;
+
     int numX = xPlayer - xFrustum / 2;
     int numY = yPlayer - yFrustum / 2;
     for (int y = yPlayer - yFrustum / 2; y < yPlayer + yFrustum / 2; y++) {
         for (int x = xPlayer - xFrustum / 2; x < xPlayer + xFrustum / 2; x++) {
 
             float screenX = (x - numX) * settings.xTextSpacing;
-            float screenY = scrHeight - ((y - numY + 1) * settings.yTextSpacing);
+            float screenY = gameState.cameraState.scrHeight - ((y - numY + 1) * settings.yTextSpacing);
 
             Chunk* chunk = nullptr;
 
@@ -365,7 +358,7 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
 
             wchar_t string;
 
-            if (viewUI) {
+            if (gameState.viewState.viewUI) {
                 int uiX = x - (xPlayer - xFrustum / 2);
                 int uiY = y - (yPlayer - yFrustum / 2);
 
@@ -389,7 +382,7 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
                 continue;
             }
             
-            if (!viewHeightMap) {
+            if (!gameState.viewState.viewHeightMap) {
                 charStr = chunk->dominantDisplay.character;
                 color = chunk->dominantDisplay.color;
             }
@@ -409,30 +402,38 @@ void drawMiniMap(Shader& shader, const Settings& settings) {
 }
 
 glm::vec3 regionColor(int region) {
-    // deterministic pseudo-random based on region id
     unsigned int x = static_cast<unsigned int>(region);
 
     x ^= x << 13;
     x ^= x >> 17;
     x ^= x << 5;
 
-    // extract RGB components
-    sf::Uint8 r = 80 + (x & 0x7F);         x >>= 8;
-    sf::Uint8 g = 80 + (x & 0x7F);         x >>= 8;
-    sf::Uint8 b = 80 + (x & 0x7F);
+    uint8_t r = 80 + (x & 0x7F);         x >>= 8;
+    uint8_t g = 80 + (x & 0x7F);         x >>= 8;
+    uint8_t b = 80 + (x & 0x7F);
 
     return normalizeRGB(glm::vec3(r, g, b));
 }
 
-void drawMap(Shader& shader, const Settings& settings)
-{
+void drawMap(Shader& shader, const Settings& settings) {
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
+
+    int xPlayer = gameState.cameraState.xPlayer;
+    int yPlayer = gameState.cameraState.yPlayer;
+
+    int mouseTileX = gameState.inputState.mouseTileX;
+    int mouseTileY = gameState.inputState.mouseTileY;
+
     int numX = xPlayer - xFrustum / 2;
     int numY = yPlayer - yFrustum / 2;
 
     std::unordered_set<std::pair<int, int>, pair_hash> lineTiles;
 
-    if (mainWorld.placementMode == PlacementMode::LINE && placing) {
-        auto line = bresenham(corner.first, corner.second, mouseTileX, mouseTileY);
+    if (mainWorld.placementMode == PlacementMode::LINE && gameState.placingState.placing) {
+        auto line = bresenham(gameState.placingState.corner.first, gameState.placingState.corner.second, mouseTileX, mouseTileY);
 		lineTiles.insert(line.begin(), line.end());
     }
 
@@ -443,7 +444,7 @@ void drawMap(Shader& shader, const Settings& settings)
 
     for (int y = yPlayer - yFrustum / 2; y < (yPlayer + yFrustum / 2) + 1; y++) {
 
-        float screenY = scrHeight - ((y - numY + 1) * settings.yTextSpacing);
+        float screenY = gameState.cameraState.scrHeight - ((y - numY + 1) * settings.yTextSpacing);
         for (int x = xPlayer - xFrustum / 2; x < (xPlayer + xFrustum / 2) + 1; x++) {
 
             float screenX = (x - numX) * settings.xTextSpacing;
@@ -458,7 +459,7 @@ void drawMap(Shader& shader, const Settings& settings)
             wchar_t string;
             glm::vec3 color(1.0f, 1.0f, 1.0f); // default white
 
-            if (viewUI) {
+            if (gameState.viewState.viewUI) {
                 int uiX = x - (xPlayer - xFrustum / 2);
                 int uiY = y - (yPlayer - yFrustum / 2);
 
@@ -510,13 +511,13 @@ void drawMap(Shader& shader, const Settings& settings)
 
             if (tile.anim.type != animType::NONE) applyAnimation(tile, color, string);
 
-            if (placing) {
+            if (gameState.placingState.placing) {
                 switch (mainWorld.placementMode) {
                 case (PlacementMode::SQUARE): {
-                    int left = std::min(corner.first, mouseTileX);
-                    int right = std::max(corner.first, mouseTileX);
-                    int top = std::min(corner.second, mouseTileY);
-                    int bottom = std::max(corner.second, mouseTileY);
+                    int left = std::min(gameState.placingState.corner.first, mouseTileX);
+                    int right = std::max(gameState.placingState.corner.first, mouseTileX);
+                    int top = std::min(gameState.placingState.corner.second, mouseTileY);
+                    int bottom = std::max(gameState.placingState.corner.second, mouseTileY);
 
                     if (x >= left && x <= right && y >= top && y <= bottom) {
                         if (y == top || y == bottom || x == left || x == right) {
@@ -542,10 +543,10 @@ void drawMap(Shader& shader, const Settings& settings)
 
                 }
                 case (PlacementMode::FILLED_SQUARE): {
-                    int left = std::min(corner.first, mouseTileX);
-                    int right = std::max(corner.first, mouseTileX);
-                    int top = std::min(corner.second, mouseTileY);
-                    int bottom = std::max(corner.second, mouseTileY);
+                    int left = std::min(gameState.placingState.corner.first, mouseTileX);
+                    int right = std::max(gameState.placingState.corner.first, mouseTileX);
+                    int top = std::min(gameState.placingState.corner.second, mouseTileY);
+                    int bottom = std::max(gameState.placingState.corner.second, mouseTileY);
 
                     if (x >= left && x <= right && y >= top && y <= bottom) {
                         string = L'+';
@@ -556,7 +557,7 @@ void drawMap(Shader& shader, const Settings& settings)
                 }
             }
 
-            if (viewHeightMap) {
+            if (gameState.viewState.viewHeightMap) {
                 string = L'■';
                 color =
                     glm::vec3(
@@ -664,17 +665,18 @@ void updateCropSystem(entt::registry& registry, ObjectManager& objectManager, fl
     auto view = registry.view<Position, Name, Renderable, Crop>();
     for (auto [entity, pos, name, renderable, crop] : view.each()) {
         crop.growthClock += deltaTime;
-        if (crop.growthClock >= crop.growthTime) {
+        if (crop.growthClock >= crop.currentGrowthTime) {
             crop.growthClock = 0.0f;
             crop.growthStage++;
             if (crop.growthStage >= crop.growthStageMax) {
 
 				auto* staticCrop = ObjectRegistry::getInstance().getStaticComponent<Harvestable>(name.name);
                 if (staticCrop) {
-                    registry.emplace_or_replace<Harvestable>(entity, staticCrop->produce, staticCrop->requiredSkill);
+                    crop.mature = true;
                 }
 
                 crop.growthStage = crop.growthStageMax;
+                crop.currentGrowthTime = crop.growthTime + (getRandomFloat(-1.0f, 1.0f) * crop.growthTime * 0.25f);
             }
 			renderable.character = crop.growthStages[crop.growthStage].first;
 			renderable.color = crop.growthStages[crop.growthStage].second;
@@ -685,19 +687,31 @@ void updateCropSystem(entt::registry& registry, ObjectManager& objectManager, fl
 void updateProduceSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
     auto view = registry.view<Position, ProduceSpawner>();
     for (auto [entity, pos, produce] : view.each()) {
+        if (!produce.canProduce) continue;
+
+        if (auto i = registry.try_get<Crop>(entity)) {
+            if (!i->mature) continue;
+        }
+
         produce.produceClock += deltaTime;
         if (produce.produceClock >= produce.productionTime) {
             produce.produceClock = 0.0f;
 			std::vector<std::pair<int, int>> dirs = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
 
+            bool hasProduced = false;
             for (auto& dir : dirs) {
+
                 int newX = pos.x + dir.first;
                 int newY = pos.y + dir.second;
 
-                if (mainWorld.objectManager.getObjectsAt(newX, newY).empty()) {
+                if (mainWorld.objectManager.isEmpty(newX, newY) && getTileRef(newX, newY).walkable) {
                     getTileRef(newX, newY).addObject(newX, newY, produce.produce);
+                    hasProduced = true;
                     break;
                 }
+            }
+            if (!hasProduced) {
+                produce.canProduce = false;
             }
         }
     }
@@ -721,8 +735,12 @@ void updateHealth(entt::registry& registry, ObjectManager& objectManager, float 
 			job_component->clearInterruptedJobs();
         }
 
+        auto& name = registry.get<Name>(entity);
+        std::cout << "Removed " << name.name << std::endl;
+
         auto& pos = registry.get<Position>(entity);
         getTileRef(pos.x, pos.y).removeObject(pos.x, pos.y, entity);
+
     }
 }
 
@@ -746,17 +764,22 @@ int main() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
-	scrWidth = 1920;
-	scrHeight = 1080;
+    GameState& gameState = Game::getInstance().gameState;
+
+    int screenWidth = 1920;
+    int screenHeight = 1080;
+
+    gameState.cameraState.scrWidth = screenWidth;
+    gameState.cameraState.scrWidth = screenHeight;
 
     //scrWidth = mode->width;
     //scrHeight = mode->height;
 
-    xFrustum = scrWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
-    yFrustum = scrHeight / Game::getInstance().getSettingsManager().get().xTextSpacing;
+    gameState.cameraState.xFrustum = screenWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
+    gameState.cameraState.yFrustum = screenHeight / Game::getInstance().getSettingsManager().get().xTextSpacing;
 
 
-    GLFWwindow* window = glfwCreateWindow(scrWidth, scrHeight, "ASCII Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "ASCII Game", NULL, NULL);
     //glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 
     if (window == NULL) {
@@ -771,7 +794,7 @@ int main() {
         return -1;
     }
 
-    glViewport(0, 0, scrWidth, scrHeight);
+    glViewport(0, 0, screenWidth, screenHeight);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -811,7 +834,7 @@ int main() {
     Game::getInstance().initUI();
 
     auto& uiManager = Game::getInstance().getUIManager();
-	uiManager.resize(xFrustum, yFrustum);
+	uiManager.resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
     uiManager.push(UI::Main);
 	
     double lastTime = glfwGetTime();
@@ -826,7 +849,7 @@ int main() {
 
     //music.play();
 
-    framebuffer_size_callback(window, scrWidth, scrHeight);
+    framebuffer_size_callback(window, screenWidth, screenHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	glfwSwapInterval(0);
@@ -838,7 +861,7 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
 
         double currentTime = glfwGetTime();
-        float dt = currentTime - lastTime;
+        float dt = (currentTime - lastTime);
         lastTime = currentTime;
 
         Clock::update(dt);
@@ -851,7 +874,7 @@ int main() {
         ClearBatch();
 
         // Draw text
-        if (viewMiniMap) {
+        if (gameState.viewState.viewMiniMap) {
             drawMiniMap(shader, Game::getInstance().getSettingsManager().get());
         }
         else {
@@ -879,22 +902,22 @@ int main() {
             mainWorld.setTemperatureMap(heatMap);
         }
 
-        glfwGetCursorPos(window, &mouseX, &mouseY);
+        glfwGetCursorPos(window, &gameState.inputState.mouseX, &gameState.inputState.mouseY);
 
         int xTextSpacing = Game::getInstance().getSettingsManager().get().xTextSpacing;
         int yTextSpacing = Game::getInstance().getSettingsManager().get().yTextSpacing;
 
-        mouseTileX = (int)(mouseX / xTextSpacing) + xPlayer - (scrWidth / (2 * xTextSpacing));
-        mouseTileY = (int)(mouseY / yTextSpacing) + yPlayer - (scrHeight / (2 * yTextSpacing));
+        gameState.inputState.mouseTileX = (int)(gameState.inputState.mouseX / xTextSpacing) + gameState.cameraState.xPlayer - (gameState.cameraState.scrWidth / (2 * xTextSpacing));
+        gameState.inputState.mouseTileY = (int)(gameState.inputState.mouseY / yTextSpacing) + gameState.cameraState.yPlayer - (gameState.cameraState.scrHeight / (2 * yTextSpacing));
 
-        if (viewUI) {
-            uiManager.update(mouseX / xTextSpacing, mouseY / yTextSpacing, clicked);
+        if (gameState.viewState.viewUI) {
+            uiManager.update(gameState.inputState.mouseX / xTextSpacing, gameState.inputState.mouseY / yTextSpacing, gameState.inputState.clicked);
             uiManager.draw();
         }
 
         if (mainWorld.isCurrentlyRendering()) {
             LoadingUI& ui = Game::getInstance().getLoadingUI();
-            ui.panel->setSize(xFrustum, yFrustum);
+            ui.panel->setSize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
             int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
 
             if (numChunks > mainWorld.getChunksRendered()) {
@@ -905,7 +928,7 @@ int main() {
             }
 
 
-            int barLength = xFrustum - 2;
+            int barLength = gameState.cameraState.xFrustum - 2;
 
             float percent = std::clamp((float)mainWorld.getChunksRendered() / numChunks, 0.0f, 1.0f);
             int filled = (int)(percent * barLength);
@@ -970,18 +993,19 @@ int main() {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+       
+    GameState& gameState = Game::getInstance().gameState;
 
-	scrWidth = width;
-	scrHeight = height;
-    xFrustum = scrWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
-    yFrustum = scrHeight / Game::getInstance().getSettingsManager().get().yTextSpacing;
-    std::cout << "Tile dimesions resized to " << xFrustum << "x" << yFrustum << std::endl;
+    gameState.cameraState.scrWidth = width;
+    gameState.cameraState.scrHeight = height;
+    gameState.cameraState.xFrustum = width / Game::getInstance().getSettingsManager().get().xTextSpacing;
+    gameState.cameraState.yFrustum = height / Game::getInstance().getSettingsManager().get().yTextSpacing;
+    std::cout << "Tile dimesions resized to " << gameState.cameraState.xFrustum << "x" << gameState.cameraState.yFrustum << std::endl;
 
 	auto& uiManager = Game::getInstance().getUIManager();
-	uiManager.resize(xFrustum, yFrustum);
+	uiManager.resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
     for (auto& i : uiManager.getAllFrames()) {
 		auto frame = i.second.get();
-        frame->resize(xFrustum, yFrustum);
-
+        frame->resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
     }
 }

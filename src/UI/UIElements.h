@@ -7,7 +7,6 @@
 #include <fstream>
 #include <algorithm>
 
-#include "Utility/Globals.h"
 #include "UI/UITypes.h"
 
 #define BLANK_CHAR L'@'

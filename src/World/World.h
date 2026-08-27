@@ -59,7 +59,7 @@ public:
 
 	DayCycle dayCycle;
     ObjectManager objectManager;
-    
+
     static World& get();
 
     std::vector<entt::entity> getAllVillagers();
