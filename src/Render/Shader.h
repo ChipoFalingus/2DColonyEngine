@@ -1,4 +1,5 @@
 #ifndef SHADER_H
+#define SHADER_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -8,6 +9,7 @@
 #include <sstream>
 #include <iostream>
 
+// Taken from learnopengl.com, overkill
 class Shader
 {
 public:

@@ -48,9 +48,6 @@
     <ClCompile Include="src\UI\UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Render\Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Jobs\JobManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,6 +63,9 @@
     <ClCompile Include="src\Entities\Villager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Room.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="FlingGames.txt">
@@ -76,10 +76,14 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="glsl shader.frag" />
-    <None Include="glsl shader.vert" />
     <None Include="assets\Object.json">
       <Filter>Resource Files\Objects</Filter>
+    </None>
+    <None Include="assets\shader.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="assets\shader.vert">
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -186,6 +190,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Room.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Render\Render.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,6 +10,7 @@
 #include "DayCycle.h"
 #include "Entities/ObjectManager.h"
 #include "Utility/ItemLocation.h"
+#include "Room.h"
 
 #include "World/Chunk.h"
 #include "Utility/Pair.h"
@@ -39,14 +40,16 @@ private:
 
     std::unordered_map<std::pair<int, int>, Chunk, pair_hash> chunks;
 
-    // Stockpiles need to be in a colony class
+    // These need to be in a colony class
     std::vector<Stockpile> stockpiles;
-	
-    // This needs to be in a colony class too
+    // ^ make a manager for this later
     std::vector<std::pair<entt::entity, std::pair<int, int>>> itemsToMove;
+	RoomManager roomManager;
 
-
+    // Move this to the lightmanager
     std::vector<float> lightMap;
+
+    // Move this to the temperaturemanager
 	std::vector<float> temperatureMap;
 
     void renderWorld();
@@ -63,6 +66,8 @@ public:
     static World& get();
 
     std::vector<entt::entity> getAllVillagers();
+
+	RoomManager& getRoomManager() { return roomManager; }
 
     void initTemperatureMap() {
         int size = calculateMapSize() * 2 + 1;
@@ -105,7 +110,7 @@ public:
         if (x < 0 || x >= size || y < 0 || y >= size)
             return 0.2f;
 
-        return lightMap[x + y * size];
+        return std::max(dayCycle.getDaylightFactor(), lightMap[x + y * size]);
     }
 
 

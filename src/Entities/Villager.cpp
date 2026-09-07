@@ -209,6 +209,7 @@ entt::entity spawnVillager(int x, int y) {
 	registry.emplace<JobComponent>(entity, nullptr);
 	registry.emplace<CombatComponent>(entity);
 	registry.emplace<Social>(entity);
+	registry.emplace<LightNeed>(entity);
 
 	auto skillList = getAllSkillTypes();
 	int rand = getRandomInt(0, skillList.size() - 1); 
@@ -251,7 +252,7 @@ void VillagerSystem(float deltaTime) {
 	updateTiredness();
 	updateWork();
 	updateAttack();
-	updateSocialNeeds();
+	//updateSocialNeeds();
 }
 
 void updateTiredness() {
@@ -367,6 +368,7 @@ void updateHunger() {
 	}
 }
 
+// this sucks
 void updateSocialNeeds() {
 	auto& registry = mainWorld.registry;
 	auto view = registry.view<JobComponent, Movable, Social>();
@@ -403,8 +405,10 @@ void updateSocialNeeds() {
 		auto other = findClosestItemType(pos.x, pos.y, 50, [entity](entt::entity e, entt::registry& reg, int x, int y) {
 			if (e == entity) return false;
 			auto* job = reg.try_get<JobComponent>(e);
-			if (job && (job->currentJob || dynamic_cast<Talk*>(job->currentJob))) {
-				return false;
+			if (job && job->currentJob) {
+				if (dynamic_cast<Talk*>(job->currentJob)) {
+					return false;
+				}
 			}
 			auto* social = reg.try_get<Social>(e);
 			return social != nullptr;

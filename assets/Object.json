@@ -1,6 +1,9 @@
 ﻿{
     "objects": [
         {
+            "name": "RoomViewer"
+        },
+        {
             "name": "Fire Pit",
             "visual": {
                 "character": "o",
@@ -326,8 +329,8 @@
             "recipe": {
                 "ingredients": [
                     {
-                        "item": "Stone Brick",
-                        "quantity": 2
+                        "item": "Rock Chunk",
+                        "quantity": 1
                     }
                 ],
                 "required_bench": "None"

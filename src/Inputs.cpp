@@ -24,7 +24,7 @@ void harvest(int left, int right, int top, int bottom);
 void plant(int left, int right, int top, int bottom);
 void stockpile(int left, int right, int top, int bottom);
 
-
+// have you ever gotten post-code clarity and realized this is bad
 void processInput(GLFWwindow* window) {
 
     moveClock += Clock::deltaTime;
@@ -127,6 +127,10 @@ void processInput(GLFWwindow* window) {
         std::cout << "Entities with Positions:  " << physicalObjects << std::endl;
     }
 
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        mainWorld.getRoomManager().printRooms();
+    }
+
     auto& ui = Game::getInstance().getInGameUI();
 
 
@@ -213,13 +217,13 @@ void processInput(GLFWwindow* window) {
 		/*auto view = mainWorld.registry.view<Name, Position>();
 
         for (auto [entity, name, position] : view.each()) {
-            if (position.x == mouseTileX && position.y == mouseTileY) {
+            if (position.x == gameState.inputState.mouseTileX && position.y == gameState.inputState.mouseTileY) {
                 itemStr += name.name + " (Registry)|";
             }
         }*/
 
         ui.tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
-        std::string type = typeToString(tile.type);
+        std::string type = typeToString(tile.type) + " " + std::to_string(mainWorld.getLightMapIndex(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY));
         ui.tileType->changeText(std::wstring(type.begin(), type.end()));
 
         std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).altitude));
@@ -341,7 +345,7 @@ void build(int left, int right, int top, int bottom) {
                 gameState.placingState.placing = false;
                 return;
             }
-
+            addBlueprint(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, itemName);
             mainWorld.registry.get<Claimable>(loc.value().item).claimed = true;
 
             Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->item, loc->x, loc->y, gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
@@ -392,7 +396,6 @@ void build(int left, int right, int top, int bottom) {
             }
         }
     }
-
 }
 
 void harvest(int left, int right, int top, int bottom) {
@@ -420,7 +423,6 @@ void harvest(int left, int right, int top, int bottom) {
                 Job* job = new HarvestTile(entt::null, entt::null, i->requiredSkill, objectList[0], x, y);
                 job->priority = 40;
                 JobManager::JobList.push_back(job);
-
             }
         }
     }
@@ -472,7 +474,7 @@ void stockpile(int left, int right, int top, int bottom) {
         for (int y = top; y <= bottom; y++) {
 
             Tile& tile = getTileRef(x, y);
-			tile.addObject_Clear(x, y, "Stockpile");
+			tile.addObject(x, y, "Stockpile");
         }
     }
 

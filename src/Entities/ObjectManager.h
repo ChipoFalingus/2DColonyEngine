@@ -21,4 +21,16 @@ public:
 
 	bool has(int x, int y, const std::string& itemName);
     bool isEmpty(int x, int y);
+
+    /*template<typename T>
+    bool hasComponent(int x, int y) {
+        uint64_t key = getKey(x, y);
+        if (itemMap.find(key) == itemMap.end()) return false;
+        for (auto entity : itemMap[key]) {
+            if (mainWorld.registry.try_get<T>(entity)) {
+                return true;
+            }
+        }
+        return false;
+	}*/
 };

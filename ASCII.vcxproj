@@ -77,6 +77,8 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;</AdditionalIncludeDirectories>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,6 +94,8 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;</AdditionalIncludeDirectories>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -107,8 +111,9 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <CompileAs>Default</CompileAs>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,6 +132,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src;C:\Users\Wyatt\source\repos\ASCII\Libraries\include\glad\glad.h;C:\Users\Wyatt\source\repos\ASCII\Libraries\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,7 +151,7 @@
     <ClCompile Include="src\Entities\Villager.cpp" />
     <ClCompile Include="src\Inputs.cpp" />
     <ClCompile Include="src\Jobs\JobManager.cpp" />
-    <ClCompile Include="src\Render\Shader.cpp" />
+    <ClCompile Include="src\Room.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\UI\UI.cpp" />
     <ClCompile Include="src\Utility\CreatureUtils.cpp" />
@@ -161,8 +167,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\Object.json" />
-    <None Include="glsl shader.frag" />
-    <None Include="glsl shader.vert" />
+    <None Include="assets\shader.frag" />
+    <None Include="assets\shader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameState.h" />
@@ -176,7 +182,9 @@
     <ClInclude Include="src\Jobs\Job.h" />
     <ClInclude Include="src\Jobs\JobCompare.h" />
     <ClInclude Include="src\Jobs\JobType.h" />
+    <ClInclude Include="src\Render\Render.h" />
     <ClInclude Include="src\Render\Shader.h" />
+    <ClInclude Include="src\Room.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\UI\UI.h" />
     <ClInclude Include="src\UI\UIElements.h" />

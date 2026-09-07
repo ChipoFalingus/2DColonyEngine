@@ -127,6 +127,10 @@ struct Social {
 	float clock = 0.0f;
 };
 
+struct LightNeed {
+	float minLight = 0.6f;
+};
+
 //struct ColonyOwner {
 //	Colony* colony;
 //};

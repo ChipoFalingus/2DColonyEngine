@@ -42,8 +42,8 @@ void JobManager::assignJobs() {
 			int dx = std::abs(position.x - job->x);
 			int dy = std::abs(position.y - job->y);
 
-			score += dx + dy;
-			score -= skills.getSkillLevel(job->type) * 5000;
+			score += (dx + dy) / 10;
+			score -= skills.getSkillLevel(job->type) * 50;
 			//score += v->tiredness * 5;
 
 			if (job_component.currentJob) score += 100;
@@ -64,6 +64,9 @@ void JobManager::assignJobs() {
 		if (assignedJobs.count(bid.job))
 			continue;
 
+		// Guarantees reservation for most qualified villager
+		assignedJobs.insert(bid.job);
+
 		auto villager = registry.try_get<JobComponent>(bid.villager);
 
 		if (villager->currentJob) continue;
@@ -73,7 +76,6 @@ void JobManager::assignJobs() {
 		bid.job->villager = bid.villager;
 		bid.job->state = JobState::Active;
 
-		assignedJobs.insert(bid.job);
 		assignedVillagers.insert(bid.villager);
 	}
 }
@@ -221,6 +223,18 @@ void Build::update() {
 
 			removeBlueprint(loc.first, loc.second);
 			getTileRef(loc.first, loc.second).addObject(loc.first, loc.second, itemName);
+
+			mainWorld.getRoomManager().findRoom(loc.first, loc.second);
+			const std::pair<int, int> dirs[4] = {
+				{0, 1}, {1, 0}, {-1, 0}, {0, -1}
+			};
+
+			for (auto& dir : dirs) {
+				int nx = loc.first + dir.first;
+				int ny = loc.second + dir.second;
+				mainWorld.getRoomManager().findRoom(nx, ny);
+			}
+
 			state = JobState::Completed;
 		}
 	}
@@ -260,6 +274,7 @@ void BuildFurniture::update() {
 			mainWorld.registry.emplace<Position>(item, tX, tY);
 			mainWorld.registry.get<Claimable>(item).claimed = false;
 			mainWorld.objectManager.addObject(tX, tY, item);
+			removeBlueprint(tX, tY);
 			state = JobState::Completed;
 
 			break;
@@ -289,6 +304,47 @@ void PlaceItem::update() {
 	}
 }
 
+std::pair<int, int> findBestLightTile(int startX, int startY, float lightNeed) {
+	std::queue<std::pair<int, int>> q;
+	std::unordered_set<std::pair<int, int>, pair_hash> visited;
+
+	q.push({startX, startY});
+	visited.insert({startX, startY});
+
+	int radius = 50;
+
+	while (!q.empty()) {
+		const std::pair<int, int> dirs[4] = {
+			{0, 1}, {1, 0}, {-1, 0}, {0, -1}
+		};
+
+		auto& [currX, currY] = q.front();
+		q.pop();
+
+		for (auto& dir : dirs) {
+			int nx = currX + dir.first;
+			int ny = currY + dir.second;
+
+			if (visited.count({ nx, ny })) continue;
+			if (!getTileRef(nx, ny).walkable) continue;
+
+			int dx = nx - startX;
+			int dy = ny - startY;
+
+			if (dx * dx + dy * dy > radius * radius) continue;
+
+			if (mainWorld.getLightMapIndex(nx, ny) >= lightNeed) {
+				return { nx, ny };
+			}
+
+			q.push({ nx, ny });
+			visited.insert({ nx, ny });
+		}
+	}
+
+	return { startX, startY };
+}
+
 void Idle::update() {
 
 	auto& pos = mainWorld.registry.get<Position>(villager);
@@ -297,6 +353,19 @@ void Idle::update() {
 	int range = 10;
 
 	if (!initialized) {
+
+		auto& lightNeed = mainWorld.registry.get<LightNeed>(villager);
+		if (mainWorld.getLightMapIndex(pos.x, pos.y) < lightNeed.minLight) {
+			auto lightPos = findBestLightTile(pos.x, pos.y, lightNeed.minLight);
+			x = lightPos.first;
+			y = lightPos.second;
+
+			waitTime = getRandomFloat(1.0f, 10.0f);
+			clock = 0.0f;
+
+			initialized = true;
+			return;
+		}
 
 		int nx = getRandomInt(pos.x - range, pos.x + range);
 		int ny = getRandomInt(pos.y - range, pos.y + range);
@@ -567,7 +636,7 @@ void Craft::update() {
 		staticRecipeEntity = ObjectRegistry::getInstance().getStaticObject(item);
 
 		if (staticRecipeEntity == entt::null) {
-			std::cout << "[ERROR] Could not find blueprint recipe for: " << item << std::endl;
+			std::cout << "Could not find blueprint recipe for: " << item << std::endl;
 			state = JobState::Completed;
 			return;
 		}
@@ -789,12 +858,11 @@ void FindFood::update() {
 
 			if (eatTimer > 10.0f) {
 
-
 				if (auto i = mainWorld.registry.try_get<Nutritional>(food)) {
 					auto& hunger = mainWorld.registry.get<HungerNeed>(villager).hunger;
 					hunger += i->nutrition;
-
 				}
+
 				if (place.has_value()) {
 					mainWorld.registry.get<Claimable>(place->item).claimed = false;
 				}

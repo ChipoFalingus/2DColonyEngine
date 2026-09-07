@@ -280,11 +280,20 @@ void Tile::getTile(int x, int y) {
             addObject_Clear(x, y, "Rock");
         }
 
-        //int radius = 5;
-        //if (std::abs(x) <= radius && std::abs(y) <= radius && (std::abs(x) == radius || std::abs(y) == radius) /*&& !(y == -5 && x == 0)*/) {
-        //    addObject_Clear(x, y, "Stone Wall");
-        //    walkable = false;
-        //}
+        if (x == 0 && y == 0) {
+            addObject_Clear(x, y, "Fire Pit");
+        }
+
+        int radius = 5;
+        if (std::abs(x) <= radius && std::abs(y) <= radius && (std::abs(x) == radius || std::abs(y) == radius) && !(y == -radius && x == 0)) {
+            addObject_Clear(x, y, "Stone Wall");
+            walkable = false;
+            blocked = true;
+        }
+
+        if (x < radius && x > -radius && y < radius && y > -radius) {
+            addObject_Clear(x, y, "Stone Floor");
+        }
     }
 
     auto display = getTileDisplay(type);

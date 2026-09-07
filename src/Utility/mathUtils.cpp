@@ -9,6 +9,7 @@
 #include "World/World.h"
 #include "Entities/CreatureComponents.h"
 #include "Utility/ItemUtils.h"
+#include "Room.h"
 
 const int PERMUTATION_SIZE = 256;
 int p[PERMUTATION_SIZE * 2];
@@ -81,8 +82,9 @@ float calculateMapSize() {
 void initializePermutation(uint32_t seed) {
     std::vector<int> perm(PERMUTATION_SIZE);
 
-    for (int i = 0; i < PERMUTATION_SIZE; i++)
+    for (int i = 0; i < PERMUTATION_SIZE; i++) {
         perm[i] = i;
+    }
 
     std::mt19937 rng(seed);
 

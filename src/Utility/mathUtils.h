@@ -7,8 +7,6 @@
 #include "Vec2.h"
 #include "Dot.h"
 
-class Creature;
-
 struct Direction {
     int dx, dy;
 };
