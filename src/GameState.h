@@ -41,9 +41,15 @@ struct PlacingState {
 	bool placing = false;
 };
 
+struct DebugState {
+	bool objectLocationView = false;
+	bool roomView = false;
+};
+
 struct GameState {
 	CameraState cameraState;
 	InputState inputState;
+	DebugState debugState;
 	ViewState viewState;
 	PlacingState placingState;
 };

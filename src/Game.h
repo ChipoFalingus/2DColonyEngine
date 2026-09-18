@@ -40,7 +40,6 @@ private:
 	PlantUI plantUI;
 	InfoUI infoUI;
 
-    LightManager lightManager;
 	HeatManager heatManager;
 	Material selectedMaterial = Material::WOOD;
 
@@ -180,10 +179,6 @@ public:
 
     UIManager& getUIManager() {
         return uiManager;
-    }
-
-    LightManager& getLightManager() {
-        return lightManager;
     }
 
     HeatManager& getHeatManager() {

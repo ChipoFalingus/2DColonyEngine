@@ -191,7 +191,7 @@ LoadingUI getLoadingFrame() {
     int xFrustum = gameState.cameraState.xFrustum;
     int yFrustum = gameState.cameraState.yFrustum;
 
-    ui.panel = &frame->addElement<Panel>(0, 0, xFrustum, yFrustum, Anchor::TOP_CENTER);
+    ui.panel = &frame->addElement<Panel>(0, 0, xFrustum, yFrustum, Anchor::TOP_LEFT);
 
     ui.text = &frame->addElement<Text>(1, -2, L"Loading...", Anchor::CENTER_LEFT);
 
@@ -387,18 +387,19 @@ StructureUI getStructureFrame() {
     frame->setType(ui.type);
 
 
-    ui.wood_wall = &createButton(*frame, 14, -17, L" Wooden Wall ", Anchor::BOTTOM_LEFT);
-    ui.stone_wall = &createButton(*frame, 14, -14, L" Stone Wall ", Anchor::BOTTOM_LEFT);
-    ui.wood_fence = &createButton(*frame, 14, -11, L" Wooden Floor ", Anchor::BOTTOM_LEFT);
-    ui.stone_fence = &createButton(*frame, 14, -8, L" Stone Floor ", Anchor::BOTTOM_LEFT);
-    ui.wood_floor = &createButton(*frame, 14, -5, L" ? ", Anchor::BOTTOM_LEFT);
+    ui.wood_wall = &createButton(*frame, 14, -20, L" Wooden Wall ", Anchor::BOTTOM_LEFT);
+    ui.stone_wall = &createButton(*frame, 14, -17, L" Stone Wall ", Anchor::BOTTOM_LEFT);
+    ui.wood_floor = &createButton(*frame, 14, -14, L" Wooden Floor ", Anchor::BOTTOM_LEFT);
+    ui.stone_floor = &createButton(*frame, 14, -11, L" Stone Floor ", Anchor::BOTTOM_LEFT);
+    ui.wood_door = &createButton(*frame, 14, -8, L" Wooden Door ", Anchor::BOTTOM_LEFT);
+    ui.stone_door = &createButton(*frame, 14, -5, L" Stone Door ", Anchor::BOTTOM_LEFT);
 
     setupBuildButton(ui.wood_wall, "Wooden Wall");
     setupBuildButton(ui.stone_wall, "Stone Wall");
-    setupBuildButton(ui.wood_fence, "Wooden Floor", PlacementMode::FILLED_SQUARE);
-    setupBuildButton(ui.stone_fence, "Stone Floor", PlacementMode::FILLED_SQUARE);
-    setupBuildButton(ui.wood_floor, "Wooden Wall");
-
+    setupBuildButton(ui.wood_floor, "Wooden Floor", PlacementMode::FILLED_SQUARE);
+    setupBuildButton(ui.stone_floor, "Stone Floor", PlacementMode::FILLED_SQUARE);
+    setupBuildButton(ui.wood_door, "Wooden Door");
+    setupBuildButton(ui.stone_door, "Stone Door");
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;

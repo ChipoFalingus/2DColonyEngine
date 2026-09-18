@@ -42,15 +42,6 @@ sf::Font font;
 sf::Text text;
 std::string textString;
 
-struct GlyphVertex {
-    glm::vec2 pos;   // screen position
-    glm::vec2 uv;    // texture coordinates
-    glm::vec3 color; // RGB color
-};
-
-
-std::vector<float> vertices;
-
 void drawTxtToMap(const std::string& filePath, int x, int y) {
     std::wifstream file(filePath);
     file.imbue(std::locale("en_US.UTF-8"));
@@ -77,21 +68,6 @@ void drawTxtToMap(const std::string& filePath, int x, int y) {
         }
         offsetY++;
     }
-}
-
-
-glm::vec3 regionColor(int region) {
-    unsigned int x = static_cast<unsigned int>(region);
-
-    x ^= x << 13;
-    x ^= x >> 17;
-    x ^= x << 5;
-
-    uint8_t r = 80 + (x & 0x7F);         x >>= 8;
-    uint8_t g = 80 + (x & 0x7F);         x >>= 8;
-    uint8_t b = 80 + (x & 0x7F);
-
-    return normalizeRGB(glm::vec3(r, g, b));
 }
 
 void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
@@ -264,7 +240,63 @@ void updateLightSystem(entt::registry& registry, ObjectManager& objectManager, f
     for (auto [entity, pos, light] : view.each()) {
         if (!light.addedToLightMap) {
 			light.addedToLightMap = true;
-			Game::getInstance().getLightManager().addLight(glm::vec2(pos.x, pos.y), glm::vec3(1.0f), 10.0f, light.light_intensity, -1.0f);
+            mainWorld.getLightManager().addLight(glm::vec2(pos.x, pos.y), glm::vec3(1.0f), 10.0f, light.light_intensity, -1.0f);
+        }
+    }
+}
+
+void updateSpawners(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, Spawner>();
+    for (auto [entity, pos, spawner] : view.each()) {
+
+        spawner.clock += deltaTime;
+        if (spawner.clock >= spawner.cooldown) {
+            spawner.clock = 0.0f;
+            std::vector<std::pair<int, int>> dirs = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
+
+            for (auto& dir : dirs) {
+
+                int newX = pos.x + dir.first;
+                int newY = pos.y + dir.second;
+
+                if (getTileRef(newX, newY).walkable) {
+                    auto& registry = mainWorld.registry;
+                    entt::entity squadEntity = registry.create();
+                    auto& controller = registry.emplace<SquadController>(squadEntity);
+
+                    controller.groupTargetPos = { newX, newY };
+                    controller.state = SquadState::IDLE;
+
+                    for (int i = 0; i < 1; i++) {
+                        entt::entity member = registry.create();
+
+                        int spawnX = getRandomInt(newX - 10, newX + 10);
+                        int spawnY = getRandomInt(newY - 10, newY + 10);
+
+                        if (!getTileRef(spawnX, spawnY).walkable) {
+                            i--;
+                            continue;
+                        }
+
+                        registry.emplace<Position>(member, spawnX, spawnY);
+                        registry.emplace<Renderable>(member, L'Z', glm::vec3(0.0f, 1.0f, 0.0f));
+
+                        registry.emplace<Movable>(member);
+
+                        registry.emplace<SquadMemberComponent>(member, squadEntity);
+
+                        registry.emplace<Name>(member, "Zombie");
+                        registry.emplace<Hostile>(member);
+                        registry.emplace<Health>(member, 40);
+
+                        registry.emplace<Zombie>(member);
+                        mainWorld.objectManager.addObject(spawnX, spawnY, member);
+
+                        controller.members.push_back(member);
+                    }
+                    break;
+                }
+            }
         }
     }
 }
@@ -401,15 +433,18 @@ int main() {
         // Inputs
         processInput(window);
 
-        Game::getInstance().getLightManager().update(dt);
+        mainWorld.getLightManager().update(dt);
 
+        // Update lighting
+        // change this to only update when dirty
         lightClock += dt;
         if (lightClock > .1f) {
 			lightClock = 0.0f;
-            std::vector<float> map = Game::getInstance().getLightManager().BFSLight();
-            mainWorld.setLightMap(map);
+            mainWorld.getLightManager().BFSLight();
         }
 
+        // Update temperature
+        // same here
 		heatClock += dt;
         if (heatClock > .5f) {
             heatClock = 0.0f;
@@ -432,6 +467,7 @@ int main() {
 
         if (mainWorld.isCurrentlyRendering()) {
             LoadingUI& ui = Game::getInstance().getLoadingUI();
+            ui.panel->setPosition(0, 0);
             ui.panel->setSize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
             int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
 
@@ -462,8 +498,9 @@ int main() {
 			updateCropSystem(mainWorld.registry, mainWorld.objectManager, dt);
             updateHealth(mainWorld.registry, mainWorld.objectManager, dt);
 			updateLightSystem(mainWorld.registry, mainWorld.objectManager, dt);
+            updateSpawners(mainWorld.registry, mainWorld.objectManager, dt);
 
-            updateSquadComponent();
+            mainWorld.squadManager.updateSquadComponent(mainWorld.registry);
 
             VillagerSystem(dt);
             JobManager::update();
@@ -478,7 +515,7 @@ int main() {
                 int currentX = it->second.first;
                 int currentY = it->second.second;
 
-				auto name = mainWorld.registry.get<Name>(item).name;
+				auto& name = mainWorld.registry.get<Name>(item).name;
                 auto spotOpt = mainWorld.findStockpileSpotForItem(name, currentX, currentY);
 
                 if (spotOpt) {

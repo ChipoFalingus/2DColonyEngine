@@ -15,6 +15,18 @@ enum class RoomType : uint8_t {
     Hospital
 };
 
+inline std::string roomTypeToString(RoomType type) {
+    switch (type) {
+        case RoomType::Unassigned: return "Unassigned";
+        case RoomType::Bedroom: return "Bedroom";
+        case RoomType::DiningRoom: return "Dining Room";
+        case RoomType::Workshop: return "Workshop";
+        case RoomType::Storage: return "Storage";
+        case RoomType::Hospital: return "Hospital";
+        default: return "Unknown";
+    }
+}
+
 struct Room {
     uint32_t ID;
 
@@ -54,7 +66,6 @@ public:
 	}
 
     void findRoom(int startX, int startY);
-    void toggleRoomView();
 
     void printRooms() {
         for (auto& [id, room] : rooms) {

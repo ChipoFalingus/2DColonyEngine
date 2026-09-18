@@ -151,6 +151,7 @@
     <ClCompile Include="src\Entities\Villager.cpp" />
     <ClCompile Include="src\Inputs.cpp" />
     <ClCompile Include="src\Jobs\JobManager.cpp" />
+    <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\Room.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\UI\UI.cpp" />
@@ -171,7 +172,6 @@
     <None Include="assets\shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameState.h" />
     <ClInclude Include="src\Entities\CreatureComponents.h" />
     <ClInclude Include="src\Entities\ItemComponents.h" />
     <ClInclude Include="src\Entities\Object.h" />
@@ -179,6 +179,7 @@
     <ClInclude Include="src\Entities\Squad.h" />
     <ClInclude Include="src\Entities\Villager.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\GameState.h" />
     <ClInclude Include="src\Jobs\Job.h" />
     <ClInclude Include="src\Jobs\JobCompare.h" />
     <ClInclude Include="src\Jobs\JobType.h" />

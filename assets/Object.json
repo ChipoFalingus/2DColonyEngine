@@ -1,7 +1,16 @@
 ﻿{
     "objects": [
         {
-            "name": "RoomViewer"
+            "name": "Spawner",
+            "visual": {
+                "character": "#",
+                "color": [ 100, 100, 100 ]
+            },
+            "spawner": {
+                "spawn": "Zombie",
+                "cooldown": 5.0,
+                "cap" :  20
+            }
         },
         {
             "name": "Fire Pit",
@@ -317,6 +326,22 @@
             }
         },
         {
+            "name": "Wooden Door",
+            "visual": {
+                "character": "D",
+                "color": [ 100, 65, 23 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Wooden Plank",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "None"
+            }
+        },
+        {
             "name": "Stone Wall",
             "structure": {
                 "health": 15,
@@ -340,6 +365,22 @@
             "name": "Stone Floor",
             "visual": {
                 "character": ".",
+                "color": [ 128, 128, 128 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 1
+                    }
+                ],
+                "required_bench": "None"
+            }
+        },
+        {
+            "name": "Stone Door",
+            "visual": {
+                "character": "D",
                 "color": [ 128, 128, 128 ]
             },
             "recipe": {

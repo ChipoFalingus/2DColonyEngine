@@ -232,7 +232,10 @@ void Build::update() {
 			for (auto& dir : dirs) {
 				int nx = loc.first + dir.first;
 				int ny = loc.second + dir.second;
-				mainWorld.getRoomManager().findRoom(nx, ny);
+
+				if (mainWorld.objectManager.has(nx, ny, "Stone Floor")) {
+					mainWorld.getRoomManager().findRoom(nx, ny);
+				}
 			}
 
 			state = JobState::Completed;
@@ -333,7 +336,7 @@ std::pair<int, int> findBestLightTile(int startX, int startY, float lightNeed) {
 
 			if (dx * dx + dy * dy > radius * radius) continue;
 
-			if (mainWorld.getLightMapIndex(nx, ny) >= lightNeed) {
+			if (mainWorld.getLightManager().getLightMapIndex(nx, ny) >= lightNeed) {
 				return { nx, ny };
 			}
 
@@ -355,7 +358,7 @@ void Idle::update() {
 	if (!initialized) {
 
 		auto& lightNeed = mainWorld.registry.get<LightNeed>(villager);
-		if (mainWorld.getLightMapIndex(pos.x, pos.y) < lightNeed.minLight) {
+		if (mainWorld.getLightManager().getLightMapIndex(pos.x, pos.y) < lightNeed.minLight) {
 			auto lightPos = findBestLightTile(pos.x, pos.y, lightNeed.minLight);
 			x = lightPos.first;
 			y = lightPos.second;

@@ -74,6 +74,24 @@ void processInput(GLFWwindow* window) {
             if (mainWorld.isRendered()) {
                 gameState.placingState.placing = false;
                 handleClickedItem(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+
+                /*if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+                    getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
+                        addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Stone Wall");
+
+                    getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).walkable = false;
+
+                    mainWorld.getRoomManager().findRoom(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+                    const std::pair<int, int> dirs[4] = {
+                        {0, 1}, {1, 0}, {-1, 0}, {0, -1}
+                    };
+
+                    for (auto& dir : dirs) {
+                        int nx = gameState.inputState.mouseTileX + dir.first;
+                        int ny = gameState.inputState.mouseTileY + dir.second;
+                        mainWorld.getRoomManager().findRoom(nx, ny);
+                    }
+                }*/
             }
         }
 
@@ -86,6 +104,36 @@ void processInput(GLFWwindow* window) {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS) {
         gameState.placingState.placing = false;
         setMode(Mode::NONE);
+
+        if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
+                addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Stone Wall");
+
+            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).walkable = false;
+
+            mainWorld.getRoomManager().findRoom(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+        }
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS) {
+        gameState.placingState.placing = false;
+        setMode(Mode::NONE);
+
+        if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
+                addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Stone Door");
+
+            mainWorld.getRoomManager().findRoom(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+            const std::pair<int, int> dirs[4] = {
+                {0, 1}, {1, 0}, {-1, 0}, {0, -1}
+            };
+
+            for (auto& dir : dirs) {
+                int nx = gameState.inputState.mouseTileX + dir.first;
+                int ny = gameState.inputState.mouseTileY + dir.second;
+                mainWorld.getRoomManager().findRoom(nx, ny);
+            }
+        }
     }
 
     if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
@@ -128,7 +176,10 @@ void processInput(GLFWwindow* window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        mainWorld.getRoomManager().printRooms();
+		gameState.debugState.roomView = !gameState.debugState.roomView;
+    }
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+        gameState.debugState.objectLocationView = !gameState.debugState.objectLocationView;
     }
 
     auto& ui = Game::getInstance().getInGameUI();
@@ -213,17 +264,21 @@ void processInput(GLFWwindow* window) {
             }
         }
 
-        // Debugging purposes, halves FPS
-		/*auto view = mainWorld.registry.view<Name, Position>();
+        if (gameState.debugState.objectLocationView) {
+            auto view = mainWorld.registry.view<Name, Position>();
 
-        for (auto [entity, name, position] : view.each()) {
-            if (position.x == gameState.inputState.mouseTileX && position.y == gameState.inputState.mouseTileY) {
-                itemStr += name.name + " (Registry)|";
+            for (auto [entity, name, position] : view.each()) {
+                if (position.x == gameState.inputState.mouseTileX && position.y == gameState.inputState.mouseTileY) {
+                    itemStr += name.name + " (Registry)|";
+                }
             }
-        }*/
+        }
 
         ui.tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
-        std::string type = typeToString(tile.type) + " " + std::to_string(mainWorld.getLightMapIndex(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY));
+        std::string type = typeToString(tile.type);
+        if (auto room = mainWorld.getRoomManager().getRoomAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+            type += " (Room" + std::to_string(room->ID) + ")";
+        }
         ui.tileType->changeText(std::wstring(type.begin(), type.end()));
 
         std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).altitude));

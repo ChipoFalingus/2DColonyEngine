@@ -368,7 +368,7 @@ void updateHunger() {
 	}
 }
 
-// this sucks
+// this needs an overhaul
 void updateSocialNeeds() {
 	auto& registry = mainWorld.registry;
 	auto view = registry.view<JobComponent, Movable, Social>();

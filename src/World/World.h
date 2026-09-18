@@ -9,6 +9,7 @@
 #include "Stockpile.h"
 #include "DayCycle.h"
 #include "Entities/ObjectManager.h"
+#include "Entities/Squad.h"
 #include "Utility/ItemLocation.h"
 #include "Room.h"
 
@@ -46,8 +47,7 @@ private:
     std::vector<std::pair<entt::entity, std::pair<int, int>>> itemsToMove;
 	RoomManager roomManager;
 
-    // Move this to the lightmanager
-    std::vector<float> lightMap;
+    LightManager lightManager;
 
     // Move this to the temperaturemanager
 	std::vector<float> temperatureMap;
@@ -60,14 +60,20 @@ public:
 
 	PlacementMode placementMode = PlacementMode::SQUARE;
 
+    // refactor this stuff
 	DayCycle dayCycle;
     ObjectManager objectManager;
+    SquadManager squadManager;
 
     static World& get();
 
     std::vector<entt::entity> getAllVillagers();
 
 	RoomManager& getRoomManager() { return roomManager; }
+
+    LightManager& getLightManager() {
+        return lightManager;
+    }
 
     void initTemperatureMap() {
         int size = calculateMapSize() * 2 + 1;
@@ -80,39 +86,14 @@ public:
 	}
 
     float getTemperatureMapIndex(int x, int y) {
-        x += calculateMapSize();
-        y += calculateMapSize();
-        int size = calculateMapSize() * 2 + 1;
+        const int r = calculateMapSize();
+        x += r;
+        y += r;
+        int size = r * 2 + 1;
         if (x < 0 || x >= size || y < 0 || y >= size)
             return 0.5f;
         return temperatureMap[x + y * size];
 	}
-
-    void initLightMap() {
-        int size = calculateMapSize() * 2 + 1;
-
-        lightMap.resize(size * size);
-        std::fill(lightMap.begin(), lightMap.end(), 0.2f);
-    }
-
-    void setLightMap(const std::vector<float>& newMap) {
-        lightMap = newMap;
-    }
-
-    std::vector<float>& getLightMap() {
-        return lightMap;
-    }
-
-    float getLightMapIndex(int x, int y) {
-        x += calculateMapSize();
-        y += calculateMapSize();
-        int size = calculateMapSize() * 2 + 1;
-        if (x < 0 || x >= size || y < 0 || y >= size)
-            return 0.2f;
-
-        return std::max(dayCycle.getDaylightFactor(), lightMap[x + y * size]);
-    }
-
 
     std::vector<Stockpile>& getStockpiles() {
         return stockpiles;
@@ -208,8 +189,7 @@ public:
     int getChunksRendered() { return chunksRendered; }
     bool isCurrentlyRendering() const { return currentlyRendering; };
     bool isRendered() const { return rendered; }
-
-
 };
+
 
 extern World& mainWorld;

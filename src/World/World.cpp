@@ -118,7 +118,7 @@ void spawnSquad(int x, int y) {
 // Adds creatures to the world
 void World::addCreatures() {
     int range = 3;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
 
@@ -155,8 +155,6 @@ void World::addCreatures() {
 
         registry.emplace<JobComponent>(entity, nullptr);
     }
-
-    //spawnSquad(20, 20);
 }
 
 std::vector<entt::entity> World::getAllVillagers() {
@@ -188,12 +186,10 @@ void World::generateWorld() {
 
         updateMiniMap();
 
-        initLightMap();
+        lightManager.initLightMap();
+        lightManager.BFSLight();
+
         initTemperatureMap();
-
-        auto newMap = Game::getInstance().getLightManager().BFSLight();
-
-        setLightMap(newMap);
 
         createRegions();
 

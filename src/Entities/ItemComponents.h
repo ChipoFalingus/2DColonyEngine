@@ -5,6 +5,8 @@
 
 #include "Jobs/JobType.h"
 
+// how many structs could a guy need?
+
 struct Renderable {
 	wchar_t character;
 	glm::vec3 color;
@@ -91,8 +93,6 @@ struct Gun {
 	int current_ammo;
 };
 
-struct NeedsMoving {};
-
 struct Craftable {
 	std::unordered_map<std::string, int> ingredients;
 	std::string benchRequired;
@@ -107,9 +107,21 @@ struct Furniture {
 	bool active;
 };
 
+struct Spawner {
+	std::string spawn;
+	float cooldown;
+	int cap;
+
+	float clock = 0.0f;
+};
+
 struct Sittable {};
 struct Table {};
 struct Structure {};
+
+// makes tiles unwalkable
+struct BlocksTile {};
+
 struct Bed {
 	bool i;
 };

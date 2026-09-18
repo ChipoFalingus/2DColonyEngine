@@ -5,41 +5,30 @@
 #include "CreatureComponents.h"
 #include "World/World.h"
 
-void findTargets(entt::entity entity, entt::registry& registry);
-SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::registry& registry);
-std::pair<int, int> getAvgPos(entt::entity entity, entt::registry& registry);
-void onIdle(entt::entity squad);
-void onAttack(entt::entity squad);
 
-void updateSquadMovement(entt::entity squad) {
-	auto& registry = mainWorld.registry;
+void SquadManager::updateSquadMovement(entt::entity squad, entt::registry& registry) {
 	auto& squadView = registry.get<SquadController>(squad);
-
-	findTargets(squad, registry);
 
 	squadView.state = (squadView.targets.empty()) ? IDLE : ATTACKING;
 
 	if (squadView.state == SquadState::IDLE) {
-		onIdle(squad);
+		onIdle(squad, registry);
 	}
 	else if (squadView.state == SquadState::ATTACKING) {
-		onAttack(squad);
+		onAttack(squad, registry);
 	}
-
-	
 }
 
-void onIdle(entt::entity squad) {
+void SquadManager::onIdle(entt::entity squad, entt::registry& registry) {
 	const int flowSize = 64;
 	const int half = flowSize / 2;
 
-	auto& registry = mainWorld.registry;
 	auto& squadView = registry.get<SquadController>(squad);
 
 	squadView.idleWanderClock += Clock::deltaTime;
 	if (squadView.macroFlowField.empty() || squadView.idleWanderClock > 20.0f) {
 		squadView.idleWanderClock = 0.0f;
-		auto avg = getAvgPos(squad, registry);
+		auto avg = squadView.centroid;
 
 		int range = 20;
 		int randX = getRandomInt(avg.first - range, avg.first + range);
@@ -75,8 +64,7 @@ void onIdle(entt::entity squad) {
 	}
 }
 
-void onAttack(entt::entity squad) {
-	auto& registry = mainWorld.registry;
+void SquadManager::onAttack(entt::entity squad, entt::registry& registry) {
 	auto& squadView = registry.get<SquadController>(squad);
 
 	for (auto& i : squadView.members) {
@@ -87,14 +75,13 @@ void onAttack(entt::entity squad) {
 
 		auto targetEntity = memberComponent.target.target;
 		if (targetEntity == entt::null) {
-            continue;
-        }
+			continue;
+		}
 
 		auto& movable = registry.get<Movable>(i);
 		auto& pos = registry.get<Position>(i);
 
 		auto& targetPos = registry.get<Position>(targetEntity);
-		
 
 		if (std::abs(pos.x - targetPos.x) <= 1 && std::abs(pos.y - targetPos.y) <= 1) {
 			auto& health = registry.get<Health>(targetEntity);
@@ -116,39 +103,17 @@ void onAttack(entt::entity squad) {
 			int newX = pos.x + moveX;
 			int newY = pos.y + moveY;
 
-			/*if (!getTileRef(newX, newY).walkable) {
-				if (moveX != 0 && getTileRef(pos.x + moveX, pos.y).walkable) {
-					newX = pos.x + moveX;
-					newY = pos.y;
-				}
-				else if (moveY != 0 && getTileRef(pos.x, pos.y + moveY).walkable) {
-					newX = pos.x;
-					newY = pos.y + moveY;
-				}
-				else {
-					newX = pos.x;
-					newY = pos.y;
-				}
-			}*/
-
 			movable.dirX = moveX;
 			movable.dirY = moveY;
 		}
 	}
 }
 
-SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::registry& registry) {
+SelectedTarget SquadManager::chooseTarget(entt::entity squad, entt::entity member, entt::registry& registry) {
 	auto& squadComponent = registry.get<SquadController>(squad);
 	auto& pos = registry.get<Position>(member);
 
 	auto& memberComponent = registry.get<SquadMemberComponent>(member);
-	if (memberComponent.target.target != entt::null) {
-		SelectedTarget nullTarget;
-		nullTarget.target = entt::null;
-		nullTarget.score = 0;
-		nullTarget.target_population = 0;
-		return nullTarget;
-	};
 
 	int bestScore = 999999;
 	size_t bestIndex = 0;
@@ -158,7 +123,9 @@ SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::regis
 		auto& currentTarget = squadComponent.targets[i];
 
 		int score = 0;
-		score += currentTarget.target_population * 200;
+		
+		// somehow immediately breaks the integer limit, impressive stuff
+		//score += currentTarget.target_population * 200;
 
 		if (!registry.valid(currentTarget.target) || !registry.all_of<Position>(currentTarget.target)) continue;
 		if (!registry.valid(member)) continue;
@@ -186,11 +153,10 @@ SelectedTarget chooseTarget(entt::entity squad, entt::entity member, entt::regis
 		return nullTarget;
 	}
 
-	//squadComponent.targets[bestIndex].target_population++;
 	return squadComponent.targets[bestIndex];
 }
 
-void findTargets(entt::entity entity, entt::registry& registry) {
+void SquadManager::findTargets(entt::entity entity, entt::registry& registry) {
 	auto& squad = registry.get<SquadController>(entity);
 	squad.attackScanClock += Clock::deltaTime;
 
@@ -199,7 +165,7 @@ void findTargets(entt::entity entity, entt::registry& registry) {
 
 		squad.targets.clear();
 
-		auto center = getAvgPos(entity, registry);
+		auto center = squad.centroid;
 		const int scanRadius = 32;
 
 		auto entities = findAllItemInRange(center.first, center.second, scanRadius, [](entt::entity entity, entt::registry& registry, int x, int y) {
@@ -212,7 +178,7 @@ void findTargets(entt::entity entity, entt::registry& registry) {
 				selected.target = s.item;
 
 				selected.score = 1;
-				if (mainWorld.registry.all_of<Villager>(s.item)) selected.score = 1;
+				if (registry.all_of<Villager>(s.item)) selected.score = 1;
 
 				squad.targets.push_back(selected);
 			}
@@ -220,9 +186,8 @@ void findTargets(entt::entity entity, entt::registry& registry) {
 	}
 }
 
-std::pair<int, int> getAvgPos(entt::entity entity, entt::registry& registry) {
+void SquadManager::updateAveragePosition(entt::entity entity, entt::registry& registry) {
 	auto& squad = registry.get<SquadController>(entity);
-	if (squad.members.empty()) return { 0, 0 };
 
 	long long sumX = 0;
 	long long sumY = 0;
@@ -237,34 +202,48 @@ std::pair<int, int> getAvgPos(entt::entity entity, entt::registry& registry) {
 		}
 	}
 
-	if (valid == 0) return { 0, 0 };
+	if (valid == 0) return;
 
 	int avgX = static_cast<int>(sumX / static_cast<long long>(valid));
 	int avgY = static_cast<int>(sumY / static_cast<long long>(valid));
 
-	return { avgX, avgY };
+	squad.centroid = { avgX, avgY };
 }
 
-void updateSquadComponent() {
-	auto& registry = mainWorld.registry;
-	auto view = registry.view<SquadController>();
-	std::vector<entt::entity> empty_squads;
+void SquadManager::merge(entt::entity squad1, entt::entity squad2, entt::registry& registry) {
+	if (squad1 == squad2) return;
+	if (!registry.valid(squad1) || !registry.valid(squad2)) return;
 
+	auto& squad = registry.get<SquadController>(squad1);
+	auto& otherSquad = registry.get<SquadController>(squad2);
 
-	for (auto& i : view) {
-		updateSquadMovement(i);
-		auto& controller = registry.get<SquadController>(i);
-		if (controller.members.empty()) {
-			empty_squads.push_back(i);
+	for (auto i : otherSquad.members) {
+		if (auto* memberComp = registry.try_get<SquadMemberComponent>(i)) {
+			memberComp->squadEntity = squad1;
 		}
-
-		std::erase_if(controller.members, [&registry](entt::entity e) {
-			auto i = registry.try_get<Health>(e);
-			return !i || i->health <= 0;
-			});
+		squad.members.push_back(i);
 	}
 
-	for (auto& i : empty_squads) {
-		registry.destroy(i);
-	}
+	otherSquad.members.clear();
+	registry.destroy(squad2);
+}
+
+void SquadManager::split(entt::entity entity, entt::registry& registry) {
+
+	if (!registry.valid(entity)) return;
+
+	auto* memberComponent = registry.try_get<SquadMemberComponent>(entity);
+	if (!memberComponent || !registry.valid(memberComponent->squadEntity)) return;
+
+	auto& oldSquadList = registry.get<SquadController>(memberComponent->squadEntity).members;
+
+	std::erase(oldSquadList, entity);
+	
+	entt::entity squadEntity = registry.create();
+	auto& newSquad = registry.emplace<SquadController>(squadEntity);
+
+	newSquad.state = SquadState::IDLE;
+	newSquad.members.push_back(entity);
+
+	memberComponent->squadEntity = squadEntity;
 }

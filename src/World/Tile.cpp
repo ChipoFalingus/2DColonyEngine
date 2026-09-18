@@ -36,7 +36,39 @@ std::string typeToString(tileType type) {
     }
 }
 
+void buildOutpost(int x, int y) {
+    Tile& tile = getTileRef(x, y);
 
+    int radius = 5;
+
+    for (int i = -radius; i <= radius; i++) {
+        for (int j = -radius; j <= radius; j++) {
+            int dx = x + i;
+            int dy = y + j;
+            if (!(std::abs(i) == 0 || std::abs(i) == 1 || std::abs(j) == 0 || std::abs(j) == 1) && (std::abs(i) == radius || std::abs(j) == radius)) {
+                //tile.addObject_Clear(dx, dy, "Stone Wall");
+                //tile.walkable = false;
+                //tile.blocked = true;
+            }
+            else {
+                tile.addObject_Clear(dx, dy, "Stone Floor");
+            }
+        }
+    }
+
+    const std::pair<int, int> dirs[4] = {
+        {2, 0}, {-2, 0}, {0, 2}, {0, -2}
+    };
+
+    for (auto& [dx, dy] : dirs) {
+        int nx = x + dx;
+        int ny = y + dy;
+
+        tile.addObject(nx, ny, "Wooden Chair");
+    }
+    tile.addObject(x, y, "Spawner");
+    
+}
 
 float waterLevel = 0.0f;
 std::vector<Island> islands;
@@ -160,7 +192,7 @@ Tile assignTileTypes(int x, int y) {
 void clearTile(int x, int y) {
     auto& registry = mainWorld.registry;
 
-    auto entitiesOnTile = mainWorld.objectManager.getObjectsAt(x, y);
+    auto& entitiesOnTile = mainWorld.objectManager.getObjectsAt(x, y);
 
     for (entt::entity entity : entitiesOnTile) {
         if (registry.valid(entity)) {
@@ -280,11 +312,13 @@ void Tile::getTile(int x, int y) {
             addObject_Clear(x, y, "Rock");
         }
 
-        if (x == 0 && y == 0) {
-            addObject_Clear(x, y, "Fire Pit");
+        float outposts = hashNoise(x + 1000000.0f, y + 1000000.0f, seed);
+
+        if (outposts < 0.00001f) {
+            buildOutpost(x, y);
         }
 
-        int radius = 5;
+        /*int radius = 5;
         if (std::abs(x) <= radius && std::abs(y) <= radius && (std::abs(x) == radius || std::abs(y) == radius) && !(y == -radius && x == 0)) {
             addObject_Clear(x, y, "Stone Wall");
             walkable = false;
@@ -293,7 +327,7 @@ void Tile::getTile(int x, int y) {
 
         if (x < radius && x > -radius && y < radius && y > -radius) {
             addObject_Clear(x, y, "Stone Floor");
-        }
+        }*/
     }
 
     auto display = getTileDisplay(type);

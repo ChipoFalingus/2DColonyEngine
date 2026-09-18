@@ -201,6 +201,14 @@ public:
 				float lightIntensity = data.get<float>();
 				targetWorldRegistry.emplace<LightEmitter>(newEntity, lightIntensity);
 			}
+
+			if (name == "spawner") {
+				std::string spawn = data.at("spawn").get<std::string>();
+				float cooldown = data.at("cooldown").get<float>();
+				int cap = data.at("cap").get<int>();
+
+				targetWorldRegistry.emplace<Spawner>(newEntity, spawn, cooldown, cap);
+			}
 		}
 
 		return newEntity;

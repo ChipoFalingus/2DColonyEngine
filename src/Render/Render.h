@@ -185,6 +185,20 @@ sf::Color hsvToRgb(float h, float s, float v) {
     );
 }
 
+glm::vec3 regionColor(int region) {
+    unsigned int x = static_cast<unsigned int>(region);
+
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+
+    uint8_t r = 80 + (x & 0x7F);         x >>= 8;
+    uint8_t g = 80 + (x & 0x7F);         x >>= 8;
+    uint8_t b = 80 + (x & 0x7F);
+
+    return normalizeRGB(glm::vec3(r, g, b));
+}
+
 sf::Color altitudeToColor(float altitude, float minAlt, float maxAlt) {
     float t = (altitude - minAlt) / (maxAlt - minAlt);
     if (t < 0.0f) t = 0.0f;
@@ -312,7 +326,6 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                 if (uiY >= 0 && uiY < frame.size() && uiX >= 0 && uiX < frame[uiY].size()) {
                     wchar_t ch = frame[uiY][uiX];
                     if (ch != L'@') {
-                        //string = std::wstring(1, ch);
                         string = ch;
                         if (ch == L' ') {
                             color = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -401,6 +414,13 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                 }
             }
 
+            if (gameState.debugState.roomView) {
+                if (auto r = mainWorld.getRoomManager().getRoomAt(x, y)) {
+                    string = L'R';
+                    color = regionColor(r->ID);
+				}
+            }
+
             if (gameState.viewState.viewHeightMap) {
                 string = L'■';
                 color =
@@ -411,7 +431,7 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                     );
             }
 
-            color *= world.getLightMapIndex(x, y);
+            color *= world.getLightManager().getLightMapIndex(x, y);
 
             if (string != L'\0') {
                 RenderText(shader, string, screenX, screenY, settings.font_size, color);

@@ -1,7 +1,17 @@
 #include "Room.h"
 #include "World/World.h"
 
+
+// There's a weird bug with 1 length hallways where it makes rooms that are techically considered "outside"
 void RoomManager::findRoom(int startX, int startY) {
+
+    if (getRoomAt(startX, startY)) return;
+    if (!getTileRef(startX, startY).walkable) return;
+
+    // If it doesnt start on a floor, dont bother
+    if (!mainWorld.objectManager.has(startX, startY, "Stone Floor")) {
+        return;
+    }
 
     std::queue<std::pair<int, int>> q;
     std::unordered_set<std::pair<int, int>, pair_hash> visited;
@@ -10,15 +20,7 @@ void RoomManager::findRoom(int startX, int startY) {
     visited.insert({ startX, startY });
 
     int radius = 50;
-    bool foundOutside = !getTileRef(startX, startY).walkable;
-
-    std::pair<int, int> topLeft = { startX, startY };
-    std::pair<int, int> bottomRight = { startX, startY };
-
-    // If it doesnt start on a floor, dont bother
-    if (!mainWorld.objectManager.has(startX, startY, "Stone Floor")) {
-        return;
-    }
+    bool foundOutside = false;
 
     while (!q.empty()) {
         const std::pair<int, int> dirs[4] = {
@@ -33,33 +35,30 @@ void RoomManager::findRoom(int startX, int startY) {
             int ny = currY + dir.second;
 
             if (visited.count({ nx, ny })) continue;
+
+			// Update these to check for components instead of specific names
             if (mainWorld.objectManager.has(nx, ny, "Stone Wall")) continue;
+            if (mainWorld.objectManager.has(nx, ny, "Stone Door")) continue;
             if (getRoomAt(nx, ny)) continue;
 
             if (mainWorld.objectManager.has(nx, ny, "Stone Floor")) {
                 q.push({ nx, ny });
                 visited.insert({ nx, ny });
-
-                if (topLeft.first > nx || topLeft.second < ny) {
-                    topLeft = { nx, ny };
-                }
-
-                if (bottomRight.first < nx || bottomRight.second > ny) {
-                    bottomRight = { nx, ny };
-                }
             }
             else {
                 foundOutside = true;
                 break;
             }
         }
+
+        if (foundOutside) break;
     }
 
     if (foundOutside) {
         std::cout << "Outside area" << std::endl;
         if (auto r = getRoomAt(startX, startY)) {
             r->type = RoomType::Unassigned;
-            removeRoom(getRoomAt(startX, startY)->ID);
+            removeRoom(r->ID);
         }
         return;
     }
@@ -71,15 +70,6 @@ void RoomManager::findRoom(int startX, int startY) {
         }
 
         addRoom(room);
-        std::cout << "Created room with " << room.roomTiles.size() << " tiles" << std::endl;
-    }
-}
-
-void RoomManager::toggleRoomView() {
-    for (auto& [id, room] : rooms) {
-        for (auto& tile : room.roomTiles) {
-            Tile& t = getTileRef(tile.first, tile.second);
-            t.addObject(tile.first, tile.second, "RoomViewer");
-        }
+        std::cout << "Created room with " << room.roomTiles.size() << " tiles starting from " << startX << ", " << startY << std::endl;
     }
 }

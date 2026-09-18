@@ -149,9 +149,10 @@ struct StructureUI {
 
     Button* wood_wall;
     Button* stone_wall;
-    Button* wood_fence;
-    Button* stone_fence;
     Button* wood_floor;
+    Button* stone_floor;
+    Button* wood_door;
+    Button* stone_door;
 };
 
 StructureUI getStructureFrame();
