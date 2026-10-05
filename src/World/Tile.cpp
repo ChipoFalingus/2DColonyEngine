@@ -18,23 +18,6 @@
 // A real big mess this all is :(
 // ^ A few months later, a less big mess this all is :)
 
-std::string typeToString(tileType type) {
-    switch (type) {
-    case(tileType::GRASS): {
-        return "Grass";
-    }case(tileType::SOIL): {
-		return "Soil";
-    }case(tileType::SAND): {
-        return "Sand";
-    }case(tileType::MOUNTAIN): {
-        return "Mountain";
-    }case(tileType::MOUNTAIN_PEAK): {
-        return "Mountain Peak";
-    }case(tileType::WATER): {
-        return "Water";
-    }
-    }
-}
 
 void buildOutpost(int x, int y) {
     Tile& tile = getTileRef(x, y);
@@ -216,7 +199,7 @@ void Tile::addObject(int x, int y, const std::string item, bool addToMove) {
     mainWorld.objectManager.addObject(x, y, i);
 
     if (addToMove) {
-		mainWorld.addItemToMove(i, x, y);
+        mainWorld.registry.emplace<NeedsMoving>(i);
 	}
 }
 
@@ -261,18 +244,6 @@ void Tile::getTile(int x, int y) {
                 if (r < 0.1f) {
                     addObject_Clear(x, y, "Oak Tree");
                 }
-                else if (r < 0.101f) {
-                    addObject_Clear(x, y, "Apple Tree");
-                }
-                else if (r < 0.102f) {
-                    addObject_Clear(x, y, "Orange Tree");
-                }
-                else if (r < 0.103f) {
-                    addObject_Clear(x, y, "Lemon Tree");
-                }
-                else if (r < 0.13f) {
-                    addObject_Clear(x, y, "Pebble");
-                }
             }
             if (spruceNoise > 0.3f) {
                 if (r < 0.1f) {
@@ -280,12 +251,6 @@ void Tile::getTile(int x, int y) {
                 }
                 else if (r < 0.101f) {
                     addObject_Clear(x, y, "Berry Bush");
-                }
-                else if (r < 0.11f) {
-                    addObject_Clear(x, y, "Stick");
-                }
-                else if (r < 0.13f) {
-                    addObject_Clear(x, y, "Pebble");
                 }
             }
         }
@@ -312,13 +277,22 @@ void Tile::getTile(int x, int y) {
             addObject_Clear(x, y, "Rock");
         }
 
+        float rubble = hashNoise(x + 100000.0f, y + 100000.0f, seed);
+
+        if (rubble < 0.5f) {
+            //addObject_Clear(x, y, "Stick");
+        }
+        /*else if (rubble < 0.02f) {
+            addObject_Clear(x, y, "Pebble");
+        }*/
+
         float outposts = hashNoise(x + 1000000.0f, y + 1000000.0f, seed);
 
         if (outposts < 0.00001f) {
-            buildOutpost(x, y);
+            //buildOutpost(x, y);
         }
 
-        /*int radius = 5;
+        int radius = 5;
         if (std::abs(x) <= radius && std::abs(y) <= radius && (std::abs(x) == radius || std::abs(y) == radius) && !(y == -radius && x == 0)) {
             addObject_Clear(x, y, "Stone Wall");
             walkable = false;
@@ -327,7 +301,20 @@ void Tile::getTile(int x, int y) {
 
         if (x < radius && x > -radius && y < radius && y > -radius) {
             addObject_Clear(x, y, "Stone Floor");
-        }*/
+        }
+
+        if (x == -3 && y == 0) {
+            addObject(x, y, "Bed");
+        }
+        if (x == -1 && y == 0) {
+            addObject(x, y, "Bed");
+        }
+        if (x == 1 && y == 0) {
+            addObject(x, y, "Bed");
+        }
+        if (x == 3 && y == 0) {
+            addObject(x, y, "Bed");
+        }
     }
 
     auto display = getTileDisplay(type);

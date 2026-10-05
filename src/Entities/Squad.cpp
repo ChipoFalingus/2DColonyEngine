@@ -51,9 +51,11 @@ void SquadManager::onIdle(entt::entity squad, entt::registry& registry) {
 		int localX = (pos.x - squadView.groupTargetPos.first) + half;
 		int localY = (pos.y - squadView.groupTargetPos.second) + half;
 
+		// outside flow field so split them off
 		if (localX < 0 || localX >= flowSize || localY < 0 || localY >= flowSize) {
 			movable.dirX = 0;
 			movable.dirY = 0;
+			split(i, registry);
 			continue;
 		}
 
@@ -177,7 +179,7 @@ void SquadManager::findTargets(entt::entity entity, entt::registry& registry) {
 				SelectedTarget selected;
 				selected.target = s.item;
 
-				selected.score = 1;
+				selected.score = 50;
 				if (registry.all_of<Villager>(s.item)) selected.score = 1;
 
 				squad.targets.push_back(selected);

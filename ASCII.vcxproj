@@ -148,7 +148,6 @@
     <ClCompile Include="src\Entities\Object.cpp" />
     <ClCompile Include="src\Entities\ObjectManager.cpp" />
     <ClCompile Include="src\Entities\Squad.cpp" />
-    <ClCompile Include="src\Entities\Villager.cpp" />
     <ClCompile Include="src\Inputs.cpp" />
     <ClCompile Include="src\Jobs\JobManager.cpp" />
     <ClCompile Include="src\Light.cpp" />
@@ -161,6 +160,7 @@
     <ClCompile Include="src\World\Stockpile.cpp" />
     <ClCompile Include="src\World\Tile.cpp" />
     <ClCompile Include="src\World\World.cpp" />
+    <ClCompile Include="Villager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Art.txt" />

@@ -132,6 +132,31 @@ SettingsUI getSettingsFrame() {
         }
         });
 
+	ui.reset = &createButton(*frame, 22, 15, L" Reset Changes ", Anchor::TOP_LEFT);
+    ui.reset->setClickFunction([ui]() {
+        Settings settings;
+        Settings currentSettings = Game::getInstance().getSettingsManager().get();
+        ui.font_size->setValue(5);
+        ui.x_text_spacing->setValue(16);
+        ui.y_text_spacing->setValue(22);
+        ui.camera_speed->setValue(currentSettings.camera_speed);
+
+        Game::getInstance().getSettingsManager().update(settings);
+        GameState& gameState = Game::getInstance().gameState;
+
+        gameState.cameraState.xFrustum = gameState.cameraState.scrWidth / Game::getInstance().getSettingsManager().get().xTextSpacing;
+        gameState.cameraState.yFrustum = gameState.cameraState.scrHeight / Game::getInstance().getSettingsManager().get().yTextSpacing;
+        std::cout << "Tile dimesions resized to " << gameState.cameraState.xFrustum << "x" << gameState.cameraState.yFrustum << std::endl;
+
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
+        for (auto& i : uiManager.getAllFrames()) {
+            auto frame = i.second.get();
+            frame->resize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
+
+        }
+		});
+
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
@@ -164,7 +189,9 @@ WorldSettingsUI getWorldSettingsFrame() {
     int xFrustum = gameState.cameraState.xFrustum;
     int yFrustum = gameState.cameraState.yFrustum;
 
-    ui.panel = &frame->addElement<Panel>(0, 3, xFrustum, yFrustum - 7, Anchor::TOP_CENTER);
+    ui.panel = &frame->addElement<Panel>(0, 3, xFrustum, yFrustum - 3, Anchor::TOP_LEFT);
+
+    ui.add_this = &frame->addElement<Text>(0, 0, L"Coming Soon!", Anchor::CENTER);
 
     ui.begin = &createButton(*frame, -1, -1, L" Begin! ", Anchor::BOTTOM_RIGHT);
 
@@ -202,6 +229,32 @@ LoadingUI getLoadingFrame() {
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
+}
+
+void LoadingUI::update() {
+    GameState& gameState = Game::getInstance().gameState;
+
+    panel->setPosition(0, 0);
+    panel->setSize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
+    int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
+
+    if (numChunks > mainWorld.getChunksRendered()) {
+        chunks->changeText(std::to_wstring(mainWorld.getChunksRendered()) + L"/" + std::to_wstring(numChunks));
+    }
+    else {
+        chunks->changeText(L"Finishing things up...");
+    }
+
+    int barLength = gameState.cameraState.xFrustum - 2;
+
+    float percent = std::clamp((float)mainWorld.getChunksRendered() / numChunks, 0.0f, 1.0f);
+    int filled = (int)(percent * barLength);
+
+    std::wstring bar;
+    bar += std::wstring(filled, L'#');
+    bar += std::wstring(barLength - filled, L'-');
+
+    animation->changeText(bar);
 }
 
 // Menu you see when you're in the game
@@ -284,8 +337,53 @@ MiniMapUI getMiniMapFrame() {
     ui.text = &frame->addElement<Text>(0, 0, L"Mini Map Mode", Anchor::TOP_LEFT);
     ui.seed = &frame->addElement<Text>(0, 1, L"Seed: " + std::to_wstring(seed), Anchor::TOP_LEFT);
 
+    //int chunkX = x / chunkDim;
+    //int chunkY = y / chunkDim;
+
+    ui.chunk_info = &frame->addElement<Panel>(0, 0, 20, 20, Anchor::TOP_RIGHT);
+    ui.chunk_objects = &frame->addElement<Text>(-19, 1, L"", Anchor::TOP_RIGHT);
+
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
+}
+
+void MiniMapUI::update(Chunk* chunk) {
+    if (!chunk) return;
+
+    std::map<tileType, int> typeTracker;
+    std::map<std::string, int> displayTracker;
+
+    for (int j = 0; j < chunkDim; j++) {
+        for (int k = 0; k < chunkDim; k++) {
+            Tile& tile = chunk->tiles[j][k];
+            typeTracker[tile.type]++;
+
+            const auto& tileObjects = mainWorld.objectManager.getObjectsAt(chunk->chunkX * chunkDim + j, chunk->chunkY * chunkDim + k);
+            if (!tileObjects.empty()) {
+                displayTracker[mainWorld.registry.get<Name>(tileObjects[0]).name]++;
+            }
+        }
+    }
+
+    int maxTypeCount = 0;
+    tileType dominantTileType{};
+    for (const auto& [type, count] : typeTracker) {
+        if (count > maxTypeCount) {
+            maxTypeCount = count;
+            dominantTileType = type;
+        }
+    }
+
+    std::string typeString = typeToString(dominantTileType) + "|";
+    std::wstring typeWString = std::wstring(typeString.begin(), typeString.end());
+
+    for (auto& [string, num] : displayTracker) {
+        std::string str = string + " x" + std::to_string(num) + "|";
+        std::wstring wstr = std::wstring(str.begin(), str.end());
+        typeWString += wstr;
+    }
+
+    chunk_objects->changeText(typeWString);
 }
 
 VillagerListUI getVillagerListFrame() {
@@ -860,9 +958,9 @@ PlantUI getPlantFrame() {
     PlantUI ui;
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
-    ui.infoPanel = &frame->addElement<Panel>(0, 10, 25, 6, Anchor::TOP_LEFT);
+    ui.infoPanel = &frame->addElement<Panel>(40, -3, 25, 6, Anchor::BOTTOM_LEFT);
     std::wstring infoText = L"Select what to plant:";
-    ui.text = &ui.infoPanel->addElement<Text>(1, 1, infoText, Anchor::TOP_LEFT);
+    ui.text = &frame->addElement<Text>(41, -3, infoText, Anchor::BOTTOM_LEFT);
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
@@ -889,37 +987,43 @@ void PlantUI::configurePlantFrame() {
         }
     }
 
-    int offset = 0;
-
     if (result.empty()) {
         text->changeText(L"No seeds to plant");
     }
     else {
-        text->changeText(L"Select what to plant:");
+        text->changeText(L"Available seeds:");
 	}
+
+    GameState& gameState = Game::getInstance().gameState;
+
+    int xFrustum = gameState.cameraState.xFrustum;
+    int yFrustum = gameState.cameraState.yFrustum;
+
+    int offset = 1;
 
     for (auto& [name, count] : result) {
         std::string plantStr = name + " x" + std::to_string(count);
         auto frame = Game::getInstance().getUIManager().getFrame(UI::Plant);
         auto button = &createButton(*frame,
-            infoPanel->getXPos() + 1, 2 + infoPanel->getYPos() + offset * 3,
-            std::wstring(plantStr.begin(), plantStr.end()), Anchor::TOP_LEFT);
+            41, (offset * -3) - 1,
+            std::wstring(plantStr.begin(), plantStr.end()), Anchor::BOTTOM_LEFT);
 
         button->setClickFunction([name] {
 			setMode(Mode::PLANT);
 			Game::getInstance().selectedPlantItem = name;
             });
 
-        GameState& gameState = Game::getInstance().gameState;
-
-        int xFrustum = gameState.cameraState.xFrustum;
-        int yFrustum = gameState.cameraState.yFrustum;
-
 		button->setAnchorPosition(xFrustum, yFrustum);
 
         seeds.push_back(button);
         offset++;
     }
+	text->setPosition(41, result.size() * -3 - 5);
+    text->setAnchorPosition(xFrustum, yFrustum);
+
+    infoPanel->setPosition(40, -3);
+    infoPanel->setSize(20, result.size() * 3 + 4);
+    infoPanel->setAnchorPosition(xFrustum, yFrustum);
 }
 
 InfoUI getInfoFrame() {

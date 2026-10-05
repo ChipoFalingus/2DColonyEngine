@@ -14,6 +14,24 @@ enum class tileType : uint8_t {
 	MOUNTAIN_PEAK,
 };
 
+inline std::string typeToString(tileType type) {
+    switch (type) {
+    case(tileType::GRASS): {
+        return "Grass";
+    }case(tileType::SOIL): {
+        return "Soil";
+    }case(tileType::SAND): {
+        return "Sand";
+    }case(tileType::MOUNTAIN): {
+        return "Mountain";
+    }case(tileType::MOUNTAIN_PEAK): {
+        return "Mountain Peak";
+    }case(tileType::WATER): {
+        return "Water";
+    }
+    }
+}
+
 enum animType {
     NONE = 0,
     STATIC = 1,
@@ -67,15 +85,14 @@ public:
     int16_t altitude;
     int16_t region = -1;
 
-    bool walkable = false;
-    bool blocked = false;
-	bool markedForHarvest = false;
-
     tileType type;
 
     Animation anim;
-
     float animOffset = getRandomFloat(0, 2 * 3.1415926);
+
+    bool walkable = false;
+    bool blocked = false;
+    bool markedForHarvest = false;
     
     void changeTileType(tileType type);
     void getTile(int x, int y);
@@ -101,8 +118,6 @@ Tile& getTileRef(int x, int y);
 
 void setSeaLevel(float level);
 void createMapIslands();
-void makeLake(int x, int y);
-std::pair<int, int> makeRiver(int x, int y);
 
 float calculateAltitude(int x, int y);
 float getAltitude(int x, int y);

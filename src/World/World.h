@@ -39,12 +39,14 @@ private:
     std::atomic<bool> currentlyRendering = false;
     std::atomic<int> chunksRendered = 0;
 
+    // to be implemented
+    const int CREATURE_CAP = 5000;
+
     std::unordered_map<std::pair<int, int>, Chunk, pair_hash> chunks;
 
     // These need to be in a colony class
     std::vector<Stockpile> stockpiles;
     // ^ make a manager for this later
-    std::vector<std::pair<entt::entity, std::pair<int, int>>> itemsToMove;
 	RoomManager roomManager;
 
     LightManager lightManager;
@@ -95,7 +97,7 @@ public:
         return temperatureMap[x + y * size];
 	}
 
-    std::vector<Stockpile>& getStockpiles() {
+    const std::vector<Stockpile>& getStockpiles() {
         return stockpiles;
     }
 
@@ -175,14 +177,6 @@ public:
     void updateMiniMap();
 
 	std::unordered_map<std::pair<int, int>, Chunk, pair_hash>& getChunks() { return chunks; }
-    
-    void addItemToMove(entt::entity item, int x, int y) {
-        itemsToMove.push_back(std::make_pair(item, std::make_pair(x, y)));
-    }
-
-    std::vector<std::pair<entt::entity, std::pair<int, int>>>& getItemsToMove() {
-        return itemsToMove;
-    }
 
     void generateWorld();
 

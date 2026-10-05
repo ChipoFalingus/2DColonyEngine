@@ -99,7 +99,9 @@ public:
 		}
 
 		for (auto& i : view) {
+
 			updateSquadMovement(i, registry);
+			if (!registry.valid(i)) continue;
 			auto& controller = registry.get<SquadController>(i);
 			if (controller.members.empty()) {
 				empty_squads.push_back(i);

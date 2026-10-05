@@ -7,6 +7,8 @@
 
 // how many structs could a guy need?
 
+// probably need to split this up into different files because 1 change makes recompilation takes an agonizing amount of time
+
 struct Renderable {
 	wchar_t character;
 	glm::vec3 color;
@@ -47,12 +49,30 @@ struct ProduceSpawner {
 	float produceClock;
 	float productionTime = 10.0f;
 
+	int range = 1;
+
 	bool isProducing = false;
 	bool canProduce = true;
 };
 
+enum class CropState {
+	SPROUT,
+	MATURED,
+	DEAD
+};
+
+struct CropStage {
+	wchar_t character;
+	glm::vec3 color;
+};
+
+// crop stuff
+struct Sprouting {};
+struct Matured {};
+struct Dead {};
+
 struct Crop {
-	std::vector<std::pair<wchar_t, glm::vec3>> growthStages;
+	std::vector<CropStage> growthStages;
 
 	float growthTime;
 	float currentGrowthTime;
@@ -61,11 +81,15 @@ struct Crop {
 	int growthStage;
 	int growthStageMax;
 
-	bool mature = false;
+	int mature_stage;
+	int death_age;
+
+	CropState state = CropState::SPROUT;
 };
 
 struct HeatEmitter {
 	float heat_intensity;
+	bool addedToHeatMap = false;
 };
 
 struct LightEmitter {
@@ -85,17 +109,29 @@ struct Furnace {
 
 struct Gun {
 	float range;
-	float damage;
+	int damage;
 	float fire_rate;
-	float reload_time;
-
 	int ammo_capacity;
-	int current_ammo;
+
+	float reload_time;
+	float fire_clock = 0.0f;
+	float reload_clock = 0.0f;
+	int current_ammo = 40000;
+
+	bool empty = false;
+	bool reloading = false;
+
+	bool isEmpty() const { return current_ammo <= 0; }
+	bool canFire() const { return current_ammo > 0 && !reloading; }
+
+	void shoot() { current_ammo--; }
 };
 
 struct Craftable {
 	std::unordered_map<std::string, int> ingredients;
 	std::string benchRequired;
+
+	float craftTime;
 	int quantity;
 };
 
@@ -115,9 +151,13 @@ struct Spawner {
 	float clock = 0.0f;
 };
 
-struct Sittable {};
+struct Sittable {
+	bool i;
+};
 struct Table {};
-struct Structure {};
+struct Structure {
+	bool flammable;
+};
 
 // makes tiles unwalkable
 struct BlocksTile {};
@@ -127,3 +167,8 @@ struct Bed {
 };
 
 struct BlueprintTag {};
+
+// add colony variable
+struct NeedsMoving {
+	bool foundSpot = false;
+};

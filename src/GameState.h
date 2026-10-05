@@ -44,6 +44,9 @@ struct PlacingState {
 struct DebugState {
 	bool objectLocationView = false;
 	bool roomView = false;
+	bool jobDanger = false;
+	bool showTemp = false;
+	bool showLightLevel = false;
 };
 
 struct GameState {

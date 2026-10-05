@@ -13,7 +13,8 @@ enum class JobState {
 	Queued,
 	Waiting,
 	Completed,
-	Failed
+	Failed,
+	Dangerous
 };
 
 
@@ -40,13 +41,12 @@ struct Job {
 
 void evaluateJobDanger(Job* job);
 
+// Shouldn't be static
 class JobManager {
 public:
 	// Holds all available jobs and gives them to villagers whenever possible
 	static std::vector<Job*> JobList;
 
-	//static void findBestColonistForJob(Job& job);
-	//static void findJobForColonist(Villager& v);
 	static void addJob(Job* job) {
 		JobList.push_back(job);
 	}
@@ -58,9 +58,7 @@ public:
 		delete job;
 	}
 
-
 	static void assignJobs();
-
 	static void update();
 };
 
@@ -144,6 +142,9 @@ public:
 	bool grabbedAllItems = false;
 	bool init = false;
 	std::vector<ItemLocation> reserve;
+
+	float clock = 0.0f;
+	float craftTime;
 
 	Build(entt::entity v, entt::entity tool, SkillType skillType, std::string itemName, int locX, int locY)
 		: Job(v, tool, skillType), itemName(itemName), locX(locX), locY(locY)
@@ -234,7 +235,8 @@ class Attack : public Job {
 public:
 
 	entt::entity target;
-	float attackClock;
+	float attackClock = 0.0f;
+	float rescanClock = 0.0f;
 
 	Attack(entt::entity v, entt::entity tool, SkillType skillType, entt::entity target)
 		: Job(v, tool, skillType), target(target)
@@ -286,6 +288,9 @@ public:
 	std::vector<ItemLocation> reserve;
 	bool init = false;
 	bool grabbedAllItems = false;
+
+	float clock = 0.0f;
+	float craftTime;
 
 	Craft(entt::entity v, entt::entity tool, SkillType skillType, std::string item)
 		: Job(v, tool, skillType), item(item)
@@ -376,16 +381,14 @@ public:
 	entt::entity chair;
 	bool init = false;
 
-	float clock;
+	float clock = 0.0f;
 
 	Sit(entt::entity v, entt::entity tool, SkillType skillType, entt::entity chair, int x, int y)
 		: Job(v, tool, skillType), chair(chair), tX(x), tY(y)
-	{
-	}
-	~Sit();
+	{}
 
 	void update();
-	
+	void onInterrupt();
 };
 
 class Wander : public Job {
@@ -416,6 +419,34 @@ public:
 
 	Talk(entt::entity v, entt::entity tool, SkillType skillType, entt::entity other)
 		: Job(v, tool, skillType), other(other)
+	{}
+
+	void update();
+};
+
+class Nap : public Job {
+public:
+	float clock = 0.0f;
+
+	Nap(entt::entity v, entt::entity tool, SkillType skillType)
+		: Job(v, tool, skillType)
+	{}
+
+	void update();
+	void onInterrupt();
+};
+
+
+class WarmUp : public Job {
+public:
+
+	std::pair<int, int> location;
+
+	float clock = 0.0f;
+	bool init = false;
+
+	WarmUp(entt::entity v, entt::entity tool, SkillType skillType)
+		: Job(v, tool, skillType)
 	{}
 
 	void update();

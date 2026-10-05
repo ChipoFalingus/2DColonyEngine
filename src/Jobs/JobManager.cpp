@@ -83,7 +83,7 @@ void JobManager::assignJobs() {
 void JobManager::update() {
 	for (Job* job : JobList) {
 		if (!job) continue;
-		if (job->state == JobState::Waiting) {
+		if (job->state == JobState::Dangerous) {
 			evaluateJobDanger(job);
 		}
 	}
@@ -183,6 +183,7 @@ void Build::update() {
 			return;
 		}
 
+		craftTime = c->craftTime;
 		reserve = findIngredientsForJob(c->ingredients);
 		init = true;
 		if (reserve.empty()) {
@@ -221,6 +222,10 @@ void Build::update() {
 
 		if (isAtTile(pos->x, pos->y, loc.first, loc.second)) {
 
+			clock += Clock::deltaTime;
+
+			if (clock < craftTime) return;
+
 			removeBlueprint(loc.first, loc.second);
 			getTileRef(loc.first, loc.second).addObject(loc.first, loc.second, itemName);
 
@@ -233,6 +238,7 @@ void Build::update() {
 				int nx = loc.first + dir.first;
 				int ny = loc.second + dir.second;
 
+				// should be generic floor tag
 				if (mainWorld.objectManager.has(nx, ny, "Stone Floor")) {
 					mainWorld.getRoomManager().findRoom(nx, ny);
 				}
@@ -434,7 +440,9 @@ void Plant::update() {
 		}
 
 		tillClock += Clock::deltaTime;
-		if (tillClock > 2.0f) {
+
+		int skill = mainWorld.registry.try_get<Skills>(villager)->getSkillLevel(type);
+		if (tillClock > 20.0f * (10.0f / skill)) {
 			tile.changeTileType(tileType::SOIL);
 			plantState = Plant::Planting;
 		}
@@ -444,7 +452,9 @@ void Plant::update() {
 	}
 	case Plant::Planting: {
 		plantClock += Clock::deltaTime;
-		if (plantClock > 3.0f) {
+
+		int skill = mainWorld.registry.try_get<Skills>(villager)->getSkillLevel(type);
+		if (plantClock > 30.0f * (10.0f / skill)) {
 			removeBlueprint(locX, locY);
 
 			auto produce = ObjectRegistry::getInstance().getStaticComponent<Seed>(seed);
@@ -461,28 +471,33 @@ void Plant::update() {
 
 void Attack::update() {
 	attackClock += Clock::deltaTime;
+	rescanClock += Clock::deltaTime;
 
 	auto& attackComponent = mainWorld.registry.get<CombatComponent>(villager);
+	auto* equipment = mainWorld.registry.try_get<Equipment>(villager);
 
-	float range = 10.0f;
-	float attackCooldown = 0.4f;
-	int dmg = 35;
+	// default stats
+	float range = 1.0f;
+	float attackCooldown = 0.5f;
+	int dmg = 5;
 
-	if (attackComponent.equippedWeapon != entt::null) {
-		if (auto gun = mainWorld.registry.try_get<Gun>(attackComponent.equippedWeapon)) {
-			range = gun->range;
-			attackCooldown = gun->fire_rate;
-			dmg = gun->damage;
+	if (equipment) {
+		if (auto gun = mainWorld.registry.try_get<Gun>(equipment->item)) {
+			if (gun->canFire()) {
+				range = gun->range;
+				attackCooldown = gun->fire_rate;
+				dmg = gun->damage;
+			}
 		}
 	}
 
 	auto& pos = mainWorld.registry.get<Position>(villager);
-	
-	if (!mainWorld.registry.valid(target)) {
+
+	if (rescanClock > 0.5f || !mainWorld.registry.valid(target)) {
+		rescanClock = 0.0f;
 		auto newThreat = findClosestItemType(pos.x, pos.y, 25, [&](entt::entity entity, entt::registry& reg, int x, int y) {
 			return reg.try_get<Hostile>(entity) && (entity != villager);
 			});
-
 
 		if (newThreat.has_value()) {
 			target = newThreat.value().item;
@@ -492,9 +507,8 @@ void Attack::update() {
 				movable->hasTarget = false;
 			}
 			state = JobState::Completed;
+			return;
 		}
-
-		return;
 	}
 
 	auto& targetPos = mainWorld.registry.get<Position>(target);
@@ -518,14 +532,21 @@ void Attack::update() {
 		x = pos.x;
 		y = pos.y;
 
+		auto line = bresenham(pos.x, pos.y, targetPos.x, targetPos.y);
+
 		if (attackClock > attackCooldown) {
 			attackClock -= attackCooldown;
+
+			if (auto gun = mainWorld.registry.try_get<Gun>(equipment->item)) {
+				if (gun->canFire()) {
+					gun->shoot();
+				}
+			}
 			
 			if (auto health = mainWorld.registry.try_get<Health>(target)) {
 				health->health -= dmg;
 			}
 
-			auto line = bresenham(pos.x, pos.y, targetPos.x, targetPos.y);
 
 			for (int i = 1; i < line.size() - 1; i++) {
 				getTileRef(line[i].first, line[i].second).setAnimType(GUN_SHOT);
@@ -536,11 +557,12 @@ void Attack::update() {
 
 void Retreat::update() {
 	auto& pos = mainWorld.registry.get<Position>(villager);
-	
+	auto& movable = mainWorld.registry.get<Movable>(villager);
+
 	if (!init) {
 		auto& jobComponent = mainWorld.registry.get<JobComponent>(villager);
 		jobComponent.panicClock = 0.0f;
-		jobComponent.panicDuration = 10.0f;
+		//jobComponent.panicDuration = 10.0f;
 
 		jobComponent.clearInterruptedJobs();
 
@@ -548,7 +570,7 @@ void Retreat::update() {
 	}
 
 	if (!foundPath) {
-		int dim = 64;
+		int dim = 32;
 		int half = dim / 2;
 		std::vector<std::vector<float>> threatMap = buildThreatMap(pos.x, pos.y, dim);
 
@@ -563,18 +585,24 @@ void Retreat::update() {
 				int localX = i + half;
 				int localY = j + half;
 
+				if (!getTileRef(worldX, worldY).walkable) {
+					continue;
+				}
+
 				int dx = std::abs(worldX - pos.x);
 				int dy = std::abs(worldY - pos.y);
-
-				auto& targetPos = mainWorld.registry.get<Position>(threat);
-				int distToThreat = std::abs(targetPos.x - worldX) + std::abs(targetPos.y - worldY);
 
 				int distFromSelf = std::abs(i) + std::abs(j);
 
 				float score = threatMap[localX][localY];
-				score -= distToThreat * 0.5f;  
 				score += distFromSelf * 0.05f;
 
+				// rooms
+				if (auto r = mainWorld.getRoomManager().getRoomAt(worldX, worldY)) {
+					score -= 5.0f;
+				}
+
+				// lower is better
 				if (score < bestScore) {
 					bestScore = score;
 					bestLocation = { worldX, worldY };
@@ -604,11 +632,13 @@ void Retreat::update() {
 void Sleep::update() {
 	mainWorld.registry.get<JobComponent>(villager).activity_state = ActivityState::Sleeping;
 	auto& tiredComponent = mainWorld.registry.get<TiredNeed>(villager);
+	auto* ownership = mainWorld.registry.try_get<Ownership>(villager);
 
 	auto& pos = mainWorld.registry.get<Position>(villager);
-	if (tiredComponent.bedLocation.has_value()) {
-		x = tiredComponent.bedLocation->first;
-		y = tiredComponent.bedLocation->second;
+	if (ownership && ownership->ownedBed != entt::null) {
+		auto& bedPos = mainWorld.registry.get<Position>(ownership->ownedBed);
+		x = bedPos.x;
+		y = bedPos.y;
 	}
 	else {
 		x = pos.x;
@@ -652,6 +682,7 @@ void Craft::update() {
 			return;
 		}
 
+		craftTime = c->craftTime;
 		auto& ingredients = c->ingredients;
 		reserve = findIngredientsForJob(ingredients);
 		init = true;
@@ -701,9 +732,13 @@ void Craft::update() {
 
 		if (isAtTile(pos->x, pos->y, loc->first, loc->second)) {
 
-			getTileRef(loc->first, loc->second).addObject(loc->first, loc->second, item, true);
+			clock += Clock::deltaTime;
 
-			state = JobState::Completed;
+			if (clock >= craftTime) {
+				getTileRef(loc->first, loc->second).addObject(loc->first, loc->second, item, true);
+				state = JobState::Completed;
+			}
+
 		}
 		break;
 	}
@@ -712,16 +747,16 @@ void Craft::update() {
 
 void HaulToStockpile::update() {
 
-	auto pos = mainWorld.registry.try_get<Position>(villager);
+	auto& pos = mainWorld.registry.get<Position>(villager);
 
 	switch (moveState) {
 
 
 	case (State::PickUpItem): {
-		std::pair<int, int> closestAdj = findClosestAdjTile(pos->x, pos->y, fromX, fromY);
+		std::pair<int, int> closestAdj = findClosestAdjTile(pos.x, pos.y, fromX, fromY);
 		x = closestAdj.first;
 		y = closestAdj.second;
-		if (pos->x == x && pos->y == y) {
+		if (pos.x == x && pos.y == y) {
 
 			mainWorld.objectManager.removeItem(fromX, fromY, itemToMove);
 
@@ -736,10 +771,10 @@ void HaulToStockpile::update() {
 	}
 
 	case (State::Move): {
-		std::pair<int, int> closestAdj = findClosestAdjTile(pos->x, pos->y, toX, toY);
+		std::pair<int, int> closestAdj = findClosestAdjTile(pos.x, pos.y, toX, toY);
 		x = closestAdj.first;
 		y = closestAdj.second;
-		if (pos->x == x && pos->y == y) {
+		if (pos.x == x && pos.y == y) {
 
 			auto* s = mainWorld.atStockpile(toX, toY);
 			if (s) {
@@ -747,7 +782,10 @@ void HaulToStockpile::update() {
 
 				auto name = mainWorld.registry.try_get<Name>(itemToMove);
 
+				// add item to stockpile
 				s->placeItem(itemToMove, toX, toY);
+
+				// add to object mananger
 				mainWorld.objectManager.addObject(toX, toY, itemToMove);
 
 				state = JobState::Completed;
@@ -767,9 +805,9 @@ void HaulToStockpile::update() {
 					stockpile->addItem(itemToMove, toX, toY);
 				}
 				else {
-					mainWorld.registry.emplace_or_replace<Position>(itemToMove, pos->x, pos->y);
-					mainWorld.addItemToMove(itemToMove, pos->x, pos->y);
-					getTileRef(pos->x, pos->y).addObject(pos->x, pos->y, name->name);
+					mainWorld.registry.emplace_or_replace<Position>(itemToMove, pos.x, pos.y);
+					mainWorld.registry.remove<NeedsMoving>(itemToMove);
+					getTileRef(pos.x, pos.y).addObject(pos.x, pos.y, name->name);
 
 					state = JobState::Completed;
 				}
@@ -813,7 +851,7 @@ void FindFood::update() {
 
 
 	case State::Find: {
-		place = findClosestItemType(pos.x, pos.y, 50, [&](entt::entity item, entt::registry& registry, int x, int y) {
+		place = findClosestItemType(pos.x, pos.y, 25, [&](entt::entity item, entt::registry& registry, int x, int y) {
 			if (!registry.any_of<Sittable>(item)) return false;
 			if (registry.get<Claimable>(item).claimed) return false;
 
@@ -991,6 +1029,84 @@ void Talk::update() {
 	}
 }
 
+void Sit::update() {
+	mainWorld.registry.get<Claimable>(chair).claimed = true;
+	
+	auto& pos = mainWorld.registry.get<Position>(chair);
+	x = pos.x;
+	y = pos.y;
+
+	clock += Clock::deltaTime;
+
+	if (clock > 10.0f) {
+		mainWorld.registry.get<TiredNeed>(villager).tiredness = 0;
+		mainWorld.registry.get<Claimable>(chair).claimed = false;
+		state = JobState::Completed;
+		return;
+	}
+}
+
+void Sit::onInterrupt() {
+	mainWorld.registry.get<Claimable>(chair).claimed = false;
+}
+
+void Nap::update() {
+	auto& tiredNeed = mainWorld.registry.get<TiredNeed>(villager);
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	auto* ownership = mainWorld.registry.try_get<Ownership>(villager);
+
+	Tile& tile = getTileRef(pos.x, pos.y - 1);
+
+	if (ownership && ownership->ownedBed != entt::null) {
+		auto& bedPos = mainWorld.registry.get<Position>(ownership->ownedBed);
+		x = bedPos.x;
+		y = bedPos.y;
+	}
+	else {
+		x = pos.x;
+		y = pos.y;
+	}
+
+	clock += Clock::deltaTime;
+
+	if (pos.x == x && pos.y == y) {
+		tile.setAnimType(Z);
+	}
+
+	if (clock > 10.0f) {
+		mainWorld.registry.get<TiredNeed>(villager).tiredness = 0;
+		tile.setAnimType(NONE);
+		state = JobState::Completed;
+		return;
+	}
+}
+
+void Nap::onInterrupt() {
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	Tile& tile = getTileRef(pos.x, pos.y - 1);
+	tile.setAnimType(NONE);
+}
+
+void WarmUp::update() {
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	auto& tempNeed = mainWorld.registry.get<TemperatureNeed>(villager);
+
+	if (!init) {
+		location = findBestTemperatureTile(pos.x, pos.y, 25, tempNeed.preferredTemp);
+		init = true;
+	}
+
+	x = location.first;
+	y = location.second;
+
+	clock += Clock::deltaTime;
+
+	if (clock > 10.0f) {
+		state = JobState::Completed;
+		return;
+	}
+}
+
 bool isAtTile(int xPos, int yPos, int xLoc, int yLoc) {
     int dx = xPos - xLoc;
     int dy = yPos - yLoc;
@@ -1027,11 +1143,28 @@ void removeBlueprint(int x, int y) {
 }
 
 void evaluateJobDanger(Job* job) {
+	if (!job) return;
+
 	auto closestThreat = findClosestItemType(job->x, job->y, 24, [&](entt::entity entity, entt::registry& reg, int x, int y) {
 		return reg.try_get<Hostile>(entity) && (entity != job->villager);
 		});
+
 	if (closestThreat.has_value()) {
-		job->state = JobState::Waiting;
+
+		// Flag nearby jobs
+		const int flagRadius = 10;
+		const int flagRadiusSq = flagRadius * flagRadius;
+
+		for (auto& i : JobManager::JobList) {
+			int dx = std::abs(i->x - job->x);
+			int dy = std::abs(i->y - job->y);
+
+			if (dx * dx + dy * dy <= flagRadiusSq) {
+				i->state = JobState::Dangerous;
+			}
+		}
+
+		job->state = JobState::Dangerous;
 	}
 	else {
 		job->state = JobState::Queued;

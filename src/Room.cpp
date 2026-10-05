@@ -39,7 +39,7 @@ void RoomManager::findRoom(int startX, int startY) {
 			// Update these to check for components instead of specific names
             if (mainWorld.objectManager.has(nx, ny, "Stone Wall")) continue;
             if (mainWorld.objectManager.has(nx, ny, "Stone Door")) continue;
-            if (getRoomAt(nx, ny)) continue;
+            //if (getRoomAt(nx, ny)) continue;
 
             if (mainWorld.objectManager.has(nx, ny, "Stone Floor")) {
                 q.push({ nx, ny });

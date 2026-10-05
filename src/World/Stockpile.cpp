@@ -1,7 +1,7 @@
 #include "Stockpile.h"
 #include "World.h"
 
-std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> Stockpile::getItems() {
+std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> Stockpile::getItems() const {
     return tileItems;
 }
 

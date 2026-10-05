@@ -60,13 +60,13 @@
     <ClCompile Include="src\Entities\Squad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Entities\Villager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Room.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Villager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

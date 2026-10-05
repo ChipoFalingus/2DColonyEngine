@@ -49,8 +49,11 @@ struct Hostile {
 struct TiredNeed {
 	int tiredness = 0;
 	float clock;
+};
 
-	std::optional<std::pair<int, int>> bedLocation;
+struct Ownership {
+	entt::entity ownedBed = entt::null;
+	uint32_t ownedRoomID = 0;
 };
 
 struct HungerNeed {
@@ -62,7 +65,10 @@ struct HungerNeed {
 
 struct TemperatureNeed {
 	float preferredTemp;
-	float clock;
+	float clock = 0.0f;
+	
+	// 0 is min, 1 is max
+	float temp_comfort = 0.0f;
 };
 
 struct JobComponent {
@@ -110,7 +116,6 @@ struct Inventory {
 };
 
 struct CombatComponent {
-	entt::entity equippedWeapon;
 	int base_damage = 1;
 	int base_attack_speed = 1.0f;
 
@@ -129,6 +134,10 @@ struct Social {
 
 struct LightNeed {
 	float minLight = 0.6f;
+};
+
+struct Equipment {
+	entt::entity item;
 };
 
 //struct ColonyOwner {

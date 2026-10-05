@@ -2,7 +2,9 @@
 #include "UI/UIElements.h"
 #include "World/Stockpile.h"
 #include "GameState.h"
+#include "World/World.h"
 
+// you might be wondering why every element is a pointer, i dont know
 struct MainMenuUI {
     UI type = UI::Main;
 
@@ -33,6 +35,7 @@ struct SettingsUI {
     Slider* camera_speed;
 
     Button* apply;
+    Button* reset;
 
     void update();
 };
@@ -43,6 +46,7 @@ struct WorldSettingsUI {
     UI type = UI::WorldSettings;
 
     Text* text;
+    Text* add_this;
     Button* back;
 
     Panel* panel;
@@ -60,7 +64,7 @@ struct LoadingUI {
     Text* chunks;
 	Text* animation;
 
-
+    void update();
 };
 
 LoadingUI getLoadingFrame();
@@ -101,8 +105,13 @@ InGameUI getInGameFrame();
 
 struct MiniMapUI {
     UI type = UI::Minimap;
+    Panel* chunk_info;
+    Text* chunk_objects;
+
     Text* text;
     Text* seed;
+
+    void update(Chunk* chunk);
 };
 
 MiniMapUI getMiniMapFrame();

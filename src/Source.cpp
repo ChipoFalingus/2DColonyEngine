@@ -70,13 +70,14 @@ void drawTxtToMap(const std::string& filePath, int x, int y) {
     }
 }
 
+// Below methods should be moved somewhere else
 void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
     auto view = registry.view<Position, Movable>();
 
     for (auto [entity, pos, movable] : view.each()) {
 
         if (movable.dirX != 0 || movable.dirY != 0) {
-			movable.hasTarget = false;
+            movable.hasTarget = false;
             movable.movementClock += deltaTime;
 
             if (movable.movementClock >= movable.currentSpeed) {
@@ -96,7 +97,7 @@ void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager
                         sepY += dy;
                     }
 
-                });
+                    });
 
                 int pushX = (sepX > 0) - (sepX < 0);
                 int pushY = (sepY > 0) - (sepY < 0);
@@ -139,6 +140,12 @@ void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager
                 int newX = movable.path[0].first;
                 int newY = movable.path[0].second;
 
+                if (!getTileRef(newX, newY).walkable) {
+                    movable.path = findPath(pos.x, pos.y, { movable.targetX, movable.targetY });
+                    newX = movable.path[0].first;
+                    newY = movable.path[0].second;
+                }
+
                 objectManager.removeItem(pos.x, pos.y, entity);
                 objectManager.addObject(newX, newY, entity);
 
@@ -156,51 +163,62 @@ void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager
     }
 }
 
-// Below methods should be moved somewhere else
 void updateCropSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
     auto view = registry.view<Position, Name, Renderable, Crop>();
     for (auto [entity, pos, name, renderable, crop] : view.each()) {
         crop.growthClock += deltaTime;
         if (crop.growthClock >= crop.currentGrowthTime) {
+
+            // hard cap in case the death thing isnt added for a plant
+            if (crop.growthStage >= crop.growthStages.size() - 1 || crop.state == CropState::DEAD) {
+                crop.growthStage = crop.growthStageMax;
+                continue;
+            }
+
             crop.growthClock = 0.0f;
             crop.growthStage++;
-            if (crop.growthStage >= crop.growthStageMax) {
 
-				auto* staticCrop = ObjectRegistry::getInstance().getStaticComponent<Harvestable>(name.name);
-                if (staticCrop) {
-                    crop.mature = true;
-                }
+            const float variance = getRandomFloat(-0.25f, 0.25f);
+            crop.currentGrowthTime = crop.growthTime * (1.0f + variance);
 
-                crop.growthStage = crop.growthStageMax;
-                crop.currentGrowthTime = crop.growthTime + (getRandomFloat(-1.0f, 1.0f) * crop.growthTime * 0.25f);
+            if (crop.growthStage == crop.mature_stage) {
+                crop.state = CropState::MATURED;
+                registry.emplace<Matured>(entity);
+                crop.currentGrowthTime *= 2;
             }
-			renderable.character = crop.growthStages[crop.growthStage].first;
-			renderable.color = crop.growthStages[crop.growthStage].second;
+            else if (crop.growthStage == crop.death_age) {
+                registry.erase<Matured>(entity);
+                crop.state = CropState::DEAD;
+            }
+            else {
+                crop.state = CropState::SPROUT;
+            }
+
+            const auto& currentStage = crop.growthStages[crop.growthStage];
+			renderable.character = currentStage.character;
+			renderable.color = currentStage.color;
         }
     }
 }
 
-void updateProduceSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
-    auto view = registry.view<Position, ProduceSpawner>();
-    for (auto [entity, pos, produce] : view.each()) {
+constexpr std::array<std::pair<int, int>, 4> dirs = {{
+    {0, 1}, {1, 0}, {0, -1}, {-1, 0} 
+    }};
 
-        if (auto i = registry.try_get<Crop>(entity)) {
-            if (!i->mature) continue;
-        }
+void updateProduceSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, ProduceSpawner, Matured>();
+    for (auto [entity, pos, produce] : view.each()) {
 
         produce.produceClock += deltaTime;
         if (produce.produceClock >= produce.productionTime) {
-            produce.produceClock = 0.0f;
-			std::vector<std::pair<int, int>> dirs = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
-
-            bool hasProduced = false;
             for (auto& dir : dirs) {
 
                 int newX = pos.x + dir.first;
                 int newY = pos.y + dir.second;
 
-                if (mainWorld.objectManager.isEmpty(newX, newY) && getTileRef(newX, newY).walkable) {
+                if (objectManager.isEmpty(newX, newY) && getTileRef(newX, newY).walkable) {
                     getTileRef(newX, newY).addObject(newX, newY, produce.produce);
+                    produce.produceClock = 0.0f;
                     break;
                 }
             }
@@ -226,9 +244,6 @@ void updateHealth(entt::registry& registry, ObjectManager& objectManager, float 
 			job_component->clearInterruptedJobs();
         }
 
-        auto& name = registry.get<Name>(entity);
-        std::cout << "Removed " << name.name << std::endl;
-
         auto& pos = registry.get<Position>(entity);
         getTileRef(pos.x, pos.y).removeObject(pos.x, pos.y, entity);
 
@@ -245,6 +260,16 @@ void updateLightSystem(entt::registry& registry, ObjectManager& objectManager, f
     }
 }
 
+void updateTemperatureSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Position, HeatEmitter>();
+    for (auto [entity, pos, heat] : view.each()) {
+        if (!heat.addedToHeatMap) {
+            heat.addedToHeatMap = true;
+            Game::getInstance().getHeatManager().addHeatSource(pos.x, pos.y, heat.heat_intensity, 10);
+        }
+    }
+}
+
 void updateSpawners(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
     auto view = registry.view<Position, Spawner>();
     for (auto [entity, pos, spawner] : view.each()) {
@@ -252,7 +277,6 @@ void updateSpawners(entt::registry& registry, ObjectManager& objectManager, floa
         spawner.clock += deltaTime;
         if (spawner.clock >= spawner.cooldown) {
             spawner.clock = 0.0f;
-            std::vector<std::pair<int, int>> dirs = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} };
 
             for (auto& dir : dirs) {
 
@@ -296,6 +320,24 @@ void updateSpawners(entt::registry& registry, ObjectManager& objectManager, floa
                     }
                     break;
                 }
+            }
+        }
+    }
+}
+
+void updateGuns(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+    auto view = registry.view<Gun>();
+    for (auto entity : view) {
+
+        auto& gun = view.get<Gun>(entity);
+
+        if (gun.reloading) {
+            gun.reload_clock += deltaTime;
+
+            if (gun.reload_clock >= gun.reload_time) {
+                int neededAmmo = gun.ammo_capacity - gun.current_ammo;
+                gun.current_ammo = neededAmmo;
+                gun.reloading = false;
             }
         }
     }
@@ -423,6 +465,11 @@ int main() {
         // Draw text
         if (gameState.viewState.viewMiniMap) {
             drawMiniMap(shader, Game::getInstance().getSettingsManager().get(), mainWorld);
+
+            int chunkX = static_cast<int>(std::floor((float)gameState.inputState.mouseTileX));
+            int chunkY = static_cast<int>(std::floor((float)gameState.inputState.mouseTileY));
+            Chunk* chunk = mainWorld.getChunk(chunkX, chunkY);
+            Game::getInstance().getMiniMapUI().update(chunk);
         }
         else {
             drawMap(shader, Game::getInstance().getSettingsManager().get(), mainWorld);
@@ -466,29 +513,7 @@ int main() {
         }
 
         if (mainWorld.isCurrentlyRendering()) {
-            LoadingUI& ui = Game::getInstance().getLoadingUI();
-            ui.panel->setPosition(0, 0);
-            ui.panel->setSize(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
-            int numChunks = (calculateMapSize() * calculateMapSize()) * 4 / (chunkDim * chunkDim);
-
-            if (numChunks > mainWorld.getChunksRendered()) {
-                ui.chunks->changeText(std::to_wstring(mainWorld.getChunksRendered()) + L"/" + std::to_wstring(numChunks));
-            }
-            else {
-                ui.chunks->changeText(L"Finishing things up...");
-            }
-
-
-            int barLength = gameState.cameraState.xFrustum - 2;
-
-            float percent = std::clamp((float)mainWorld.getChunksRendered() / numChunks, 0.0f, 1.0f);
-            int filled = (int)(percent * barLength);
-            
-            std::wstring bar;
-            bar += std::wstring(filled, L'#');
-            bar += std::wstring(barLength - filled, L'-');
-
-            ui.animation->changeText(bar);
+            Game::getInstance().getLoadingUI().update();
         }
 
         if (mainWorld.isRendered()) {
@@ -497,6 +522,7 @@ int main() {
 			updateProduceSystem(mainWorld.registry, mainWorld.objectManager, dt);
 			updateCropSystem(mainWorld.registry, mainWorld.objectManager, dt);
             updateHealth(mainWorld.registry, mainWorld.objectManager, dt);
+            updateTemperatureSystem(mainWorld.registry, mainWorld.objectManager, dt);
 			updateLightSystem(mainWorld.registry, mainWorld.objectManager, dt);
             updateSpawners(mainWorld.registry, mainWorld.objectManager, dt);
 
@@ -506,30 +532,24 @@ int main() {
             JobManager::update();
 
             // Stockpile item moving
+            auto view = mainWorld.registry.view<Position, NeedsMoving>();
 
-            // Move this to the Colony class later
-            auto& itemsToMove = mainWorld.getItemsToMove();
+            for (auto [entity, pos, moving] : view.each()) {
+                if (moving.foundSpot) continue;
 
-            for (auto it = itemsToMove.begin(); it != itemsToMove.end(); ) {
-                auto& item = it->first;
-                int currentX = it->second.first;
-                int currentY = it->second.second;
-
-				auto& name = mainWorld.registry.get<Name>(item).name;
-                auto spotOpt = mainWorld.findStockpileSpotForItem(name, currentX, currentY);
+                auto& name = mainWorld.registry.get<Name>(entity).name;
+                auto spotOpt = mainWorld.findStockpileSpotForItem(name, pos.x, pos.y);
 
                 if (spotOpt) {
-                    auto [stockpile, pos] = *spotOpt;
-                    stockpile->addItem(item, pos.first, pos.second);
+                    auto& [stockpile, stockpilePos] = *spotOpt;
+                    stockpile->addItem(entity, stockpilePos.first, stockpilePos.second);
 
-                    Job* job = new HaulToStockpile(entt::null, entt::null, SkillType::None, item, currentX, currentY, pos.first, pos.second);
+                    moving.foundSpot = true;
+
+                    Job* job = new HaulToStockpile(entt::null, entt::null, SkillType::None, entity, pos.x, pos.y, stockpilePos.first, stockpilePos.second);
 
                     job->priority = 10;
                     JobManager::addJob(job);
-                    it = itemsToMove.erase(it);
-                }
-                else {
-                    it++;
                 }
             }
         

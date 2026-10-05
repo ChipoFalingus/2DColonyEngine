@@ -7,17 +7,13 @@
 #include "GameState.h"
 #include <entt/entt.hpp>
 
-enum struct Material {
-    WOOD,
-    STONE,
-};
-
 // Responsible for managing UI, Worlds, Settings, and Game States
 class Game {
 private:
     Game() {}
     UIManager uiManager;
     
+    // wow
     MainMenuUI mainMenuUI;
 	SettingsUI settingsUI;
     WorldSettingsUI worldSettingsUI;
@@ -41,7 +37,6 @@ private:
 	InfoUI infoUI;
 
 	HeatManager heatManager;
-	Material selectedMaterial = Material::WOOD;
 
     std::string selectedBuildItem;
     SettingsManager settingsManager;
@@ -55,10 +50,6 @@ public:
     static Game& getInstance() {
         static Game instance;
         return instance;
-    }
-
-    void setSelectedMaterial(Material material) {
-        selectedMaterial = material;
     }
 
     void initUI() {
@@ -171,10 +162,6 @@ public:
 
     InfoUI& getInfoUI() {
         return infoUI;
-	}
-
-    Material getSelectedMaterial() const {
-        return selectedMaterial;
 	}
 
     UIManager& getUIManager() {

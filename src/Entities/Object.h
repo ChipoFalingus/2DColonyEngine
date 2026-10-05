@@ -122,7 +122,8 @@ public:
 			if (name == "crop") {
 				float growthTime = data.at("grow_time").get<float>();
 
-				std::vector<std::pair<wchar_t, glm::vec3>> growthStages;
+				int stageCount = 0;
+				std::vector<CropStage> growthStages;
 				for (auto& stage : data.at("stages")) {
 					auto& chNode = stage.at("char");
 					wchar_t ch = chNode.is_number_integer() ? chNode.get<int>() : chNode.get<std::string>()[0];
@@ -135,11 +136,15 @@ public:
 					);
 
 					growthStages.push_back({ ch, color });
+					stageCount++;
 				}
+
+				int mature = data.at("mature_age").get<int>();
+				int death = data.at("death_age").get<int>();
 
 				float currentGrowthTime = growthTime + (getRandomFloat(0.0f, 1.0f) * growthTime * 0.25f);
 
-				targetWorldRegistry.emplace<Crop>(newEntity, growthStages, growthTime, currentGrowthTime, 0.0f, 0, static_cast<int>(growthStages.size() - 1));
+				targetWorldRegistry.emplace<Crop>(newEntity, growthStages, growthTime, currentGrowthTime, 0.0f, 0, stageCount - 1, mature, death);
 
 			}
 
@@ -163,8 +168,9 @@ public:
 				}
 
 				std::string bench = data.at("required_bench").get<std::string>();
+				float craftTime = data.at("craft_time").get<float>();
 
-				targetWorldRegistry.emplace<Craftable>(newEntity, ingredients, bench);
+				targetWorldRegistry.emplace<Craftable>(newEntity, ingredients, bench, craftTime);
 			}
 
 			if (name == "nutrition") {
@@ -208,6 +214,15 @@ public:
 				int cap = data.at("cap").get<int>();
 
 				targetWorldRegistry.emplace<Spawner>(newEntity, spawn, cooldown, cap);
+			}
+
+			if (name == "gun") {
+				float range = data.at("range").get<float>();
+				float cooldown = data.at("attack_cooldown").get<float>();
+				int damage = data.at("damage").get<int>();
+				int max_ammo = data.at("max_ammo").get<int>();
+
+				targetWorldRegistry.emplace<Gun>(newEntity, range, damage, cooldown, max_ammo);
 			}
 		}
 

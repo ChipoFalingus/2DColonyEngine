@@ -79,11 +79,30 @@ unsigned char checkedboxBitmap[256] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
+unsigned char arBitmap[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 255, 0, 255, 255, 255, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 255, 0, 255, 255, 255, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 255, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0,
+  0, 0, 0, 0, 0, 255, 255, 255, 0, 255, 0, 255, 255, 255, 0, 0,
+  0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 255, 255, 255, 0, 255, 255, 255, 0, 0, 0, 0, 0, 0,
+  0, 0, 255, 255, 255, 255, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0,
+  0, 0, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
 
 
 std::unordered_map<FT_ULong, CustomGlyph> customGlyphs = {
     {0xA32, {0xA32, 16, 16, 0, 16, 16, checkboxBitmap}},
     {0xA33, {0xA33, 16, 16, 0, 16, 16, checkedboxBitmap}},
+    {0xFFF, {0xFFF, 16, 16, 0, 16, 16, arBitmap}}
 };
 
 void generateFontAtlas(const std::string& fontPath, int fontSize) {
@@ -306,7 +325,6 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
         for (int x = xPlayer - xFrustum / 2; x < (xPlayer + xFrustum / 2) + 1; x++) {
 
             float screenX = (x - numX) * settings.xTextSpacing;
-            Tile* a = nullptr;
             Chunk* chunk = nullptr;
             if (world.isRendered()) {
                 int chunkX = x / chunkDim;
@@ -429,6 +447,21 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                         altitudeToColor(tile.altitude, -100.0f, 100.0f).g / 255.0f,
                         altitudeToColor(tile.altitude, -100.0f, 100.0f).b / 255.0f
                     );
+            }
+
+            if (gameState.debugState.jobDanger) {
+                for (auto& i : JobManager::JobList) {
+                    if (x == i->x && y == i->y) {
+                        if (i->state == JobState::Dangerous) {
+                            string = L'D';
+                            color = glm::vec3(1.0f, 0.0f, 0.0f);
+                        }
+                        else {
+                            string = L'C';
+                            color = glm::vec3(0.0f, 1.0f, 0.0f);
+                        }
+                    }
+                }
             }
 
             color *= world.getLightManager().getLightMapIndex(x, y);

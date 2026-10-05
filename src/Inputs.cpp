@@ -74,24 +74,6 @@ void processInput(GLFWwindow* window) {
             if (mainWorld.isRendered()) {
                 gameState.placingState.placing = false;
                 handleClickedItem(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
-
-                /*if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
-                    getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
-                        addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Stone Wall");
-
-                    getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).walkable = false;
-
-                    mainWorld.getRoomManager().findRoom(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
-                    const std::pair<int, int> dirs[4] = {
-                        {0, 1}, {1, 0}, {-1, 0}, {0, -1}
-                    };
-
-                    for (auto& dir : dirs) {
-                        int nx = gameState.inputState.mouseTileX + dir.first;
-                        int ny = gameState.inputState.mouseTileY + dir.second;
-                        mainWorld.getRoomManager().findRoom(nx, ny);
-                    }
-                }*/
             }
         }
 
@@ -105,13 +87,43 @@ void processInput(GLFWwindow* window) {
         gameState.placingState.placing = false;
         setMode(Mode::NONE);
 
-        if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
-            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
-                addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Stone Wall");
+        auto& registry = mainWorld.registry;
+        entt::entity squadEntity = registry.create();
+        auto& controller = registry.emplace<SquadController>(squadEntity);
 
-            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).walkable = false;
+        controller.groupTargetPos = { gameState.inputState.mouseTileX, gameState.inputState.mouseTileY };
+        controller.state = SquadState::IDLE;
 
-            mainWorld.getRoomManager().findRoom(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+        int attemptCount = 0;
+        int maxAttempts = 100;
+        for (int i = 0; i < 1; i++) {
+            int spawnX = getRandomInt(gameState.inputState.mouseTileX - 10, gameState.inputState.mouseTileX + 10);
+            int spawnY = getRandomInt(gameState.inputState.mouseTileY - 10, gameState.inputState.mouseTileY + 10);
+
+            if (!getTileRef(spawnX, spawnY).walkable) {
+                attemptCount++;
+                if (attemptCount >= maxAttempts) break;
+                i--;
+                continue;
+            }
+
+            entt::entity member = registry.create();
+
+            registry.emplace<Position>(member, spawnX, spawnY);
+            registry.emplace<Renderable>(member, L'Z', glm::vec3(1.0f, 1.0f, 1.0f));
+
+            registry.emplace<Movable>(member);
+
+            registry.emplace<SquadMemberComponent>(member, squadEntity);
+
+            registry.emplace<Name>(member, "Zombie");
+            registry.emplace<Hostile>(member);
+            registry.emplace<Health>(member, 40);
+
+            registry.emplace<Zombie>(member);
+            mainWorld.objectManager.addObject(spawnX, spawnY, member);
+
+            controller.members.push_back(member);
         }
     }
 
@@ -147,7 +159,6 @@ void processInput(GLFWwindow* window) {
         auto& UIManager = Game::getInstance().getUIManager();
 		UIManager.swapFrame(UI::Minimap, UI::InGame);
     }
-
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
         gameState.viewState.viewHeightMap = !gameState.viewState.viewHeightMap;
     }
@@ -180,6 +191,15 @@ void processInput(GLFWwindow* window) {
     }
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
         gameState.debugState.objectLocationView = !gameState.debugState.objectLocationView;
+    }
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+        gameState.debugState.jobDanger = !gameState.debugState.jobDanger;
+    }
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
+        gameState.debugState.showLightLevel = !gameState.debugState.showLightLevel;
+    }
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+        gameState.debugState.showTemp = !gameState.debugState.showTemp;
     }
 
     auto& ui = Game::getInstance().getInGameUI();
@@ -260,6 +280,18 @@ void processInput(GLFWwindow* window) {
                 if (auto c = registry.try_get<Claimable>(e)) {
                     itemStr += std::to_string(c->claimed);
                 }
+
+                if (auto c = registry.try_get<Crop>(e)) {
+                    if (c->state == CropState::SPROUT) {
+                        itemStr += " Sprouting";
+                    }
+                    else if (c->state == CropState::MATURED) {
+                        itemStr += " Matured";
+                    }
+                    else {
+                        itemStr += " Dead";
+                    }
+                }
                 itemStr += "|";
             }
         }
@@ -278,6 +310,12 @@ void processInput(GLFWwindow* window) {
         std::string type = typeToString(tile.type);
         if (auto room = mainWorld.getRoomManager().getRoomAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
             type += " (Room" + std::to_string(room->ID) + ")";
+        }
+        if (gameState.debugState.showTemp) {
+            type += " " + std::to_string(mainWorld.getTemperatureMapIndex(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) + "F";
+        }
+        if (gameState.debugState.showLightLevel) {
+            type += " " + std::to_string(mainWorld.getLightManager().getLightMapIndex(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY));
         }
         ui.tileType->changeText(std::wstring(type.begin(), type.end()));
 
@@ -455,30 +493,37 @@ void build(int left, int right, int top, int bottom) {
 
 void harvest(int left, int right, int top, int bottom) {
     ObjectManager& manager = mainWorld.objectManager;
+    auto& registry = mainWorld.registry;
 
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
 
             Tile& tile = getTileRef(x, y);
-            ObjectManager* manager = &mainWorld.objectManager;
-            auto& objectList = manager->getObjectsAt(x, y);
+            auto& objectList = manager.getObjectsAt(x, y);
+            auto& topObject = objectList[0];
 
-            if (manager->has(x, y, "Stockpile")) continue;
+            if (manager.has(x, y, "Stockpile")) continue;
             if (objectList.empty()) continue;
 			if (tile.markedForHarvest) continue;
 
-            if (auto* i = mainWorld.registry.try_get<Crop>(objectList[0])) {
-                if (!i->mature) continue;
+            if (auto* i = registry.try_get<Crop>(topObject)) {
+                if (i->state != CropState::MATURED) continue;
             }
 
-            if (auto* i = mainWorld.registry.try_get<Harvestable>(objectList[0])) {
+            if (auto* i = registry.try_get<Harvestable>(topObject)) {
                 tile.markedForHarvest = true;
                 tile.anim.type = animType::RED_X;
 
-                Job* job = new HarvestTile(entt::null, entt::null, i->requiredSkill, objectList[0], x, y);
+                Job* job = new HarvestTile(entt::null, entt::null, i->requiredSkill, topObject, x, y);
                 job->priority = 40;
                 JobManager::JobList.push_back(job);
             }
+            //else {
+            //    // create a generic "pickupable" tag so that colonists dont freaking harvest each other
+            //    if (!registry.try_get<NeedsMoving>(topObject) && !registry.try_get<JobComponent>(topObject)) {
+            //        registry.emplace<NeedsMoving>(topObject);
+            //    }
+            //}
         }
     }
 }

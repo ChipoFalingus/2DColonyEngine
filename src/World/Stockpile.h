@@ -36,7 +36,7 @@ public:
     int getWidth() const { return width; }
     int getHeight() const { return height; }
 
-    std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> getItems();
+    std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> getItems() const;
     std::unordered_map<std::string, int> getItemCounts();
 
     bool atStockpile(int x, int y) const;

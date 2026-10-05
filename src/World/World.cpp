@@ -86,16 +86,21 @@ void spawnSquad(int x, int y) {
     controller.groupTargetPos = { x, y };
     controller.state = SquadState::IDLE;
 
+	int attemptCount = 0;
+	int maxAttempts = 100;
     for (int i = 0; i < 20; i++) {
-        entt::entity member = registry.create();
 
         int spawnX = getRandomInt(x-10, x+10);
         int spawnY = getRandomInt(y-10, y+10);
 
         if (!getTileRef(spawnX, spawnY).walkable) {
+            attemptCount++;
+            if (attemptCount >= maxAttempts) break;
             i--;
             continue;
 		}
+
+        entt::entity member = registry.create();
 
         registry.emplace<Position>(member, spawnX, spawnY);
         registry.emplace<Renderable>(member, L'Z', glm::vec3(1.0f, 1.0f, 1.0f));

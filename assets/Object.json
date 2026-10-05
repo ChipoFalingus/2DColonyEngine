@@ -6,10 +6,14 @@
                 "character": "#",
                 "color": [ 100, 100, 100 ]
             },
+            "structure": {
+                "health": 1500,
+                "flammable": true
+            },
             "spawner": {
                 "spawn": "Zombie",
                 "cooldown": 5.0,
-                "cap" :  20
+                "cap": 20
             }
         },
         {
@@ -29,6 +33,7 @@
                         "quantity": 4
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             },
             "heat_intensity": 50.0,
@@ -58,7 +63,15 @@
                 "drop": [
                     {
                         "item": "Wheat Seeds",
-                        "odds": 0.1
+                        "odds": 1.1
+                    },
+                    {
+                        "item": "Potato Seeds",
+                        "odds": 1.1
+                    },
+                    {
+                        "item": "Carrot Seeds",
+                        "odds": 1.1
                     }
                 ],
                 "skill": "Farming"
@@ -67,8 +80,8 @@
         {
             "name": "Oak Tree",
             "visual": {
-                "character": 9827,
-                "color": [ 0, 255, 0 ]
+                "character": ".",
+                "color": [ 56, 118, 29 ]
             },
             "drop_table": {
                 "drop": [
@@ -78,7 +91,35 @@
                     }
                 ],
                 "skill": "Woodcutting"
-            }
+            },
+            "crop": {
+                "grow_time": 1200.0,
+                "mature_age": 3,
+                "death_age": 4,
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": ",",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "|",
+                        "color": [ 100, 65, 23 ]
+                    },
+                    {
+                        "char": 9827,
+                        "color": [ 0, 255, 0 ]
+                    },
+                    {
+                        "char": "Y",
+                        "color": [ 100, 65, 23 ]
+                    }
+                ]
+            },
+            "produce": "Oak Tree"
         },
         {
             "name": "Pine Tree",
@@ -113,22 +154,6 @@
             }
         },
         {
-            "name": "Dead Tree",
-            "visual": {
-                "character": "Y",
-                "color": [ 150, 75, 0 ]
-            },
-            "drop_table": {
-                "drop": [
-                    {
-                        "item": "Wood",
-                        "odds": 1.0
-                    }
-                ],
-                "skill": "Woodcutting"
-            }
-        },
-        {
             "name": "Pine Cone",
             "visual": {
                 "character": "&",
@@ -148,6 +173,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
         },
@@ -249,6 +275,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
         },
@@ -265,6 +292,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Stone Cutter"
             }
         },
@@ -299,6 +327,7 @@
                         "quantity": 2
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -322,6 +351,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -338,6 +368,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -358,6 +389,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -374,6 +406,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -390,6 +423,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -411,6 +445,7 @@
                         "quantity": 2
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
         },
@@ -445,6 +480,7 @@
                         "quantity": 1
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -461,6 +497,7 @@
                         "quantity": 6
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -477,6 +514,7 @@
                         "quantity": 6
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -493,6 +531,7 @@
                         "quantity": 3
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
         },
@@ -514,6 +553,7 @@
                         "quantity": 3
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
         },
@@ -535,6 +575,7 @@
                         "quantity": 4
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
         },
@@ -556,6 +597,7 @@
                         "quantity": 3
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Stone Cutter"
             }
         },
@@ -577,6 +619,7 @@
                         "quantity": 4
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "Stone Cutter"
             }
         },
@@ -622,7 +665,9 @@
                 "skill": "Farming"
             },
             "crop": {
-                "grow_time": 200.0,
+                "grow_time": 500.0,
+                "mature_age": 3,
+                "death_age": 4,
                 "stages": [
                     {
                         "char": ".",
@@ -670,12 +715,18 @@
                     {
                         "item": "Carrot",
                         "odds": 1.0
+                    },
+                    {
+                        "item": "Carrot Seeds",
+                        "odds": 0.1
                     }
                 ],
                 "skill": "Farming"
             },
             "crop": {
-                "grow_time": 2.0,
+                "grow_time": 500.0,
+                "mature_age": 3,
+                "death_age": 4,
                 "stages": [
                     {
                         "char": ".",
@@ -723,12 +774,18 @@
                     {
                         "item": "Potato",
                         "odds": 1.0
+                    },
+                    {
+                        "item": "Potato Seeds",
+                        "odds": 0.1
                     }
                 ],
                 "skill": "Farming"
             },
             "crop": {
-                "grow_time": 2.0,
+                "grow_time": 500.0,
+                "mature_age": 3,
+                "death_age": 4,
                 "stages": [
                     {
                         "char": ",",
@@ -779,6 +836,33 @@
                     }
                 ],
                 "skill": "Woodcutting"
+            },
+            "crop": {
+                "grow_time": 2.0,
+                "mature_age": 3,
+                "death_age": 4,
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": ",",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "|",
+                        "color": [ 147, 196, 125 ]
+                    },
+                    {
+                        "char": 9827,
+                        "color": [ 255, 229, 153 ]
+                    },
+                    {
+                        "char": "Y",
+                        "color": [ 100, 65, 23 ]
+                    }
+                ]
             },
             "produce": "Apple"
         },
@@ -831,7 +915,8 @@
                 "character": "Q",
                 "color": [ 255, 0, 0 ]
             },
-            "nutrition": 52
+            "nutrition": 52,
+            "grows_into": "Apple Tree"
         },
         {
             "name": "Orange",
@@ -873,112 +958,6 @@
             },
             "nutrition": 250
         },
-
-        {
-            "name": "Pistol",
-            "visual": {
-                "character": "⌐",
-                "color": [ 135, 135, 135 ]
-            },
-            "recipe": {
-                "ingredients": [
-                    {
-                        "item": "Raw Iron",
-                        "quantity": 3
-                    }
-                ],
-                "required_bench": "Gun Bench"
-            },
-            "max_ammo": 7,
-            "damage": 10,
-            "range": 10.0,
-            "attack_cooldown": 0.7
-
-        },
-        {
-            "name": "Pepper Gun",
-            "visual": {
-                "character": "-",
-                "color": [ 135, 135, 135 ]
-            },
-            "recipe": {
-                "ingredients": [
-                    {
-                        "item": "Raw Iron",
-                        "quantity": 3
-                    }
-                ],
-                "required_bench": "Gun Bench"
-            },
-            "max_ammo": 5,
-            "damage": 4,
-            "range": 50.0,
-            "attack_cooldown": 1.0
-
-        },
-        {
-            "name": "Assault Rifle",
-            "visual": {
-                "character": "╬",
-                "color": [ 135, 135, 135 ]
-            },
-            "recipe": {
-                "ingredients": [
-                    {
-                        "item": "Raw Iron",
-                        "quantity": 3
-                    }
-                ],
-                "required_bench": "Gun Bench"
-            },
-            "max_ammo": 30,
-            "damage": 7,
-            "range": 20.0,
-            "attack_cooldown": 0.1
-
-        },
-        {
-            "name": "Minigun",
-            "visual": {
-                "character": "M",
-                "color": [ 135, 135, 135 ]
-            },
-            "recipe": {
-                "ingredients": [
-                    {
-                        "item": "Raw Iron",
-                        "quantity": 3
-                    }
-                ],
-                "required_bench": "Gun Bench"
-            },
-            "max_ammo": 200,
-            "damage": 10,
-            "range": 40.0,
-            "attack_cooldown": 0.05
-
-        },
-        {
-            "name": "Sniper",
-            "visual": {
-                "character": "A",
-                "color": [ 135, 135, 135 ]
-            },
-            "recipe": {
-                "ingredients": [
-                    {
-                        "item": "Raw Iron",
-                        "quantity": 3
-                    }
-                ],
-                "required_bench": "Gun Bench"
-            },
-            "max_ammo": 5,
-            "damage": 70,
-            "range": 100.0,
-            "attack_cooldown": 5.0
-
-        },
         {
             "name": "Torch",
             "visual": {
@@ -994,9 +973,132 @@
                         "quantity": 2
                     }
                 ],
+                "craft_time": 1.0,
                 "required_bench": "None"
             }
-        }
+        },
 
+        {
+            "name": "Pistol",
+            "visual": {
+                "character": "⌐",
+                "color": [ 135, 135, 135 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            },
+            "gun": {
+                "max_ammo": 7,
+                "damage": 10,
+                "range": 10.0,
+                "attack_cooldown": 0.7
+            }
+        },
+        {
+            "name": "Pistol Bullet",
+            "visual": {
+                "character": "^",
+                "color": [ 255, 255, 0 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 1
+                    }
+                ],
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            }
+        },
+        {
+            "name": "Pistol Magazine",
+            "visual": {
+                "character": "|",
+                "color": [ 100, 100, 100 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Pistol Bullet",
+                        "quantity": 7
+                    },
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 2
+                    }
+                ],
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            }
+        },
+        {
+            "name": "Assault Rifle",
+            "visual": {
+                "character": 4095,
+                "color": [ 135, 135, 135 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            },
+            "gun": {
+                "max_ammo": 30,
+                "damage": 15,
+                "range": 20.0,
+                "attack_cooldown": 0.1
+            }
+        },
+        {
+            "name": "AR Bullet",
+            "visual": {
+                "character": "i",
+                "color": [ 255, 255, 0 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 1
+                    }
+                ],
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            }
+        },
+        {
+            "name": "AR Magazine",
+            "visual": {
+                "character": "║",
+                "color": [ 100, 100, 100 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "AR Bullet",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 3
+                    }
+                ],
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            }
+        }
     ]
 }
