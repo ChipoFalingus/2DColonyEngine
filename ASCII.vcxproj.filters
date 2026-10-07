@@ -16,6 +16,9 @@
     <Filter Include="Resource Files\Objects">
       <UniqueIdentifier>{6aab908d-0d06-40b7-b4ec-fd650da79ade}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Jobs">
+      <UniqueIdentifier>{663de1d7-c4a5-40f4-b75a-a4b9a2d6e409}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">
@@ -67,6 +70,57 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Villager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Plant.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\BuildFurniture.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\FindFood.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Craft.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\HaulToStockpile.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Retreat.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Attack.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Sleep.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\WarmUp.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Sit.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Nap.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Idle.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Talk.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\PlaceItem.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Build.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\HarvestTile.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\JobUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -200,6 +254,66 @@
     </ClInclude>
     <ClInclude Include="src\GameState.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Inputs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Plant.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\BuildFurniture.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\FindFood.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Craft.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\HaulToStockpile.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Retreat.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Attack.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Sleep.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\WarmUp.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Sit.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Nap.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Idle.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Talk.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\PlaceItem.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Build.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\JobUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Harvest.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\HarvestTile.h">
+      <Filter>Header Files\Jobs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

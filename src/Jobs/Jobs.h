@@ -1,0 +1,21 @@
+#pragma once
+
+#include "Job.h"
+
+#include "Jobs/Attack.h"
+#include "Jobs/Build.h"
+#include "Jobs/BuildFurniture.h"
+#include "Jobs/Craft.h"
+#include "Jobs/FindFood.h"
+#include "Jobs/Harvest.h"
+#include "Jobs/HarvestTile.h"
+#include "Jobs/HaulToStockpile.h"
+#include "Jobs/Idle.h"
+#include "Jobs/Nap.h"
+#include "Jobs/PlaceItem.h"
+#include "Jobs/Plant.h"
+#include "Jobs/Retreat.h"
+#include "Jobs/Sit.h"
+#include "Jobs/Sleep.h"
+#include "Jobs/Talk.h"
+#include "Jobs/Warmup.h"

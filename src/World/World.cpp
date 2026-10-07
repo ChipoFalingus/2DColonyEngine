@@ -123,7 +123,7 @@ void spawnSquad(int x, int y) {
 // Adds creatures to the world
 void World::addCreatures() {
     int range = 3;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 8; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
 

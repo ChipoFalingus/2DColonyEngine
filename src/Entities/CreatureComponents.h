@@ -80,6 +80,10 @@ struct JobComponent {
 	float panicClock = 0.0f;
 	float panicDuration = 0.0f;
 
+	bool willAccept(Job* newJob) {
+		return !currentJob || newJob->priority > currentJob->priority;
+	}
+
 	void proposeJob(Job* newJob) {
 		if (!currentJob) {
 			currentJob = newJob;
@@ -92,9 +96,6 @@ struct JobComponent {
 			currentJob->onInterrupt();
 			currentJob = newJob;
 			currentJob->state = JobState::Active;
-		}
-		else {
-			delete newJob;
 		}
 	}
 

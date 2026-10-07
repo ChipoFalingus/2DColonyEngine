@@ -15,6 +15,7 @@ private:
     
     // wow
     MainMenuUI mainMenuUI;
+	CreditsUI creditsUI;
 	SettingsUI settingsUI;
     WorldSettingsUI worldSettingsUI;
 	LoadingUI loadingUI;
@@ -54,6 +55,7 @@ public:
 
     void initUI() {
         mainMenuUI = getMainMenuFrame();
+		creditsUI = getCreditsFrame();
 		settingsUI = getSettingsFrame();
         worldSettingsUI = getWorldSettingsFrame();
 		loadingUI = getLoadingFrame();
@@ -82,6 +84,10 @@ public:
 
     MainMenuUI& getMainMenuUI() {
         return mainMenuUI;
+    }
+
+    CreditsUI& getCreditsUI() {
+        return creditsUI;
     }
 
     SettingsUI& getSettingsUI() {

@@ -99,6 +99,7 @@ public:
 
     void addObject_Clear(int x, int y, const std::string item);
 	void addObject(int x, int y, const std::string item, bool addToMove = false);
+    void addRandomCropAttributes(int x, int y, const std::string item);
 
 	void removeObject(int x, int y, entt::entity item);
 

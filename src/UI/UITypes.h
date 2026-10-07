@@ -2,6 +2,7 @@
 
 enum class UI {
     Main,
+    Credits,
     Settings,
     WorldSettings,
     Loading,

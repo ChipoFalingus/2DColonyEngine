@@ -87,6 +87,15 @@ struct Crop {
 	CropState state = CropState::SPROUT;
 };
 
+struct FirePitSlot {
+	int x, y;
+	entt::entity entity;
+};
+
+struct FirePitComponent {
+	std::vector<FirePitSlot> slots;
+};
+
 struct HeatEmitter {
 	float heat_intensity;
 	bool addedToHeatMap = false;

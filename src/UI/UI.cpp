@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "Jobs/JobType.h"
 #include "Jobs/Job.h"
+#include "Jobs/Jobs.h"
 
 #include <thread>
 #include <GLFW/glfw3.h>
@@ -60,10 +61,28 @@ MainMenuUI getMainMenuFrame() {
 
     ui.exit = &createButton(*frame, 0, 9, L"             Exit             ", Anchor::CENTER);
 
-	ui.backers = &createButton(*frame, 0, 0, L" Backers ", Anchor::BOTTOM_RIGHT);
+	ui.backers = &createButton(*frame, 0, 0, L" Credits/Backers ", Anchor::BOTTOM_RIGHT);
 
-	ui.text = &frame->addElement<Text>(0, 0, L"Created by Fling's Studio", Anchor::BOTTOM_LEFT);
+    ui.backers->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.swapFrame(UI::Main, UI::Credits);
+        });
 
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
+CreditsUI getCreditsFrame() {
+    CreditsUI ui;
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+    ui.text = &frame->addElement<Text>(0, 1, L"Credits/Backers", Anchor::TOP_CENTER);
+	ui.fling = &frame->addElement<Text>(0, -12, L"Created by Fling Games", Anchor::CENTER);
+    ui.back = &createButton(*frame, 0, 0, L" < Back ", Anchor::TOP_LEFT);
+    ui.back->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.swapFrame(UI::Credits, UI::Main);
+        });
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }

@@ -19,6 +19,7 @@
 #include "Render/Shader.h"
 #include "Utility/Light.h"
 #include "Utility/Clock.h"
+#include "Jobs/Jobs.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -548,7 +549,7 @@ int main() {
 
                     Job* job = new HaulToStockpile(entt::null, entt::null, SkillType::None, entity, pos.x, pos.y, stockpilePos.first, stockpilePos.second);
 
-                    job->priority = 10;
+                    job->priority = 25;
                     JobManager::addJob(job);
                 }
             }

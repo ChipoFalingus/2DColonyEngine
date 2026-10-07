@@ -7,6 +7,7 @@
 #include "Entities/ItemComponents.h"
 #include "Entities/CreatureComponents.h"
 #include "Entities/Squad.h"
+#include "Jobs/Jobs.h"
 
 double lastTime = glfwGetTime();
 int nbFrames = 0;
@@ -86,45 +87,6 @@ void processInput(GLFWwindow* window) {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS) {
         gameState.placingState.placing = false;
         setMode(Mode::NONE);
-
-        auto& registry = mainWorld.registry;
-        entt::entity squadEntity = registry.create();
-        auto& controller = registry.emplace<SquadController>(squadEntity);
-
-        controller.groupTargetPos = { gameState.inputState.mouseTileX, gameState.inputState.mouseTileY };
-        controller.state = SquadState::IDLE;
-
-        int attemptCount = 0;
-        int maxAttempts = 100;
-        for (int i = 0; i < 1; i++) {
-            int spawnX = getRandomInt(gameState.inputState.mouseTileX - 10, gameState.inputState.mouseTileX + 10);
-            int spawnY = getRandomInt(gameState.inputState.mouseTileY - 10, gameState.inputState.mouseTileY + 10);
-
-            if (!getTileRef(spawnX, spawnY).walkable) {
-                attemptCount++;
-                if (attemptCount >= maxAttempts) break;
-                i--;
-                continue;
-            }
-
-            entt::entity member = registry.create();
-
-            registry.emplace<Position>(member, spawnX, spawnY);
-            registry.emplace<Renderable>(member, L'Z', glm::vec3(1.0f, 1.0f, 1.0f));
-
-            registry.emplace<Movable>(member);
-
-            registry.emplace<SquadMemberComponent>(member, squadEntity);
-
-            registry.emplace<Name>(member, "Zombie");
-            registry.emplace<Hostile>(member);
-            registry.emplace<Health>(member, 40);
-
-            registry.emplace<Zombie>(member);
-            mainWorld.objectManager.addObject(spawnX, spawnY, member);
-
-            controller.members.push_back(member);
-        }
     }
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS) {
@@ -133,18 +95,9 @@ void processInput(GLFWwindow* window) {
 
         if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
             getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
-                addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Stone Door");
+                addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Fire Pit");
 
-            mainWorld.getRoomManager().findRoom(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
-            const std::pair<int, int> dirs[4] = {
-                {0, 1}, {1, 0}, {-1, 0}, {0, -1}
-            };
-
-            for (auto& dir : dirs) {
-                int nx = gameState.inputState.mouseTileX + dir.first;
-                int ny = gameState.inputState.mouseTileY + dir.second;
-                mainWorld.getRoomManager().findRoom(nx, ny);
-            }
+            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).setAnimType(FIRE);
         }
     }
 

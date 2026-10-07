@@ -7,6 +7,7 @@
 #include "Utility/ItemUtils.h"
 #include "World/World.h"
 #include "Utility/CreatureUtils.h"
+#include "Jobs/Jobs.h"
 
 std::vector<std::string> names = {
 	"Wyatt",
@@ -205,8 +206,8 @@ entt::entity spawnVillager(int x, int y) {
 	registry.emplace<Movable>(entity, moveSpeed, moveSpeed, clock, initTargetX, initTargetY, false);
 	registry.emplace<Health>(entity, 100);
 	registry.emplace<HungerNeed>(entity, 100);
-	registry.emplace<TiredNeed>(entity, 0);
-	registry.emplace<TemperatureNeed>(entity, getRandomFloat(60.0f, 80.0f));
+	registry.emplace<TiredNeed>(entity, 40);
+	registry.emplace<TemperatureNeed>(entity, getRandomFloat(70.0f, 80.0f));
 
 	registry.emplace<JobComponent>(entity, nullptr);
 	registry.emplace<CombatComponent>(entity);
@@ -227,7 +228,7 @@ entt::entity spawnVillager(int x, int y) {
 			villagerSkills.setSkillLevel(skillList[i], getRandomInt(10, 13));
 		}
 		else {
-			villagerSkills.setSkillLevel(skillList[i], getRandomInt(10, 13));
+			villagerSkills.setSkillLevel(skillList[i], getRandomInt(1, 3));
 		}
 	}
 
@@ -254,7 +255,7 @@ void VillagerSystem(float deltaTime) {
 	}
 
 	updateHunger();
-	updateTiredness();
+	//updateTiredness();
 	updateWork();
 	updateAttack();
 	//updateSocialNeeds();
@@ -457,18 +458,6 @@ void updateSocialNeeds() {
 	}
 }
 
-void updateTempComfort() {
-
-	auto& registry = mainWorld.registry;
-	auto view = registry.view<JobComponent, Position, TemperatureNeed>();
-	for (auto [entity, work, pos, temp] : view.each()) {
-
-		auto currTemp = mainWorld.getTemperatureMapIndex(pos.x, pos.y);
-
-		temp.temp_comfort = bellCurve(currTemp, temp.preferredTemp, 8);
-	}
-}
-
 void updateWork() {
 
 	auto& registry = mainWorld.registry;
@@ -593,7 +582,7 @@ void chooseIdle(entt::entity entity) {
 	// -----------------------
 	//      Take A Nap Job
 	// -----------------------
-	if (tiredness.tiredness > 50) {
+	if (tiredness.tiredness > 80) {
 		Job* job = new Nap(entity, entt::null, SkillType::None);
 
 		// could also factor in a low social need
@@ -606,17 +595,15 @@ void chooseIdle(entt::entity entity) {
 	// ------------------------------------
 	//     Go To Better Temperature Job
 	// ------------------------------------
-	if (tempNeed.temp_comfort < 0.2f) {
+	if (float j = bellCurve(mainWorld.getTemperatureMapIndex(pos.x, pos.y), tempNeed.preferredTemp, 8) < 0.2f) {
+		Job* job = new WarmUp(entity, entt::null, SkillType::None);
 
-		auto location = findBestTemperatureTile(pos.x, pos.y, 25, tempNeed.preferredTemp);
-		if (float j = bellCurve(mainWorld.getTemperatureMapIndex(location.first, location.second), tempNeed.preferredTemp, 8) > tempNeed.temp_comfort) {
-			/*Job* job = new WarmUp(entity, entt::null, SkillType::None);
+		float score = 20 / (j + 0.01f) + (tiredness.tiredness / 10);
+		job->priority = score;
 
-			float score = 10 / (tempNeed.temp_comfort + 0.01f) + (tiredness.tiredness / 10);
-			job->priority = score;
+		//std::cout << "Temperature need score: " << score << std::endl;
 
-			jobs.push_back({ job, score });*/
-		}
+		jobs.push_back({ job, score });
 	}
 
 

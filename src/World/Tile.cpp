@@ -203,6 +203,30 @@ void Tile::addObject(int x, int y, const std::string item, bool addToMove) {
 	}
 }
 
+void Tile::addRandomCropAttributes(int x, int y, const std::string item) {
+    auto i = ObjectRegistry::getInstance().createInstance(item, mainWorld.registry);
+    mainWorld.registry.emplace<Position>(i, x, y);
+    mainWorld.objectManager.addObject(x, y, i);
+    if (auto* j = mainWorld.registry.try_get<Crop>(i)) {
+		auto& renderable = mainWorld.registry.get<Renderable>(i);
+
+		j->growthStage = getRandomInt(0, j->growthStageMax);
+		renderable.character = j->growthStages[j->growthStage].character;
+		renderable.color = j->growthStages[j->growthStage].color;
+
+        if (j->growthStage == j->mature_stage) {
+			j->state = CropState::MATURED;
+            mainWorld.registry.emplace<Matured>(i);
+        }
+        else if (j->growthStage == j->death_age) {
+			j->state = CropState::DEAD;
+        }
+        else {
+			j->state = CropState::SPROUT;
+        }
+    }
+}
+
 void Tile::removeObject(int x, int y, entt::entity item) {
     mainWorld.objectManager.removeItem(x, y, item);
     mainWorld.registry.destroy(item);
@@ -242,7 +266,7 @@ void Tile::getTile(int x, int y) {
         if (oakNoise > 0.3f || spruceNoise > 0.3f) {
             if (oakNoise > 0.3f) {
                 if (r < 0.1f) {
-                    addObject_Clear(x, y, "Oak Tree");
+                    addRandomCropAttributes(x, y, "Oak Tree");
                 }
             }
             if (spruceNoise > 0.3f) {

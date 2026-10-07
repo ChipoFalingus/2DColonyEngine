@@ -33,11 +33,13 @@
                         "quantity": 4
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             },
             "heat_intensity": 50.0,
-            "light_intensity": 1.0
+            "light_intensity": 1.0,
+            "fire_pit": true
         },
         {
             "name": "Scrap Metal",
@@ -63,15 +65,15 @@
                 "drop": [
                     {
                         "item": "Wheat Seeds",
-                        "odds": 1.1
+                        "odds": 0.1
                     },
                     {
                         "item": "Potato Seeds",
-                        "odds": 1.1
+                        "odds": 0.1
                     },
                     {
                         "item": "Carrot Seeds",
-                        "odds": 1.1
+                        "odds": 0.1
                     }
                 ],
                 "skill": "Farming"
@@ -173,6 +175,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
@@ -275,6 +278,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
@@ -292,6 +296,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Stone Cutter"
             }
@@ -327,6 +332,7 @@
                         "quantity": 2
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -351,6 +357,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -368,6 +375,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -389,6 +397,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -406,6 +415,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -423,6 +433,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -445,6 +456,7 @@
                         "quantity": 2
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
@@ -480,6 +492,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -497,6 +510,7 @@
                         "quantity": 6
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -514,6 +528,7 @@
                         "quantity": 6
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -531,6 +546,7 @@
                         "quantity": 3
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -553,6 +569,7 @@
                         "quantity": 3
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
@@ -575,6 +592,7 @@
                         "quantity": 4
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
@@ -597,6 +615,7 @@
                         "quantity": 3
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Stone Cutter"
             }
@@ -619,6 +638,7 @@
                         "quantity": 4
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Stone Cutter"
             }
@@ -973,6 +993,7 @@
                         "quantity": 2
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "None"
             }
@@ -991,6 +1012,7 @@
                         "quantity": 3
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
             },
@@ -1014,6 +1036,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
             }
@@ -1035,6 +1058,7 @@
                         "quantity": 2
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
             }
@@ -1052,6 +1076,7 @@
                         "quantity": 3
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
             },
@@ -1065,8 +1090,8 @@
         {
             "name": "AR Bullet",
             "visual": {
-                "character": "i",
-                "color": [ 255, 255, 0 ]
+                "character": 4094,
+                "color": [ 181, 166, 66 ]
             },
             "recipe": {
                 "ingredients": [
@@ -1075,6 +1100,7 @@
                         "quantity": 1
                     }
                 ],
+                "quantity": 5,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
             }
@@ -1096,6 +1122,7 @@
                         "quantity": 3
                     }
                 ],
+                "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
             }

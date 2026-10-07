@@ -169,8 +169,9 @@ public:
 
 				std::string bench = data.at("required_bench").get<std::string>();
 				float craftTime = data.at("craft_time").get<float>();
+				int quantity = data.at("quantity").get<int>();
 
-				targetWorldRegistry.emplace<Craftable>(newEntity, ingredients, bench, craftTime);
+				targetWorldRegistry.emplace<Craftable>(newEntity, ingredients, bench, craftTime, quantity);
 			}
 
 			if (name == "nutrition") {
@@ -201,6 +202,22 @@ public:
 			if (name == "heat_intensity") {
 				float heatIntensity = data.get<float>();
 				targetWorldRegistry.emplace<HeatEmitter>(newEntity, heatIntensity);
+			}
+
+			if (name == "fire_pit") {
+				const std::vector<std::pair<int, int>> directions = { {2, -2}, {2, 2}, {-2, -2}, {-2, 2},
+					{3, 0}, {-3, 0}, {0, 3}, {0, -3} };
+
+				std::vector<FirePitSlot> slots;
+				for (int i = 0; i < directions.size(); i++) {
+					FirePitSlot slot;
+					slot.x = directions[i].first;
+					slot.y = directions[i].second;
+					slot.entity = entt::null;
+					slots.push_back(slot);
+				}
+
+				targetWorldRegistry.emplace<FirePitComponent>(newEntity, slots);
 			}
 
 			if (name == "light_intensity") {

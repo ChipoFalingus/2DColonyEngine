@@ -21,6 +21,17 @@ struct MainMenuUI {
 
 MainMenuUI getMainMenuFrame();
 
+struct CreditsUI {
+    UI type = UI::Credits;
+    Text* text;
+	Text* fling;
+	Text* backers;
+    Text* list;
+    Button* back;
+};
+
+CreditsUI getCreditsFrame();
+
 struct SettingsUI {
     UI type = UI::Settings;
 
