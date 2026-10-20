@@ -348,13 +348,100 @@ InGameUI getInGameFrame() {
     return ui;
 }
 
+void InGameUI::update(std::string fps) {
+    GameState& gameState = Game::getInstance().gameState;
+
+    std::string dayStr = "Day: " + std::to_string(mainWorld.dayCycle.getDayNumber()) + "|" + timePeriodToString(mainWorld.dayCycle.getTimePeriod());
+    day->changeText(std::wstring(dayStr.begin(), dayStr.end()));
+
+    //ui.playerPos->changeText(L"Player Position: (" + std::to_wstring(xPlayer) + L"," + std::to_wstring(yPlayer) + L")");
+    playerPos->changeText(L"Mouse Position: (" + std::to_wstring(gameState.inputState.mouseTileX) + L"," + std::to_wstring(gameState.inputState.mouseTileY) + L")");
+
+    FPS->changeText(std::wstring(fps.begin(), fps.end()));
+
+    int uiX = gameState.inputState.mouseTileX - (gameState.cameraState.xPlayer - gameState.cameraState.xFrustum / 2);
+    int uiY = gameState.inputState.mouseTileY - (gameState.cameraState.yPlayer - gameState.cameraState.yFrustum / 2);
+
+    if (gameState.placingState.placing && (mainWorld.placementMode == PlacementMode::SQUARE || mainWorld.placementMode == PlacementMode::FILLED_SQUARE)) {
+        std::string xStr = std::to_string(std::abs(gameState.placingState.corner.first - gameState.inputState.mouseTileX) + 1);
+        std::string yStr = std::to_string(std::abs(gameState.placingState.corner.second - gameState.inputState.mouseTileY) + 1);
+        std::string dim = xStr + "x" + yStr;
+
+        placingDims->changeText(std::wstring(dim.begin(), dim.end()));
+        placingDims->setPosition(uiX - (dim.size() >> 1), uiY - 1);
+        placingDims->setAnchorPosition(gameState.cameraState.xFrustum, gameState.cameraState.yFrustum);
+    }
+    else {
+        placingDims->changeText(L"");
+    }
+
+
+    if (mainWorld.isRendered()) {
+        Tile& tile = getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+        std::string itemStr = "";
+
+        auto& list = mainWorld.objectManager.getObjectsAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+        auto& registry = mainWorld.registry;
+
+        for (entt::entity e : list) {
+
+            if (registry.valid(e) && registry.all_of<Name>(e)) {
+                itemStr += registry.get<Name>(e).name + " (ObjectManager) ";
+                if (auto c = registry.try_get<Claimable>(e)) {
+                    itemStr += std::to_string(c->claimed);
+                }
+
+                if (auto c = registry.try_get<Crop>(e)) {
+                    if (c->state == CropState::SPROUT) {
+                        itemStr += " Sprouting";
+                    }
+                    else if (c->state == CropState::MATURED) {
+                        itemStr += " Matured";
+                    }
+                    else {
+                        itemStr += " Dead";
+                    }
+                }
+                itemStr += "|";
+            }
+        }
+
+        if (gameState.debugState.objectLocationView) {
+            auto view = mainWorld.registry.view<Name, Position>();
+
+            for (auto [entity, name, position] : view.each()) {
+                if (position.x == gameState.inputState.mouseTileX && position.y == gameState.inputState.mouseTileY) {
+                    itemStr += name.name + " (Registry)|";
+                }
+            }
+        }
+
+        tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
+        std::string type = typeToString(tile.type);
+        if (auto room = mainWorld.getRoomManager().getRoomAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+            type += " (Room" + std::to_string(room->ID) + ")";
+        }
+        if (gameState.debugState.showTemp) {
+            type += " " + std::to_string(mainWorld.getTemperatureMapIndex(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) + "F";
+        }
+        if (gameState.debugState.showLightLevel) {
+            type += " " + std::to_string(mainWorld.getLightManager().getLightMapIndex(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY));
+        }
+        tileType->changeText(std::wstring(type.begin(), type.end()));
+
+        std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).altitude));
+
+        waterLevel->changeText(lightLevel);
+    }
+}
+
 MiniMapUI getMiniMapFrame() {
     MiniMapUI ui;
     auto frame = std::make_unique<Frame>();
 
     frame->setType(ui.type);
     ui.text = &frame->addElement<Text>(0, 0, L"Mini Map Mode", Anchor::TOP_LEFT);
-    ui.seed = &frame->addElement<Text>(0, 1, L"Seed: " + std::to_wstring(seed), Anchor::TOP_LEFT);
+    ui.seed = &frame->addElement<Text>(0, 1, L"Seed: " + std::to_wstring(mainWorld.getSeed()), Anchor::TOP_LEFT);
 
     //int chunkX = x / chunkDim;
     //int chunkY = y / chunkDim;
@@ -857,7 +944,7 @@ GunBenchUI getGunBenchFrame() {
 
 
         button->setClickFunction([name] {
-            Job* job = new Craft(entt::null, entt::null, SkillType::Masonry, name.name);
+            Job* job = new Craft(entt::null, entt::null, SkillType::Gunsmithing, name.name);
             job->priority = 25;
             JobManager::addJob(job);
             });
@@ -900,6 +987,76 @@ GunBenchUI getGunBenchFrame() {
     return ui;
 }
 
+FurnaceUI getFurnaceFrame() {
+    FurnaceUI ui;
+
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+
+    ui.panel = &frame->addElement<Panel>(10, 10, 30, 5, Anchor::TOP_LEFT);
+
+    ui.text = &ui.panel->addElement<Text>(1, 1, L"Select something to cook:", Anchor::TOP_LEFT);
+    ui.ingredients = &ui.panel->addElement<Text>(17, 5, L"", Anchor::TOP_LEFT);
+
+    int num = 0;
+
+    auto& registry = ObjectRegistry::getInstance().getStaticRegistry();
+    auto view = registry.view<Craftable>();
+
+    for (auto i : view) {
+        auto& name = registry.get<Name>(i);
+        const auto& recipe = view.get<Craftable>(i);
+
+        if (recipe.benchRequired != "Furnace") continue;
+
+        auto button = &createButton(*frame,
+            ui.panel->getXOffset() + 1, ui.panel->getXOffset() + num * 3 + 2,
+            std::wstring(name.name.begin(), name.name.end()), Anchor::TOP_LEFT);
+
+
+        button->setClickFunction([name] {
+            Job* job = new AddToFurnace(entt::null, entt::null, SkillType::Blacksmithing, name.name);
+            job->priority = 25;
+            JobManager::addJob(job);
+            });
+
+        button->setHoverFunction([ui, recipe, name] {
+            std::string infoStr = "Ingredients:|";
+            for (auto& j : recipe.ingredients) {
+                std::string ingredientStr = j.first + ": x" + std::to_string(j.second);
+                infoStr += ingredientStr + "|";
+
+            }
+            infoStr += "|";
+            infoStr += "Produces:|";
+            infoStr += "x" + std::to_string(recipe.quantity) + " " + name.name;
+            ui.ingredients->changeText(std::wstring(infoStr.begin(), infoStr.end()));
+            });
+
+        GameState& gameState = Game::getInstance().gameState;
+
+        int xFrustum = gameState.cameraState.xFrustum;
+        int yFrustum = gameState.cameraState.yFrustum;
+
+        button->setAnchorPosition(xFrustum, yFrustum);
+
+        ui.craftable_items.push_back(button);
+        num++;
+    }
+
+    ui.closeButton = &createButton(*frame, ui.panel->getXOffset() + 31, ui.panel->getXOffset() + 1, L"X", Anchor::TOP_LEFT);
+
+
+    ui.closeButton->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+        uiManager.remove(UI::Furnace);
+        });
+
+    ui.panel->setSize(35, std::max(num * 3 + 3, 5));
+
+    Game::getInstance().getUIManager().addFrame(std::move(frame), UI::Furnace);
+    return ui;
+}
 
 StockpileUI getStockpileFrame() {
     StockpileUI ui;
@@ -953,8 +1110,49 @@ VillagerInfoUI getVillagerInfoFrame() {
 
     ui.log = &ui.infoPanel->addElement<Text>(20, 1, L"", Anchor::TOP_LEFT);
 
+    //ui.equipmentButton = &createButton(*frame, 10, 10, L" Unequip ", Anchor::TOP_LEFT);
+
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
+}
+
+void VillagerInfoUI::update(entt::entity entity) {
+    if (entity == entt::null) return;
+
+    auto& registry = mainWorld.registry;
+    if (!registry.valid(entity)) return;
+
+    auto name = registry.try_get<Name>(entity);
+    std::string str = name ? name->name : "Unknown";
+    text->changeText(std::wstring(str.begin(), str.end()));
+
+
+    auto skill = registry.try_get<Skills>(entity);
+
+    std::string skillString = "Skills:|";
+    if (skill) {
+        for (auto& s : skill->skills) {
+            skillString += skillTypeToString(s.first) + ": " + std::to_string(s.second) + "|";
+        }
+    }
+
+    skills->changeText(std::wstring(skillString.begin(), skillString.end()));
+
+    std::string activity = std::to_string(registry.get<HungerNeed>(entity).hunger);
+    hunger->changeText(std::wstring(activity.begin(), activity.end()));
+
+    /*equipmentButton->setClickFunction([&]() {
+        auto* equipment = registry.try_get<Equipment>(entity);
+        if (!equipment || !registry.valid(equipment->item)) return;
+
+        entt::entity itemEntity = equipment->item;
+        equipment->item = entt::null;
+
+        auto& pos = registry.get<Position>(entity);
+        registry.emplace_or_replace<Position>(itemEntity, pos.x, pos.y);
+
+        registry.emplace_or_replace<NeedsMoving>(equipment->item);
+        });*/
 }
 
 HarvestUI getHarvestFrame() {
@@ -1030,6 +1228,7 @@ void PlantUI::configurePlantFrame() {
         button->setClickFunction([name] {
 			setMode(Mode::PLANT);
 			Game::getInstance().selectedPlantItem = name;
+            Game::getInstance().getUIManager().remove(UI::Plant);
             });
 
 		button->setAnchorPosition(xFrustum, yFrustum);

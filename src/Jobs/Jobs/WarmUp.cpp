@@ -56,23 +56,24 @@ void WarmUp::update() {
 
 	clock += Clock::deltaTime;
 
-	if (clock > 30.0f) {
-		/*priority--;
+	if (clock > 3.0f) {
+		clock = 0.0f;
+		priority--;
+
+		std::cout << priority << std::endl;
 
 		if (priority <= 0) {
-			state = JobState::Completed;
-			return;
-		}*/
-		if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(location->item)) {
-			for (auto& slot : slots->slots) {
-				if (slot.entity == villager) {
-					slot.entity = entt::null;
-					break;
+			if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(location->item)) {
+				for (auto& slot : slots->slots) {
+					if (slot.entity == villager) {
+						slot.entity = entt::null;
+						break;
+					}
 				}
 			}
+			state = JobState::Completed;
+			return;
 		}
-		state = JobState::Completed;
-		return;
 	}
 }
 

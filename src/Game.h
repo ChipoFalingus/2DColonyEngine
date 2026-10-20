@@ -31,6 +31,7 @@ private:
 	StoneCutterUI stoneCutterUI;
 	AnvilUI anvilUI;
 	GunBenchUI gunBenchUI;
+    FurnaceUI furnaceUI;
     StockpileUI stockpileUI;
     VillagerInfoUI villagerInfoUI;
 	HarvestUI harvestUI;
@@ -71,6 +72,7 @@ public:
 		stoneCutterUI = getStoneCutterFrame();
         anvilUI = getAnvilFrame();
         gunBenchUI = getGunBenchFrame();
+        furnaceUI = getFurnaceFrame();
         stockpileUI = getStockpileFrame();
         villagerInfoUI = getVillagerInfoFrame();
         infoUI = getInfoFrame();
@@ -148,6 +150,10 @@ public:
 
     GunBenchUI& getGunBenchUI() {
         return gunBenchUI;
+    }
+
+    FurnaceUI& getFurnaceUI() {
+        return furnaceUI;
     }
 
     StockpileUI& getStockpileUI() {

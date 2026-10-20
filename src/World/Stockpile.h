@@ -50,6 +50,7 @@ public:
     entt::entity retrieveItem(int x, int y);
 
     std::optional<std::pair<int, int>> findOpenSpot();
+    std::optional<std::pair<int, int>> findClosestOpenSpot(int x, int y);
     std::optional<std::pair<int, int>> findItemLocation(const std::string& name);
 	std::optional<std::pair<int, int>> findUnclaimedItemLocation(const std::string& name);
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "Jobs/Job.h"
 
 class Attack : public Job {

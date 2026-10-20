@@ -121,7 +121,10 @@
                     }
                 ]
             },
-            "produce": "Oak Tree"
+            "produce": {
+                "name": "Oak Tree",
+                "produce_time": 1000.0
+            }
         },
         {
             "name": "Pine Tree",
@@ -306,6 +309,17 @@
             "visual": {
                 "character": "I",
                 "color": [ 203, 205, 205 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron",
+                        "quantity": 1
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 1.0,
+                "required_bench": "Furnace"
             }
         },
         {
@@ -464,20 +478,21 @@
         {
             "name": "Furnace",
             "visual": {
-                "character": "O",
+                "character": "#",
                 "color": [ 128, 128, 128 ]
             },
-            "heat_intensity": 10.0,
-            "light_intensity": 0.7
-        },
-        {
-            "name": "Oven",
-            "visual": {
-                "character": "H",
-                "color": [ 128, 128, 128 ]
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Rock Chunk",
+                        "quantity": 6
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 15.0,
+                "required_bench": "None"
             },
-            "heat_intensity": 10.0,
-            "light_intensity": 0.5
+            "furnace": true
         },
         {
             "name": "Carpentry Bench",
@@ -845,8 +860,8 @@
         {
             "name": "Apple Tree",
             "visual": {
-                "character": 9827,
-                "color": [ 0, 255, 0 ]
+                "character": ".",
+                "color": [ 56, 118, 29 ]
             },
             "drop_table": {
                 "drop": [
@@ -858,7 +873,7 @@
                 "skill": "Woodcutting"
             },
             "crop": {
-                "grow_time": 2.0,
+                "grow_time": 1200.0,
                 "mature_age": 3,
                 "death_age": 4,
                 "stages": [
@@ -884,7 +899,10 @@
                     }
                 ]
             },
-            "produce": "Apple"
+            "produce": {
+                "name": "Apple",
+                "produce_time": 20.0
+            }
         },
         {
             "name": "Orange Tree",
@@ -901,7 +919,10 @@
                 ],
                 "skill": "Woodcutting"
             },
-            "produce": "Orange"
+            "produce": {
+                "name": "Orange",
+                "produce_time": 20.0
+            }
         },
         {
             "name": "Lemon Tree",
@@ -918,7 +939,10 @@
                 ],
                 "skill": "Woodcutting"
             },
-            "produce": "Lemon"
+            "produce": {
+                "name": "Lemon",
+                "produce_time": 20.0
+            }
         },
         {
             "name": "Berry Bush",
@@ -926,7 +950,10 @@
                 "character": "&",
                 "color": [ 0, 255, 0 ]
             },
-            "produce": "Berry"
+            "produce": {
+                "name": "Berry",
+                "produce_time": 20.0
+            }
         },
 
         {
@@ -935,7 +962,7 @@
                 "character": "Q",
                 "color": [ 255, 0, 0 ]
             },
-            "nutrition": 52,
+            "nutrition": 20,
             "grows_into": "Apple Tree"
         },
         {
@@ -944,7 +971,7 @@
                 "character": "O",
                 "color": [ 250, 112, 0 ]
             },
-            "nutrition": 52
+            "nutrition": 20
         },
         {
             "name": "Lemon",
@@ -952,7 +979,7 @@
                 "character": "0",
                 "color": [ 250, 250, 0 ]
             },
-            "nutrition": 52
+            "nutrition": 20
         },
         {
             "name": "Berry",
@@ -968,7 +995,18 @@
                 "character": "8",
                 "color": [ 210, 180, 140 ]
             },
-            "nutrition": 265
+            "nutrition": 30,
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Bundled Wheat",
+                        "quantity": 2
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 1.0,
+                "required_bench": "Furnace"
+            }
         },
         {
             "name": "Meat",
@@ -1013,7 +1051,7 @@
                     }
                 ],
                 "quantity": 1,
-                "craft_time": 1.0,
+                "craft_time": 35.0,
                 "required_bench": "Gun Bench"
             },
             "gun": {
@@ -1072,12 +1110,12 @@
             "recipe": {
                 "ingredients": [
                     {
-                        "item": "Raw Iron",
+                        "item": "Rock Chunk",
                         "quantity": 3
                     }
                 ],
                 "quantity": 1,
-                "craft_time": 1.0,
+                "craft_time": 45.0,
                 "required_bench": "Gun Bench"
             },
             "gun": {

@@ -14,6 +14,10 @@ struct Settings {
 	bool v_sync = false;
 	bool show_fps = false;
 
+	// fun settings
+	bool invert_colors = false;
+	bool disco_mode = false;
+
 };
 
 class SettingsManager {

@@ -18,6 +18,7 @@ enum class UI {
     StoneCutter,
     Anvil,
     Gun,
+    Furnace,
     Stockpile,
     Villager,
     Harvest,

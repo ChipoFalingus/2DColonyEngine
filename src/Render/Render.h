@@ -485,6 +485,18 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                 }
             }
 
+            if (Game::getInstance().getSettingsManager().get().invert_colors) {
+                color = 1.0f - color;
+            }
+
+            if (Game::getInstance().getSettingsManager().get().disco_mode) {
+                color = glm::vec3(
+                    getRandomFloat(0.0f, 1.0f),
+                    getRandomFloat(0.0f, 1.0f),
+                    getRandomFloat(0.0f, 1.0f)
+                   );
+            }
+
             color *= world.getLightManager().getLightMapIndex(x, y);
 
             if (string != L'\0') {

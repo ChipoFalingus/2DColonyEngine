@@ -63,7 +63,7 @@ void LightManager::removeLight(int x, int y) {
     }
 }
 
-void LightManager::BFSLight() {
+void LightManager::BFSLight(entt::registry& registry) {
 
     int dim = calculateMapSize();
     int size = dim * 2 + 1;
@@ -87,8 +87,8 @@ void LightManager::BFSLight() {
     }
 
     const int dirs[8][2] = {
-    {1,0}, {-1,0}, {0,1}, {0,-1},
-    {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
+        {1,0}, {-1,0}, {0,1}, {0,-1},
+        {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
     };
 
     while (!q.empty()) {

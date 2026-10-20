@@ -40,7 +40,7 @@ void Plant::update() {
 		tillClock += Clock::deltaTime;
 
 		int skill = mainWorld.registry.try_get<Skills>(villager)->getSkillLevel(type);
-		if (tillClock > 20.0f * (10.0f / (skill + 3))) {
+		if (tillClock > 15.0f * (10.0f / (skill + 3))) {
 			tile.changeTileType(tileType::SOIL);
 			plantState = Plant::Planting;
 		}
@@ -52,7 +52,7 @@ void Plant::update() {
 		plantClock += Clock::deltaTime;
 
 		int skill = mainWorld.registry.try_get<Skills>(villager)->getSkillLevel(type);
-		if (plantClock > 30.0f * (10.0f / (skill + 3))) {
+		if (plantClock > 10.0f * (10.0f / (skill + 3))) {
 			removeBlueprint(locX, locY);
 
 			auto produce = ObjectRegistry::getInstance().getStaticComponent<Seed>(seed);

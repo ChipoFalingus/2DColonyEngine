@@ -69,9 +69,11 @@ void Attack::update() {
 		if (attackClock > attackCooldown) {
 			attackClock -= attackCooldown;
 
-			if (auto* gun = mainWorld.registry.try_get<Gun>(equipment->item)) {
-				if (gun->canFire()) {
-					gun->shoot();
+			if (equipment) {
+				if (auto* gun = mainWorld.registry.try_get<Gun>(equipment->item)) {
+					if (gun->canFire()) {
+						gun->shoot();
+					}
 				}
 			}
 

@@ -8,6 +8,7 @@
 #include <limits>
 #include "World/World.h"
 #include "Utility/ItemUtils.h"
+#include "Jobs/JobUtils.h"
 
 std::vector<Job*> JobManager::JobList;
 
@@ -41,7 +42,7 @@ void JobManager::assignJobs() {
 			score -= skills.getSkillLevel(job->type) * 10;
 			//score += v->tiredness * 5;
 
-			if (job_component.currentJob) score += 10;
+			if (job_component.currentJob) score += 25;
 
 			bids.push_back({ job, entity, score });
 		}
@@ -73,11 +74,10 @@ void JobManager::assignJobs() {
 }
 
 void JobManager::update() {
-	for (Job* job : JobList) {
-		if (!job) continue;
-		if (job->state == JobState::Dangerous) {
-			evaluateJobDanger(job);
-		}
+	searchDangerClock += Clock::deltaTime;
+	if (searchDangerClock > 1.0f) {
+		searchDangerClock = 0.0f;
+		//evaluateJobDanger();
 	}
 
 	assignJobs();

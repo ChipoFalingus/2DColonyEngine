@@ -110,6 +110,8 @@ struct InGameUI {
         plantButton->setAnchorPosition(screenW, screenH);
         stockpileButton->setAnchorPosition(screenW, screenH);
 	}
+
+    void update(std::string fps);
 };
 
 InGameUI getInGameFrame();
@@ -245,6 +247,17 @@ struct GunBenchUI {
 
 GunBenchUI getGunBenchFrame();
 
+struct FurnaceUI {
+    UI type = UI::Furnace;
+    Text* text;
+    Text* ingredients;
+    Panel* panel;
+    std::vector<Button*> craftable_items;
+    Button* closeButton;
+};
+
+FurnaceUI getFurnaceFrame();
+
 struct StockpileUI {
     UI type = UI::Stockpile;
     Panel* infoPanel;
@@ -275,6 +288,10 @@ struct VillagerInfoUI {
 
     Text* skills;
     Text* log;
+
+    Button* equipmentButton;
+
+    void update(entt::entity entity);
 };
 
 VillagerInfoUI getVillagerInfoFrame();

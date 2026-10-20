@@ -146,32 +146,23 @@ void removeBlueprint(int x, int y) {
 	}
 }
 
-void evaluateJobDanger(Job* job) {
-	if (!job) return;
+void evaluateJobDanger() {
 
-	auto closestThreat = findClosestItemType(job->x, job->y, 24, [&](entt::entity entity, entt::registry& reg, int x, int y) {
-		return reg.try_get<Hostile>(entity) && (entity != job->villager);
-		});
+	auto view = mainWorld.registry.view<Position, Hostile>();
+	// Flag nearby jobs
+	const int flagRadius = 10;
+	const int flagRadiusSq = flagRadius * flagRadius;
 
-	if (closestThreat.has_value()) {
-
-		// Flag nearby jobs
-		const int flagRadius = 10;
-		const int flagRadiusSq = flagRadius * flagRadius;
-
-		for (auto& i : JobManager::JobList) {
-			int dx = std::abs(i->x - job->x);
-			int dy = std::abs(i->y - job->y);
+	for (auto& i : JobManager::JobList) {
+		for (auto [entity, pos, hostile] : view.each()) {
+			int dx = std::abs(pos.x - i->x);
+			int dy = std::abs(pos.y - i->y);
 
 			if (dx * dx + dy * dy <= flagRadiusSq) {
 				i->state = JobState::Dangerous;
+				break;
 			}
 		}
-
-		job->state = JobState::Dangerous;
-	}
-	else {
-		job->state = JobState::Queued;
 	}
 }
 

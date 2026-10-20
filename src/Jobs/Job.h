@@ -39,14 +39,12 @@ struct Job {
 	//virtual void onFail() {}
 };
 
-void evaluateJobDanger(Job* job);
-
 // Shouldn't be static
 class JobManager {
 public:
 	// Holds all available jobs and gives them to villagers whenever possible
 	static std::vector<Job*> JobList;
-
+	inline static float searchDangerClock = 0.0f;
 	static void addJob(Job* job) {
 		JobList.push_back(job);
 	}
@@ -61,3 +59,12 @@ public:
 	static void assignJobs();
 	static void update();
 };
+
+//class JobSpatial {
+//private:
+//	std::unordered_map<std::pair<int, int>, Job*, pair_hash> jobLocations;
+//
+//public:
+//	
+//
+//};

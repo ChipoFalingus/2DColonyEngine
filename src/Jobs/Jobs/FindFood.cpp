@@ -81,7 +81,7 @@ void FindFood::update() {
 
 				if (auto i = mainWorld.registry.try_get<Nutritional>(food)) {
 					auto& hunger = mainWorld.registry.get<HungerNeed>(villager).hunger;
-					hunger += i->nutrition;
+					hunger -= i->nutrition;
 				}
 
 				if (place.has_value()) {

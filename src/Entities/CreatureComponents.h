@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "Jobs/Job.h"
+#include "Jobs/JobUtils.h"
 #include "Entities/Villager.h"
 #include "Utility/mathUtils.h"
 
@@ -57,7 +58,7 @@ struct Ownership {
 };
 
 struct HungerNeed {
-	int hunger = 100;
+	int hunger = 0;
 	float weight = getRandomFloat(0.0f, 1.0f);
 	float clock;
 	float findFoodClock;
@@ -102,7 +103,6 @@ struct JobComponent {
 	void clearInterruptedJobs() {
 		for (Job* job : interrupted) {
 			job->villager = entt::null;
-			evaluateJobDanger(job);
 		}
 		interrupted.clear();
 	}

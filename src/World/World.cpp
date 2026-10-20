@@ -105,7 +105,7 @@ void spawnSquad(int x, int y) {
         registry.emplace<Position>(member, spawnX, spawnY);
         registry.emplace<Renderable>(member, L'Z', glm::vec3(1.0f, 1.0f, 1.0f));
 
-        registry.emplace<Movable>(member);
+        registry.emplace<Movable>(member, 1.5f);
 
         registry.emplace<SquadMemberComponent>(member, squadEntity);
 
@@ -123,7 +123,7 @@ void spawnSquad(int x, int y) {
 // Adds creatures to the world
 void World::addCreatures() {
     int range = 3;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 3; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
 
@@ -178,9 +178,14 @@ std::vector<entt::entity> World::getAllVillagers() {
 // Central method to generate the world
 void World::generateWorld() {
     // World setup
+    std::random_device rd;
+    seed = rd();
+    rng.seed(seed);
+    srand(seed);
 
     // Another thread for world gen, main thread does loading screen
     std::thread([this] {
+
         currentlyRendering = true;
         initializePermutation(seed);
         setSeaLevel(0.0f);
@@ -192,7 +197,7 @@ void World::generateWorld() {
         updateMiniMap();
 
         lightManager.initLightMap();
-        lightManager.BFSLight();
+        lightManager.BFSLight(registry);
 
         initTemperatureMap();
 

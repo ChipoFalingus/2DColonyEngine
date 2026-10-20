@@ -69,9 +69,6 @@
     <ClCompile Include="src\Light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Villager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Jobs\Jobs\Plant.cpp">
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
@@ -121,6 +118,27 @@
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
     <ClCompile Include="src\Jobs\JobUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\EquipItem.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\DropEquipment.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\AddToFurnace.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Villager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Furnace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Crop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Movement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -314,6 +332,24 @@
     </ClInclude>
     <ClInclude Include="src\Jobs\Jobs\HarvestTile.h">
       <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\EquipItem.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\DropEquipment.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\AddToFurnace.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entities\Furnace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entities\Crop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entities\Movement.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

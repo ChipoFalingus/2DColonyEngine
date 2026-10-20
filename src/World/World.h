@@ -35,6 +35,8 @@ private:
     World(const World&) = delete;
     World& operator=(const World&) = delete;
 
+    ~World() = default;
+
     std::atomic<bool> rendered = false;
     std::atomic<bool> currentlyRendering = false;
     std::atomic<int> chunksRendered = 0;
@@ -56,6 +58,8 @@ private:
 
     void renderWorld();
     void addCreatures();
+
+    int seed = 0;
 public:
 
     entt::registry registry;
@@ -75,6 +79,10 @@ public:
 
     LightManager& getLightManager() {
         return lightManager;
+    }
+
+    int getSeed() {
+        return seed;
     }
 
     void initTemperatureMap() {
@@ -127,7 +135,7 @@ public:
             int dy = std::abs(loc.second - villagerY);
             int dist = dx * dx + dy * dy;
 
-            auto spot = s.findOpenSpot();
+            auto spot = s.findClosestOpenSpot(villagerX, villagerY);
 
             if (dist < bestDist && spot) {
                 bestDist = dist;

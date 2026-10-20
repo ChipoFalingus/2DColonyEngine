@@ -145,15 +145,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
+    <ClCompile Include="src\Entities\Crop.cpp" />
+    <ClCompile Include="src\Entities\Furnace.cpp" />
+    <ClCompile Include="src\Entities\Movement.cpp" />
     <ClCompile Include="src\Entities\Object.cpp" />
     <ClCompile Include="src\Entities\ObjectManager.cpp" />
     <ClCompile Include="src\Entities\Squad.cpp" />
+    <ClCompile Include="src\Entities\Villager.cpp" />
     <ClCompile Include="src\Inputs.cpp" />
     <ClCompile Include="src\Jobs\JobManager.cpp" />
+    <ClCompile Include="src\Jobs\Jobs\AddToFurnace.cpp" />
     <ClCompile Include="src\Jobs\Jobs\Attack.cpp" />
     <ClCompile Include="src\Jobs\Jobs\Build.cpp" />
     <ClCompile Include="src\Jobs\Jobs\BuildFurniture.cpp" />
     <ClCompile Include="src\Jobs\Jobs\Craft.cpp" />
+    <ClCompile Include="src\Jobs\Jobs\DropEquipment.cpp" />
+    <ClCompile Include="src\Jobs\Jobs\EquipItem.cpp" />
     <ClCompile Include="src\Jobs\Jobs\FindFood.cpp" />
     <ClCompile Include="src\Jobs\Jobs\HarvestTile.cpp" />
     <ClCompile Include="src\Jobs\Jobs\HaulToStockpile.cpp" />
@@ -177,7 +184,6 @@
     <ClCompile Include="src\World\Stockpile.cpp" />
     <ClCompile Include="src\World\Tile.cpp" />
     <ClCompile Include="src\World\World.cpp" />
-    <ClCompile Include="Villager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Art.txt" />
@@ -190,7 +196,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Entities\CreatureComponents.h" />
+    <ClInclude Include="src\Entities\Crop.h" />
+    <ClInclude Include="src\Entities\Furnace.h" />
     <ClInclude Include="src\Entities\ItemComponents.h" />
+    <ClInclude Include="src\Entities\Movement.h" />
     <ClInclude Include="src\Entities\Object.h" />
     <ClInclude Include="src\Entities\ObjectManager.h" />
     <ClInclude Include="src\Entities\Squad.h" />
@@ -201,10 +210,13 @@
     <ClInclude Include="src\Jobs\Job.h" />
     <ClInclude Include="src\Jobs\JobCompare.h" />
     <ClInclude Include="src\Jobs\Jobs.h" />
+    <ClInclude Include="src\Jobs\Jobs\AddToFurnace.h" />
     <ClInclude Include="src\Jobs\Jobs\Attack.h" />
     <ClInclude Include="src\Jobs\Jobs\Build.h" />
     <ClInclude Include="src\Jobs\Jobs\BuildFurniture.h" />
     <ClInclude Include="src\Jobs\Jobs\Craft.h" />
+    <ClInclude Include="src\Jobs\Jobs\DropEquipment.h" />
+    <ClInclude Include="src\Jobs\Jobs\EquipItem.h" />
     <ClInclude Include="src\Jobs\Jobs\FindFood.h" />
     <ClInclude Include="src\Jobs\Jobs\Harvest.h" />
     <ClInclude Include="src\Jobs\Jobs\HarvestTile.h" />

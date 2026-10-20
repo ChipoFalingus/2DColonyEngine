@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <queue>
 #include <unordered_set>
+#include <set>
 
 #include "Utility/CreatureUtils.h"
 #include "Utility/mathUtils.h"
@@ -12,7 +13,7 @@
 #include "Game.h"
 #include "Entities/ItemComponents.h"
 #include "Entities/CreatureComponents.h"
-#include <set>
+#include "Entities/Crop.h"
 
 // A lot of this stuff is world generation, so it should be moved to a separate file later
 // A real big mess this all is :(
@@ -186,6 +187,22 @@ void clearTile(int x, int y) {
     mainWorld.objectManager.clearTile(x, y);
 }
 
+
+// splash of color :)
+void addFlower(int x, int y) {
+    auto f = mainWorld.registry.create();
+    int r = getRandomInt(0, 255);
+    int g = getRandomInt(0, 255);
+    int b = getRandomInt(0, 255);
+    mainWorld.registry.emplace<Renderable>(f, L'*', normalizeRGB(glm::vec3(r, g ,b)));
+    mainWorld.registry.emplace<Position>(f, x, y);
+    mainWorld.registry.emplace<Pickupable>(f);
+    mainWorld.registry.emplace<Name>(f, "Flower");
+    mainWorld.registry.emplace<Claimable>(f);
+    mainWorld.objectManager.addObject(x, y, f);
+}
+
+// The whole ECS system needs more abstraction like this
 void Tile::addObject_Clear(int x, int y, const std::string item) {
     clearTile(x, y);
     auto i = ObjectRegistry::getInstance().createInstance(item, mainWorld.registry);
@@ -202,6 +219,14 @@ void Tile::addObject(int x, int y, const std::string item, bool addToMove) {
         mainWorld.registry.emplace<NeedsMoving>(i);
 	}
 }
+
+void Tile::addGroundObject(int x, int y, const std::string item) {
+    auto i = ObjectRegistry::getInstance().createInstance(item, mainWorld.registry);
+    mainWorld.registry.emplace<Position>(i, x, y);
+    mainWorld.registry.emplace<Pickupable>(i);
+    mainWorld.objectManager.addObject(x, y, i);
+}
+
 
 void Tile::addRandomCropAttributes(int x, int y, const std::string item) {
     auto i = ObjectRegistry::getInstance().createInstance(item, mainWorld.registry);
@@ -253,6 +278,8 @@ void Tile::getTile(int x, int y) {
 
 	float tallGrassNoise = perlin(x * 0.02f + 10000.0f, y * 0.02f + 10000.0f);
 
+    int seed = mainWorld.getSeed();
+
     if (type == tileType::GRASS) {
 
         float r = hashNoise(x, y, seed);
@@ -267,6 +294,9 @@ void Tile::getTile(int x, int y) {
             if (oakNoise > 0.3f) {
                 if (r < 0.1f) {
                     addRandomCropAttributes(x, y, "Oak Tree");
+                }
+                else if (r < 0.11f) {
+                    addRandomCropAttributes(x, y, "Apple Tree");
                 }
             }
             if (spruceNoise > 0.3f) {
@@ -295,9 +325,15 @@ void Tile::getTile(int x, int y) {
             }
         }
 
+        float flower = hashNoise(x + 923983.0f, y + 27395.0f, seed);
+
+        if (flower < 0.01f) {
+            //addFlower(x, y);
+        }
+
         float rock = hashNoise(x + 10000.0f, y + 10000.0f, seed);
 
-        if (rock < 0.1f && altitude > waterLevel + 80.0f) {
+        if (rock < 0.025f && altitude > waterLevel + 80.0f) {
             addObject_Clear(x, y, "Rock");
         }
 
@@ -316,7 +352,7 @@ void Tile::getTile(int x, int y) {
             //buildOutpost(x, y);
         }
 
-        int radius = 5;
+        /*int radius = 5;
         if (std::abs(x) <= radius && std::abs(y) <= radius && (std::abs(x) == radius || std::abs(y) == radius) && !(y == -radius && x == 0)) {
             addObject_Clear(x, y, "Stone Wall");
             walkable = false;
@@ -325,19 +361,28 @@ void Tile::getTile(int x, int y) {
 
         if (x < radius && x > -radius && y < radius && y > -radius) {
             addObject_Clear(x, y, "Stone Floor");
+        }*/
+
+        if (x == 0 && y == 0) {
+            addGroundObject(x, y, "Apple");
         }
 
-        if (x == -3 && y == 0) {
-            addObject(x, y, "Bed");
+        if (x == 0 && y == 1) {
+            addObject(x, y, "Furnace");
         }
-        if (x == -1 && y == 0) {
-            addObject(x, y, "Bed");
+        if (x == -1 && y == 1) {
+            addObject(x, y, "Furnace");
         }
-        if (x == 1 && y == 0) {
-            addObject(x, y, "Bed");
+        if (x == 1 && y == 1) {
+            addObject(x, y, "Furnace");
         }
-        if (x == 3 && y == 0) {
-            addObject(x, y, "Bed");
+
+        if (x == 0 && y == -3) {
+            addObject(x, y, "Raw Iron", true);
+            addObject(x, y, "Raw Iron", true);
+            addObject(x, y, "Raw Iron", true);
+            addObject(x, y, "Raw Iron", true);
+            addObject(x, y, "Raw Iron", true);
         }
     }
 

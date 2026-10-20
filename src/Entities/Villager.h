@@ -6,6 +6,9 @@
 
 entt::entity spawnVillager(int x, int y);
 void VillagerSystem(float deltaTime);
+float calculateWorkAbility(entt::entity entity);
+float calculateSpeedPenalty(entt::entity entity);
+
 
 void updateHunger();
 void updateTiredness();

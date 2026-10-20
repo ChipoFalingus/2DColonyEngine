@@ -41,6 +41,7 @@ void HaulToStockpile::update() {
 
 				// add item to stockpile
 				s->placeItem(itemToMove, toX, toY);
+				mainWorld.registry.remove<NeedsMoving>(itemToMove);
 
 				// add to object mananger
 				mainWorld.objectManager.addObject(toX, toY, itemToMove);

@@ -7,7 +7,7 @@
 
 // how many structs could a guy need?
 
-// probably need to split this up into different files because 1 change makes recompilation takes an agonizing amount of time
+// probably need to split this up into different files because 1 change makes recompilation take an agonizing amount of time
 
 struct Renderable {
 	wchar_t character;
@@ -36,6 +36,9 @@ struct Harvestable {
 	SkillType requiredSkill;
 };
 
+// things that can be picked up with no harvesting
+struct Pickupable {};
+
 struct Health {
 	int health;
 };
@@ -46,45 +49,13 @@ struct Nutritional {
 
 struct ProduceSpawner {
 	std::string produce;
+	float productionTime;
 	float produceClock;
-	float productionTime = 10.0f;
 
 	int range = 1;
 
 	bool isProducing = false;
 	bool canProduce = true;
-};
-
-enum class CropState {
-	SPROUT,
-	MATURED,
-	DEAD
-};
-
-struct CropStage {
-	wchar_t character;
-	glm::vec3 color;
-};
-
-// crop stuff
-struct Sprouting {};
-struct Matured {};
-struct Dead {};
-
-struct Crop {
-	std::vector<CropStage> growthStages;
-
-	float growthTime;
-	float currentGrowthTime;
-	float growthClock;
-
-	int growthStage;
-	int growthStageMax;
-
-	int mature_stage;
-	int death_age;
-
-	CropState state = CropState::SPROUT;
 };
 
 struct FirePitSlot {
@@ -104,16 +75,6 @@ struct HeatEmitter {
 struct LightEmitter {
 	float light_intensity;
 	bool addedToLightMap = false;
-};
-
-struct FuelBurner {
-	float fuel_amount;
-	float burn_rate;
-};
-
-// Requires FuelBurner component
-struct Furnace {
-	entt::entity itemToCook;
 };
 
 struct Gun {
@@ -181,3 +142,5 @@ struct BlueprintTag {};
 struct NeedsMoving {
 	bool foundSpot = false;
 };
+
+struct Equipped {};

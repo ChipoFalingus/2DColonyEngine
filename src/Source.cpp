@@ -15,11 +15,15 @@
 #include "Entities/CreatureComponents.h"
 #include "Entities/Squad.h"
 #include "Utility/itemUtils.h"
+#include "Inputs.h"
 
 #include "Render/Shader.h"
 #include "Utility/Light.h"
 #include "Utility/Clock.h"
 #include "Jobs/Jobs.h"
+#include "Entities/Furnace.h"
+#include "Entities/Crop.h"
+#include "Entities/Movement.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -31,17 +35,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-
-void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void setMode(Mode mode);
-
-std::random_device rd;
-int seed;
-
-sf::Font font;
-sf::Text text;
-std::string textString;
 
 void drawTxtToMap(const std::string& filePath, int x, int y) {
     std::wifstream file(filePath);
@@ -72,136 +66,6 @@ void drawTxtToMap(const std::string& filePath, int x, int y) {
 }
 
 // Below methods should be moved somewhere else
-void updateMovementSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
-    auto view = registry.view<Position, Movable>();
-
-    for (auto [entity, pos, movable] : view.each()) {
-
-        if (movable.dirX != 0 || movable.dirY != 0) {
-            movable.hasTarget = false;
-            movable.movementClock += deltaTime;
-
-            if (movable.movementClock >= movable.currentSpeed) {
-                movable.movementClock = 0.0f;
-                int sepX = 0, sepY = 0;
-
-                forEachInRange(pos.x, pos.y, 3, [&](entt::entity otherEntity, entt::registry& reg, int x, int y) {
-                    if (otherEntity == entity) return;
-                    if (!reg.try_get<SquadMemberComponent>(otherEntity)) return;
-                    auto& otherPos = reg.get<Position>(otherEntity);
-
-                    int dx = pos.x - otherPos.x;
-                    int dy = pos.y - otherPos.y;
-
-                    if (dx * dx + dy * dy <= 3) {
-                        sepX += dx;
-                        sepY += dy;
-                    }
-
-                    });
-
-                int pushX = (sepX > 0) - (sepX < 0);
-                int pushY = (sepY > 0) - (sepY < 0);
-
-                int stepX = std::clamp(movable.dirX + pushX, -1, 1);
-                int stepY = std::clamp(movable.dirY + pushY, -1, 1);
-
-                int newX = pos.x + stepX;
-                int newY = pos.y + stepY;
-
-                if (getTileRef(newX, newY).walkable) {
-                    objectManager.removeItem(pos.x, pos.y, entity);
-                    objectManager.addObject(newX, newY, entity);
-                    pos.x = newX;
-                    pos.y = newY;
-                }
-
-                movable.dirX = 0;
-                movable.dirY = 0;
-                continue;
-            }
-        }
-
-        if (!movable.hasTarget) continue;
-        movable.movementClock += deltaTime;
-
-        if (movable.movementClock >= movable.currentSpeed) {
-            movable.movementClock = 0.0f;
-
-            if (movable.path.empty()) {
-                movable.path = findPath(pos.x, pos.y, { movable.targetX, movable.targetY });
-
-                if (movable.path.empty()) {
-                    movable.hasTarget = false;
-                    continue;
-                }
-            }
-
-            if (!movable.path.empty()) {
-                int newX = movable.path[0].first;
-                int newY = movable.path[0].second;
-
-                if (!getTileRef(newX, newY).walkable) {
-                    movable.path = findPath(pos.x, pos.y, { movable.targetX, movable.targetY });
-                    newX = movable.path[0].first;
-                    newY = movable.path[0].second;
-                }
-
-                objectManager.removeItem(pos.x, pos.y, entity);
-                objectManager.addObject(newX, newY, entity);
-
-                pos.x = newX;
-                pos.y = newY;
-
-                movable.path.erase(movable.path.begin());
-            }
-
-            if (pos.x == movable.targetX && pos.y == movable.targetY) {
-                movable.hasTarget = false;
-                movable.path.clear();
-            }
-        }
-    }
-}
-
-void updateCropSystem(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
-    auto view = registry.view<Position, Name, Renderable, Crop>();
-    for (auto [entity, pos, name, renderable, crop] : view.each()) {
-        crop.growthClock += deltaTime;
-        if (crop.growthClock >= crop.currentGrowthTime) {
-
-            // hard cap in case the death thing isnt added for a plant
-            if (crop.growthStage >= crop.growthStages.size() - 1 || crop.state == CropState::DEAD) {
-                crop.growthStage = crop.growthStageMax;
-                continue;
-            }
-
-            crop.growthClock = 0.0f;
-            crop.growthStage++;
-
-            const float variance = getRandomFloat(-0.25f, 0.25f);
-            crop.currentGrowthTime = crop.growthTime * (1.0f + variance);
-
-            if (crop.growthStage == crop.mature_stage) {
-                crop.state = CropState::MATURED;
-                registry.emplace<Matured>(entity);
-                crop.currentGrowthTime *= 2;
-            }
-            else if (crop.growthStage == crop.death_age) {
-                registry.erase<Matured>(entity);
-                crop.state = CropState::DEAD;
-            }
-            else {
-                crop.state = CropState::SPROUT;
-            }
-
-            const auto& currentStage = crop.growthStages[crop.growthStage];
-			renderable.character = currentStage.character;
-			renderable.color = currentStage.color;
-        }
-    }
-}
-
 constexpr std::array<std::pair<int, int>, 4> dirs = {{
     {0, 1}, {1, 0}, {0, -1}, {-1, 0} 
     }};
@@ -218,7 +82,7 @@ void updateProduceSystem(entt::registry& registry, ObjectManager& objectManager,
                 int newY = pos.y + dir.second;
 
                 if (objectManager.isEmpty(newX, newY) && getTileRef(newX, newY).walkable) {
-                    getTileRef(newX, newY).addObject(newX, newY, produce.produce);
+                    getTileRef(newX, newY).addGroundObject(newX, newY, produce.produce);
                     produce.produceClock = 0.0f;
                     break;
                 }
@@ -328,9 +192,7 @@ void updateSpawners(entt::registry& registry, ObjectManager& objectManager, floa
 
 void updateGuns(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
     auto view = registry.view<Gun>();
-    for (auto entity : view) {
-
-        auto& gun = view.get<Gun>(entity);
+    for (auto [entity, gun] : view.each()) {
 
         if (gun.reloading) {
             gun.reload_clock += deltaTime;
@@ -340,6 +202,30 @@ void updateGuns(entt::registry& registry, ObjectManager& objectManager, float de
                 gun.current_ammo = neededAmmo;
                 gun.reloading = false;
             }
+        }
+    }
+}
+
+void updateNeedsMoving(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
+
+    // Stockpile item moving
+    auto view = registry.view<Position, NeedsMoving>();
+
+    for (auto [entity, pos, moving] : view.each()) {
+        if (moving.foundSpot) continue;
+        auto& name = registry.get<Name>(entity).name;
+        auto spotOpt = mainWorld.findStockpileSpotForItem(name, pos.x, pos.y);
+
+        if (spotOpt) {
+            auto& [stockpile, stockpilePos] = *spotOpt;
+            stockpile->addItem(entity, stockpilePos.first, stockpilePos.second);
+
+            moving.foundSpot = true;
+
+            Job* job = new HaulToStockpile(entt::null, entt::null, SkillType::None, entity, pos.x, pos.y, stockpilePos.first, stockpilePos.second);
+
+            job->priority = 20;
+            JobManager::addJob(job);
         }
     }
 }
@@ -412,11 +298,6 @@ int main() {
 
     Shader shader("assets/shader.vert", "assets/shader.frag");
 
-    std::random_device rd;
-    seed = rd();
-    rng.seed(seed);
-    srand(seed);
-
     // Item setup
     ObjectRegistry::getInstance().loadObjects();
     ObjectRegistry::getInstance().loadStaticObjects();
@@ -429,7 +310,6 @@ int main() {
 	
     double lastTime = glfwGetTime();
     int nbFrames = 0;
-    std::string fps;
 
     sf::Music music;
 
@@ -488,7 +368,7 @@ int main() {
         lightClock += dt;
         if (lightClock > .1f) {
 			lightClock = 0.0f;
-            mainWorld.getLightManager().BFSLight();
+            mainWorld.getLightManager().BFSLight(mainWorld.registry);
         }
 
         // Update temperature
@@ -519,40 +399,30 @@ int main() {
 
         if (mainWorld.isRendered()) {
 			mainWorld.dayCycle.update();
-			updateMovementSystem(mainWorld.registry, mainWorld.objectManager, dt);
+
+            MovementManager movement(mainWorld.registry, mainWorld.objectManager);
+            movement.updateMovementSystem(dt);
+
 			updateProduceSystem(mainWorld.registry, mainWorld.objectManager, dt);
-			updateCropSystem(mainWorld.registry, mainWorld.objectManager, dt);
+
+            CropManager crop(mainWorld.registry);
+			crop.updateCropSystem(dt);
+
             updateHealth(mainWorld.registry, mainWorld.objectManager, dt);
             updateTemperatureSystem(mainWorld.registry, mainWorld.objectManager, dt);
 			updateLightSystem(mainWorld.registry, mainWorld.objectManager, dt);
             updateSpawners(mainWorld.registry, mainWorld.objectManager, dt);
+
+            FurnaceManager furnace(mainWorld.registry);
+            furnace.updateFurnaces(dt);
+
+            updateNeedsMoving(mainWorld.registry, mainWorld.objectManager, dt);
 
             mainWorld.squadManager.updateSquadComponent(mainWorld.registry);
 
             VillagerSystem(dt);
             JobManager::update();
 
-            // Stockpile item moving
-            auto view = mainWorld.registry.view<Position, NeedsMoving>();
-
-            for (auto [entity, pos, moving] : view.each()) {
-                if (moving.foundSpot) continue;
-
-                auto& name = mainWorld.registry.get<Name>(entity).name;
-                auto spotOpt = mainWorld.findStockpileSpotForItem(name, pos.x, pos.y);
-
-                if (spotOpt) {
-                    auto& [stockpile, stockpilePos] = *spotOpt;
-                    stockpile->addItem(entity, stockpilePos.first, stockpilePos.second);
-
-                    moving.foundSpot = true;
-
-                    Job* job = new HaulToStockpile(entt::null, entt::null, SkillType::None, entity, pos.x, pos.y, stockpilePos.first, stockpilePos.second);
-
-                    job->priority = 25;
-                    JobManager::addJob(job);
-                }
-            }
         
         }
 

@@ -19,3 +19,6 @@
 #include "Jobs/Sleep.h"
 #include "Jobs/Talk.h"
 #include "Jobs/Warmup.h"
+#include "Jobs/EquipItem.h"
+#include "Jobs/DropEquipment.h"
+#include "Jobs/AddToFurnace.h"

@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_map>
 #include <utility>
+#include <entt/entt.hpp>
 
 struct Light {
     glm::vec2 position;
@@ -40,5 +41,5 @@ public:
     void update(float deltaTime);
     std::vector<PointLight> getLights();
     void removeLight(int x, int y);
-    void BFSLight();
+    void BFSLight(entt::registry& registry);
 };

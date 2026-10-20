@@ -84,8 +84,6 @@ std::optional<std::pair<int, int>> Stockpile::findOpenSpot() {
     for (int x = location.first; x < location.first + width; x++) {
         for (int y = location.second; y < location.second + height; y++) {
             if (!claimed(x, y)) {
-                std::cout << "Found open spot at: " << x << "," << y << "\n";
-
                 return std::make_pair(x, y);
             }
         }
@@ -93,12 +91,29 @@ std::optional<std::pair<int, int>> Stockpile::findOpenSpot() {
     return std::nullopt;
 }
 
+std::optional<std::pair<int, int>> Stockpile::findClosestOpenSpot(int xPos, int yPos) {
+    int bestDist = INT_MAX;
+    std::optional<std::pair<int, int>> closestSpot = std::nullopt;
+    for (int x = location.first; x < location.first + width; x++) {
+        for (int y = location.second; y < location.second + height; y++) {
+            int dx = std::abs(xPos - x);
+            int dy = std::abs(yPos - y);
+            int dist = dx * dx + dy * dy;
+
+            if (dist < bestDist && !claimed(x, y)) {
+                bestDist = dist;
+                closestSpot = std::make_pair(x, y);
+            }
+        }
+    }
+    return closestSpot;
+}
+
 // Finds the first item with the given name and returns its coordinates
 std::optional<std::pair<int, int>> Stockpile::findItemLocation(const std::string& name) {
     for (auto& [pos, item] : tileItems) {
         const auto& str = mainWorld.registry.get<Name>(item[0]);
         if (str.name == name) {
-            std::cout << "Found item!\n";
             return pos;
         }
     }
@@ -107,13 +122,10 @@ std::optional<std::pair<int, int>> Stockpile::findItemLocation(const std::string
 
 // Finds the first unclaimed item with the given name and returns its coordinates
 std::optional<std::pair<int, int>> Stockpile::findUnclaimedItemLocation(const std::string& name) {
-    std::cout << "Looking for: " << name << "\n";
-
     for (auto& [pos, item] : tileItems) {
         const auto& str = mainWorld.registry.get<Name>(item[0]);
         bool claimed = mainWorld.registry.get<Claimable>(item[0]).claimed;
         if (str.name == name && !claimed) {
-            std::cout << "Found item!\n";
             return pos;
         }
     }

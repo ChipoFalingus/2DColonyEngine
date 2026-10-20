@@ -17,7 +17,6 @@ struct TilePos {
 };
 
 extern std::mt19937 rng;
-extern int seed;
 
 float perlin(float x, float y);
 float fade(float t);

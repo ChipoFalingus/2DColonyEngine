@@ -11,6 +11,9 @@
 #include "ItemComponents.h"
 #include "Utility/mathUtils.h"
 
+#include "Entities/Furnace.h"
+#include "Entities/Crop.h"
+
 using json = nlohmann::json;
 
 struct Blueprint {
@@ -149,8 +152,9 @@ public:
 			}
 
 			if (name == "produce") {
-				std::string produce = data.get<std::string>();
-				targetWorldRegistry.emplace<ProduceSpawner>(newEntity, produce);
+				std::string produce = data.at("name").get<std::string>();
+				float time = data.at("produce_time").get<float>();
+				targetWorldRegistry.emplace<ProduceSpawner>(newEntity, produce, time);
 			}
 
 			if (name == "grows_into") {
@@ -218,6 +222,11 @@ public:
 				}
 
 				targetWorldRegistry.emplace<FirePitComponent>(newEntity, slots);
+			}
+
+			if (name == "furnace") {
+				targetWorldRegistry.emplace<FuelBurner>(newEntity);
+				targetWorldRegistry.emplace<Furnace>(newEntity);
 			}
 
 			if (name == "light_intensity") {
