@@ -22,3 +22,4 @@
 #include "Jobs/EquipItem.h"
 #include "Jobs/DropEquipment.h"
 #include "Jobs/AddToFurnace.h"
+#include "Jobs/Guard.h"

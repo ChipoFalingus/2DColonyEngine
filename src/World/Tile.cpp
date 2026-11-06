@@ -30,9 +30,9 @@ void buildOutpost(int x, int y) {
             int dx = x + i;
             int dy = y + j;
             if (!(std::abs(i) == 0 || std::abs(i) == 1 || std::abs(j) == 0 || std::abs(j) == 1) && (std::abs(i) == radius || std::abs(j) == radius)) {
-                //tile.addObject_Clear(dx, dy, "Stone Wall");
-                //tile.walkable = false;
-                //tile.blocked = true;
+                tile.addObject_Clear(dx, dy, "Stone Wall");
+                tile.walkable = false;
+                tile.blocked = true;
             }
             else {
                 tile.addObject_Clear(dx, dy, "Stone Floor");
@@ -229,6 +229,7 @@ void Tile::addGroundObject(int x, int y, const std::string item) {
 
 
 void Tile::addRandomCropAttributes(int x, int y, const std::string item) {
+    clearTile(x, y);
     auto i = ObjectRegistry::getInstance().createInstance(item, mainWorld.registry);
     mainWorld.registry.emplace<Position>(i, x, y);
     mainWorld.objectManager.addObject(x, y, i);
@@ -256,7 +257,7 @@ void Tile::removeObject(int x, int y, entt::entity item) {
     mainWorld.objectManager.removeItem(x, y, item);
     mainWorld.registry.destroy(item);
 
-    if (auto s = mainWorld.atStockpile(x, y)) {
+    if (auto s = mainWorld.getColony().atStockpile(x, y)) {
         s->removeItem(x, y, item);
     }
 
@@ -301,7 +302,7 @@ void Tile::getTile(int x, int y) {
             }
             if (spruceNoise > 0.3f) {
                 if (r < 0.1f) {
-                    addObject_Clear(x, y, "Pine Tree");
+                    addRandomCropAttributes(x, y, "Pine Tree");
                 }
                 else if (r < 0.101f) {
                     addObject_Clear(x, y, "Berry Bush");
@@ -317,7 +318,7 @@ void Tile::getTile(int x, int y) {
                     addObject_Clear(x, y, "Raw Iron");
                 }
                 if (copperNoise > oreThreshold) {
-                    addObject_Clear(x, y, "Copper");
+                    addObject_Clear(x, y, "Raw Copper");
                 }
                 if (coalNoise > oreThreshold) {
                     addObject_Clear(x, y, "Coal");
@@ -348,7 +349,7 @@ void Tile::getTile(int x, int y) {
 
         float outposts = hashNoise(x + 1000000.0f, y + 1000000.0f, seed);
 
-        if (outposts < 0.00001f) {
+        if (outposts < 0.0001f) {
             //buildOutpost(x, y);
         }
 
@@ -362,28 +363,6 @@ void Tile::getTile(int x, int y) {
         if (x < radius && x > -radius && y < radius && y > -radius) {
             addObject_Clear(x, y, "Stone Floor");
         }*/
-
-        if (x == 0 && y == 0) {
-            addGroundObject(x, y, "Apple");
-        }
-
-        if (x == 0 && y == 1) {
-            addObject(x, y, "Furnace");
-        }
-        if (x == -1 && y == 1) {
-            addObject(x, y, "Furnace");
-        }
-        if (x == 1 && y == 1) {
-            addObject(x, y, "Furnace");
-        }
-
-        if (x == 0 && y == -3) {
-            addObject(x, y, "Raw Iron", true);
-            addObject(x, y, "Raw Iron", true);
-            addObject(x, y, "Raw Iron", true);
-            addObject(x, y, "Raw Iron", true);
-            addObject(x, y, "Raw Iron", true);
-        }
     }
 
     auto display = getTileDisplay(type);

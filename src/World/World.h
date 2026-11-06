@@ -15,11 +15,11 @@
 
 #include "World/Chunk.h"
 #include "Utility/Pair.h"
+#include "World/Colony.h"
 
 #include <entt/entt.hpp>
 
 class Creature;
-class Colony;
 
 enum struct PlacementMode {
     SINGLE,
@@ -32,34 +32,28 @@ class World {
 private:
 
     World() = default;
+    ~World() = default;
     World(const World&) = delete;
     World& operator=(const World&) = delete;
 
-    ~World() = default;
-
-    std::atomic<bool> rendered = false;
-    std::atomic<bool> currentlyRendering = false;
-    std::atomic<int> chunksRendered = 0;
+    std::atomic<bool> rendered{false};
+    std::atomic<bool> currentlyRendering{false};
+    std::atomic<int> chunksRendered{0};
 
     // to be implemented
-    const int CREATURE_CAP = 5000;
+    static constexpr int CREATURE_CAP = 5000;
 
     std::unordered_map<std::pair<int, int>, Chunk, pair_hash> chunks;
 
-    // These need to be in a colony class
-    std::vector<Stockpile> stockpiles;
-    // ^ make a manager for this later
-	RoomManager roomManager;
-
     LightManager lightManager;
+    Colony playerColony;
 
     // Move this to the temperaturemanager
 	std::vector<float> temperatureMap;
+    int seed = 0;
 
     void renderWorld();
     void addCreatures();
-
-    int seed = 0;
 public:
 
     entt::registry registry;
@@ -68,22 +62,18 @@ public:
 
     // refactor this stuff
 	DayCycle dayCycle;
-    ObjectManager objectManager;
+    ObjectManager objectManager{ 1000, 1000 };
     SquadManager squadManager;
 
     static World& get();
 
-    std::vector<entt::entity> getAllVillagers();
+    [[nodiscard]] LightManager& getLightManager() noexcept { return lightManager; }
+    [[nodiscard]] const LightManager& getLightManager() const noexcept { return lightManager; }
 
-	RoomManager& getRoomManager() { return roomManager; }
+    [[nodiscard]] Colony& getColony() noexcept { return playerColony; }
+    [[nodiscard]] const Colony& getColony() const noexcept { return playerColony; }
 
-    LightManager& getLightManager() {
-        return lightManager;
-    }
-
-    int getSeed() {
-        return seed;
-    }
+    [[nodiscard]] int getSeed() const { return seed; }
 
     void initTemperatureMap() {
         int size = calculateMapSize() * 2 + 1;
@@ -95,7 +85,7 @@ public:
         temperatureMap = newMap;
 	}
 
-    float getTemperatureMapIndex(int x, int y) {
+    [[nodiscard]] float getTemperatureMapIndex(int x, int y) {
         const int r = calculateMapSize();
         x += r;
         y += r;
@@ -105,92 +95,20 @@ public:
         return temperatureMap[x + y * size];
 	}
 
-    const std::vector<Stockpile>& getStockpiles() {
-        return stockpiles;
-    }
-
-    void addStockpile(const Stockpile& stockpile) {
-        stockpiles.push_back(stockpile);
-	}
-
-    Stockpile* atStockpile(int x, int y) {
-        for (auto& s : stockpiles) {
-            if (s.atStockpile(x, y)) {
-                return &s;
-            }
-        }
-        return nullptr;
-    }
-
-    std::optional<std::pair<Stockpile*, std::pair<int, int>>> findStockpileSpotForItem(const std::string& itemName, int villagerX, int villagerY) {
-
-        Stockpile* bestStockpile = nullptr;
-        std::optional<std::pair<int, int>> bestSpot;
-
-        int bestDist = INT_MAX;
-
-        for (auto& s : stockpiles) {
-            auto loc = s.getLocation();
-            int dx = std::abs(loc.first - villagerX);
-            int dy = std::abs(loc.second - villagerY);
-            int dist = dx * dx + dy * dy;
-
-            auto spot = s.findClosestOpenSpot(villagerX, villagerY);
-
-            if (dist < bestDist && spot) {
-                bestDist = dist;
-                bestStockpile = &s;
-                bestSpot = spot;
-            }
-        }
-
-        if (!bestStockpile || !bestSpot) {
-            return std::nullopt;
-        }
-
-        return std::make_pair(bestStockpile, *bestSpot);
-    }
-
-    // returns both location and the stockpile its found on
-    std::optional<std::pair<Stockpile*, std::pair<int, int>>> findItemInAllStockpile(const std::string& name) {
-        for (auto& s : stockpiles) {
-            auto it = s.findItemLocation(name);
-            if (it) {
-                return std::make_pair(&s, *it);
-            }
-        }
-        return std::nullopt;
-    }
-
-    std::optional<ItemLocation> findUnclaimedItemInAllStockpile(const std::string& name) {
-        for (auto& s : stockpiles) {
-            auto it = s.findUnclaimedItemLocation(name);
-            if (it) {
-                auto itemEntity = s.retrieveItem(it->first, it->second);
-                if (!registry.try_get<Claimable>(itemEntity)->claimed) {
-                    ItemLocation itemLocation;
-                    itemLocation.x = it->first;
-                    itemLocation.y = it->second;
-                    itemLocation.item = itemEntity;
-					return itemLocation;
-                }
-            }
-        }
-        return std::nullopt;
-	}
-
     Chunk& loadOrGenerateChunk(int x, int y);
+    [[nodiscard]] Chunk* getChunk(int x, int y);
+
     void addTileToMinimap(Chunk& chunk);
-    Chunk* getChunk(int x, int y);
     void updateMiniMap();
 
-	std::unordered_map<std::pair<int, int>, Chunk, pair_hash>& getChunks() { return chunks; }
+    [[nodiscard]] auto& getChunks() noexcept { return chunks; }
+    [[nodiscard]] const auto& getChunks() const noexcept { return chunks; }
 
     void generateWorld();
 
-    int getChunksRendered() { return chunksRendered; }
-    bool isCurrentlyRendering() const { return currentlyRendering; };
-    bool isRendered() const { return rendered; }
+    [[nodiscard]] int getChunksRendered() const { return chunksRendered; }
+    [[nodiscard]] bool isCurrentlyRendering() const { return currentlyRendering; };
+    [[nodiscard]] bool isRendered() const { return rendered; }
 };
 
 

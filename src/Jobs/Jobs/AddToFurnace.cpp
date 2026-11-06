@@ -54,7 +54,7 @@ void AddToFurnace::update() {
 		y = adjLoc.second;
 
 		if (pos->x == x && pos->y == y) {
-			if (auto s = mainWorld.atStockpile(itemObj.x, itemObj.y)) {
+			if (auto s = mainWorld.getColony().atStockpile(itemObj.x, itemObj.y)) {
 				getTileRef(itemObj.x, itemObj.y).removeObject(itemObj.x, itemObj.y, itemObj.item);
 			}
 

@@ -418,7 +418,7 @@ void InGameUI::update(std::string fps) {
 
         tileItems->changeText(std::wstring(itemStr.begin(), itemStr.end()));
         std::string type = typeToString(tile.type);
-        if (auto room = mainWorld.getRoomManager().getRoomAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
+        if (auto room = mainWorld.getColony().getRoomManager().getRoomAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
             type += " (Room" + std::to_string(room->ID) + ")";
         }
         if (gameState.debugState.showTemp) {
@@ -685,7 +685,7 @@ std::unordered_map<std::string, int> getFurnitureList() {
     std::unordered_map<std::string, int> result;
     auto& registry = mainWorld.registry;
 
-    auto& stockpiles = mainWorld.getStockpiles();
+    auto& stockpiles = mainWorld.getColony().getStockpiles();
     for (auto& s : stockpiles) {
         for (auto& [loc, f] : s.getItems()) {
             for (auto& item : f) {
@@ -1189,7 +1189,7 @@ void PlantUI::configurePlantFrame() {
     seeds.clear();
 
 	std::unordered_map<std::string, int> result;
-    auto& stockpiles = mainWorld.getStockpiles();
+    auto& stockpiles = mainWorld.getColony().getStockpiles();
     for (auto& s : stockpiles) {
         const auto& list = s.getItems();
         for (auto& [loc, f] : list) {

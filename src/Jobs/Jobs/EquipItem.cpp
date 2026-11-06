@@ -20,7 +20,7 @@ void EquipItem::update() {
 			mainWorld.registry.remove<Position>(item);
 		}
 
-		if (auto* s = mainWorld.atStockpile(itemPos.x, itemPos.y)) {
+		if (auto* s = mainWorld.getColony().atStockpile(itemPos.x, itemPos.y)) {
 			s->removeItem(itemPos.x, itemPos.y, item);
 		}
 

@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "Jobs/JobType.h"
+#include "World/Colony.h"
 
 // how many structs could a guy need?
 
@@ -88,7 +89,6 @@ struct Gun {
 	float reload_clock = 0.0f;
 	int current_ammo = 40000;
 
-	bool empty = false;
 	bool reloading = false;
 
 	bool isEmpty() const { return current_ammo <= 0; }
@@ -132,9 +132,7 @@ struct Structure {
 // makes tiles unwalkable
 struct BlocksTile {};
 
-struct Bed {
-	bool i;
-};
+struct Bed {};
 
 struct BlueprintTag {};
 
@@ -144,3 +142,11 @@ struct NeedsMoving {
 };
 
 struct Equipped {};
+
+struct BelongsTo {
+	Colony& owner;
+};
+
+struct GuardPost {
+	bool active = false;
+};

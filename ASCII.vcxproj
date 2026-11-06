@@ -162,6 +162,7 @@
     <ClCompile Include="src\Jobs\Jobs\DropEquipment.cpp" />
     <ClCompile Include="src\Jobs\Jobs\EquipItem.cpp" />
     <ClCompile Include="src\Jobs\Jobs\FindFood.cpp" />
+    <ClCompile Include="src\Jobs\Jobs\Guard.cpp" />
     <ClCompile Include="src\Jobs\Jobs\HarvestTile.cpp" />
     <ClCompile Include="src\Jobs\Jobs\HaulToStockpile.cpp" />
     <ClCompile Include="src\Jobs\Jobs\Idle.cpp" />
@@ -181,6 +182,7 @@
     <ClCompile Include="src\Utility\CreatureUtils.cpp" />
     <ClCompile Include="src\Utility\ItemUtils.cpp" />
     <ClCompile Include="src\Utility\mathUtils.cpp" />
+    <ClCompile Include="src\World\Colony.cpp" />
     <ClCompile Include="src\World\Stockpile.cpp" />
     <ClCompile Include="src\World\Tile.cpp" />
     <ClCompile Include="src\World\World.cpp" />
@@ -218,6 +220,7 @@
     <ClInclude Include="src\Jobs\Jobs\DropEquipment.h" />
     <ClInclude Include="src\Jobs\Jobs\EquipItem.h" />
     <ClInclude Include="src\Jobs\Jobs\FindFood.h" />
+    <ClInclude Include="src\Jobs\Jobs\Guard.h" />
     <ClInclude Include="src\Jobs\Jobs\Harvest.h" />
     <ClInclude Include="src\Jobs\Jobs\HarvestTile.h" />
     <ClInclude Include="src\Jobs\Jobs\HaulToStockpile.h" />
@@ -252,6 +255,7 @@
     <ClInclude Include="src\Utility\ThreadPool.h" />
     <ClInclude Include="src\Utility\Vec2.h" />
     <ClInclude Include="src\World\Chunk.h" />
+    <ClInclude Include="src\World\Colony.h" />
     <ClInclude Include="src\World\DayCycle.h" />
     <ClInclude Include="src\World\Stockpile.h" />
     <ClInclude Include="src\World\Tile.h" />

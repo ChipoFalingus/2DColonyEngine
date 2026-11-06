@@ -1,6 +1,25 @@
 ﻿{
     "objects": [
         {
+            "name": "Guard Post",
+            "visual": {
+                "character": "^",
+                "color": [ 200, 200, 200 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Stone Brick",
+                        "quantity": 6
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 1.0,
+                "required_bench": "None"
+            },
+            "guard_post": true
+        },
+        {
             "name": "Spawner",
             "visual": {
                 "character": "#",
@@ -129,8 +148,8 @@
         {
             "name": "Pine Tree",
             "visual": {
-                "character": 9824,
-                "color": [ 42, 55, 12 ]
+                "character": ".",
+                "color": [ 56, 118, 29 ]
             },
             "drop_table": {
                 "drop": [
@@ -140,6 +159,33 @@
                     }
                 ],
                 "skill": "Woodcutting"
+            },
+            "crop": {
+                "grow_time": 1200.0,
+                "mature_age": 3,
+                "death_age": 4,
+                "stages": [
+                    {
+                        "char": ".",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": ",",
+                        "color": [ 56, 118, 29 ]
+                    },
+                    {
+                        "char": "|",
+                        "color": [ 100, 65, 23 ]
+                    },
+                    {
+                        "char": 9824,
+                        "color": [ 42, 55, 12 ]
+                    },
+                    {
+                        "char": "Y",
+                        "color": [ 100, 65, 23 ]
+                    }
+                ]
             }
         },
         {
@@ -229,7 +275,7 @@
             "drop_table": {
                 "drop": [
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
                         "odds": 1.0
                     }
                 ],
@@ -237,7 +283,14 @@
             }
         },
         {
-            "name": "Copper",
+            "name": "Raw Iron Chunk",
+            "visual": {
+                "character": "i",
+                "color": [ 217, 201, 147 ]
+            }
+        },
+        {
+            "name": "Raw Copper",
             "visual": {
                 "character": "C",
                 "color": [ 184, 115, 51 ]
@@ -245,11 +298,18 @@
             "drop_table": {
                 "drop": [
                     {
-                        "item": "Copper",
+                        "item": "Raw Copper Chunk",
                         "odds": 1.0
                     }
                 ],
                 "skill": "Mining"
+            }
+        },
+        {
+            "name": "Raw Copper Chunk",
+            "visual": {
+                "character": "c",
+                "color": [ 184, 115, 51 ]
             }
         },
         {
@@ -261,11 +321,18 @@
             "drop_table": {
                 "drop": [
                     {
-                        "item": "Coal",
+                        "item": "Coal Chunk",
                         "odds": 1.0
                     }
                 ],
                 "skill": "Mining"
+            }
+        },
+        {
+            "name": "Coal Chunk",
+            "visual": {
+                "character": "c",
+                "color": [ 54, 69, 79 ]
             }
         },
         {
@@ -313,7 +380,25 @@
             "recipe": {
                 "ingredients": [
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
+                        "quantity": 1
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 1.0,
+                "required_bench": "Furnace"
+            }
+        },
+        {
+            "name": "Copper Bar",
+            "visual": {
+                "character": "I",
+                "color": [ 184, 115, 51 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Copper Chunk",
                         "quantity": 1
                     }
                 ],
@@ -855,7 +940,7 @@
                 "character": "o",
                 "color": [ 183, 146, 104 ]
             },
-            "nutrition": 140
+            "nutrition": 25
         },
         {
             "name": "Apple Tree",
@@ -873,7 +958,7 @@
                 "skill": "Woodcutting"
             },
             "crop": {
-                "grow_time": 1200.0,
+                "grow_time": 12.0,
                 "mature_age": 3,
                 "death_age": 4,
                 "stages": [
@@ -901,7 +986,7 @@
             },
             "produce": {
                 "name": "Apple",
-                "produce_time": 20.0
+                "produce_time": 5.0
             }
         },
         {
@@ -1009,6 +1094,25 @@
             }
         },
         {
+            "name": "Baked Potato",
+            "visual": {
+                "character": "o",
+                "color": [ 210, 180, 140 ]
+            },
+            "nutrition": 45,
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Potato",
+                        "quantity": 1
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 1.0,
+                "required_bench": "Furnace"
+            }
+        },
+        {
             "name": "Meat",
             "visual": {
                 "character": "M",
@@ -1046,7 +1150,7 @@
             "recipe": {
                 "ingredients": [
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
                         "quantity": 3
                     }
                 ],
@@ -1070,7 +1174,7 @@
             "recipe": {
                 "ingredients": [
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
                         "quantity": 1
                     }
                 ],
@@ -1092,7 +1196,7 @@
                         "quantity": 7
                     },
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
                         "quantity": 2
                     }
                 ],
@@ -1134,7 +1238,7 @@
             "recipe": {
                 "ingredients": [
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
                         "quantity": 1
                     }
                 ],
@@ -1156,7 +1260,7 @@
                         "quantity": 30
                     },
                     {
-                        "item": "Raw Iron",
+                        "item": "Raw Iron Chunk",
                         "quantity": 3
                     }
                 ],

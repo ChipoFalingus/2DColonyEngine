@@ -10,7 +10,7 @@ void DropEquipment::update() {
 	y = closestAdj.second;
 	if (pos.x == x && pos.y == y) {
 
-		auto* s = mainWorld.atStockpile(dropX, dropY);
+		auto* s = mainWorld.getColony().atStockpile(dropX, dropY);
 		if (s) {
 			mainWorld.registry.emplace_or_replace<Position>(item, dropX, dropY);
 
@@ -20,14 +20,14 @@ void DropEquipment::update() {
 			s->placeItem(item, dropX, dropY);
 			mainWorld.registry.remove<NeedsMoving>(item);
 
-			// add to object mananger
+			// add to object manager
 			mainWorld.objectManager.addObject(dropX, dropY, item);
 
 			state = JobState::Completed;
 		}
 		else {
 			auto name = mainWorld.registry.try_get<Name>(item);
-			auto spotOpt = mainWorld.findStockpileSpotForItem(name->name, x, y);
+			auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(name->name, x, y);
 
 			if (spotOpt) {
 				auto& [stockpile, pos] = *spotOpt;

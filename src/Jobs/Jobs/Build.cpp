@@ -61,8 +61,9 @@ void Build::update() {
 
 			removeBlueprint(loc.first, loc.second);
 			getTileRef(loc.first, loc.second).addObject(loc.first, loc.second, itemName);
+			mainWorld.getColony().updateBorders(loc.first, loc.second);
 
-			mainWorld.getRoomManager().findRoom(loc.first, loc.second);
+			mainWorld.getColony().getRoomManager().findRoom(loc.first, loc.second);
 			const std::pair<int, int> dirs[4] = {
 				{0, 1}, {1, 0}, {-1, 0}, {0, -1}
 			};
@@ -73,7 +74,7 @@ void Build::update() {
 
 				// should be generic floor tag
 				if (mainWorld.objectManager.has(nx, ny, "Stone Floor")) {
-					mainWorld.getRoomManager().findRoom(nx, ny);
+					mainWorld.getColony().getRoomManager().findRoom(nx, ny);
 				}
 			}
 

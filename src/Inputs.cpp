@@ -75,6 +75,8 @@ void processInput(GLFWwindow* window) {
             if (mainWorld.isRendered()) {
                 gameState.placingState.placing = false;
                 handleClickedItem(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+
+				getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Guard Post");
             }
         }
 
@@ -295,7 +297,7 @@ void handleClickedItem(int x, int y) {
         uiManager.addOrRemoveFrame(UI::Gun);
     }
     else if (manager->has(x, y, "Stockpile")) {
-        auto s = mainWorld.atStockpile(x, y);
+        auto s = mainWorld.getColony().atStockpile(x, y);
         Game::getInstance().getStockpileUI().updateStockpileUI(*s);
         Game::getInstance().getUIManager().addOrRemoveFrame(UI::Stockpile);
 
@@ -356,7 +358,7 @@ void build(int left, int right, int top, int bottom) {
 
         auto staticObject = ObjectRegistry::getInstance().getStaticComponent<Furniture>(itemName);
         if (staticObject) {
-            auto loc = mainWorld.findUnclaimedItemInAllStockpile(itemName);
+            auto loc = mainWorld.getColony().findUnclaimedItemInAllStockpile(itemName, mainWorld.registry);
             if (!loc) {
                 gameState.placingState.placing = false;
                 return;
@@ -428,9 +430,10 @@ void harvest(int left, int right, int top, int bottom) {
             if (manager.has(x, y, "Stockpile")) continue;
             if (objectList.empty()) continue;
 			if (tile.markedForHarvest) continue;
+            if (!mainWorld.getColony().isInsideColony(x, y, 100)) continue;
 
             if (auto* i = registry.try_get<Crop>(topObject)) {
-                if (i->state != CropState::MATURED) continue;
+                if (i->state == CropState::SPROUT) continue;
             }
 
             if (auto* i = registry.try_get<Harvestable>(topObject)) {
@@ -455,7 +458,7 @@ void plant(int left, int right, int top, int bottom) {
         for (int y = top; y <= bottom; y++) {
             if (!manager.has(x, y, "Stockpile")) {
 
-                auto itemLocation = mainWorld.findUnclaimedItemInAllStockpile(Game::getInstance().selectedPlantItem);
+                auto itemLocation = mainWorld.getColony().findUnclaimedItemInAllStockpile(Game::getInstance().selectedPlantItem, mainWorld.registry);
 
                 if (itemLocation) {
 
@@ -482,7 +485,7 @@ void stockpile(int left, int right, int top, int bottom) {
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
             Tile& tile = getTileRef(x, y);
-           if (!tile.walkable || manager.has(x, y, "Stockpile")) {
+            if (!mainWorld.getColony().isInsideColony(x, y, -1) || !tile.walkable || manager.has(x, y, "Stockpile")) {
                 return;
 			}
         }
@@ -503,5 +506,5 @@ void stockpile(int left, int right, int top, int bottom) {
 	int height = std::abs(bottom - top) + 1;
     
     Stockpile stockpile({ locX, locY }, width, height);
-    mainWorld.addStockpile(stockpile);
+    mainWorld.getColony().addStockpile(stockpile);
 }

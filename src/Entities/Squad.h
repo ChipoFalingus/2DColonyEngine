@@ -51,6 +51,8 @@ private:
 
 	float mergeClock = 0.0f;
 
+	std::vector<entt::entity> squads;
+
 	void updateSquadMovement(entt::entity squad, entt::registry& registry);
 	void onIdle(entt::entity squad, entt::registry& registry);
 	void onAttack(entt::entity squad, entt::registry& registry);
@@ -67,18 +69,27 @@ public:
 		auto view = registry.view<SquadController>();
 		std::vector<entt::entity> empty_squads;
 
-		for (auto& i : view) {
-			findTargets(i, registry);
-			updateAveragePosition(i, registry);
+		for (auto entity : view) {
+			auto& controller = registry.get<SquadController>(entity);
+			std::erase_if(controller.members, [&registry](entt::entity e) {
+				auto i = registry.try_get<Health>(e);
+				return !i || i->health <= 0;
+				});
+		}
+
+		for (auto entity : view) {
+			findTargets(entity, registry);
+			updateAveragePosition(entity, registry);
 		}
 		
 		mergeClock += Clock::deltaTime;
-
 		const int radius = 20 * 20;
 
 		if (mergeClock > 1.0f) {
 			mergeClock = 0.0f;
-			std::vector<entt::entity> squads(view.begin(), view.end());
+
+			squads.clear();
+			squads.assign(view.begin(), view.end());
 
 			for (size_t i = 0; i < squads.size(); i++) {
 				for (size_t j = i + 1; j < squads.size(); j++) {
@@ -106,11 +117,6 @@ public:
 			if (controller.members.empty()) {
 				empty_squads.push_back(i);
 			}
-
-			std::erase_if(controller.members, [&registry](entt::entity e) {
-				auto i = registry.try_get<Health>(e);
-				return !i || i->health <= 0;
-				});
 		}
 
 		for (auto& i : empty_squads) {

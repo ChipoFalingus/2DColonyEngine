@@ -180,6 +180,7 @@ std::vector<std::string> lastnames = {
 
 void updateSocialNeeds();
 void chooseIdle(entt::entity entity);
+void updateGuards();
 
 entt::entity spawnVillager(int x, int y) {
 	auto& registry = mainWorld.registry;
@@ -216,6 +217,8 @@ entt::entity spawnVillager(int x, int y) {
 	registry.emplace<CombatComponent>(entity);
 	registry.emplace<Social>(entity);
 	registry.emplace<LightNeed>(entity);
+
+	registry.emplace<OnGuard>(entity);
 
 	auto skillList = getAllSkillTypes();
 	int rand = getRandomInt(0, skillList.size() - 1);
@@ -258,6 +261,7 @@ void VillagerSystem(float deltaTime) {
 	updateTiredness();
 	updateWork();
 	updateAttack();
+	updateGuards();
 	//updateSocialNeeds();
 }
 
@@ -299,15 +303,14 @@ void updateTiredness() {
 
 		if (!ownership || ownership->ownedBed == entt::null) {
 			auto bedLocation = findClosestItemType(pos.x, pos.y, 50, [](entt::entity entity, entt::registry& reg, int x, int y) {
-				auto* bed = reg.try_get<Bed>(entity);
 				auto* claim = reg.try_get<Claimable>(entity);
 				NeedsMoving* needsMoving = reg.try_get<NeedsMoving>(entity);
 
-				return bed && (claim ? !claim->claimed : true) && !needsMoving;
+				return reg.all_of<Bed>(entity) && (claim ? !claim->claimed : true) && !needsMoving;
 				});
 
 			if (bedLocation.has_value()) {
-				auto* room = mainWorld.getRoomManager().getRoomAt(bedLocation->x, bedLocation->y);
+				auto* room = mainWorld.getColony().getRoomManager().getRoomAt(bedLocation->x, bedLocation->y);
 				if (room) {
 					std::cout << "Colonist has claimed room " << room->ID << std::endl;
 					registry.emplace<Ownership>(entity, bedLocation->item, room->ID);
@@ -627,10 +630,29 @@ void chooseIdle(entt::entity entity) {
 		return a.score > b.score;
 		});
 
+	if (jobs.empty()) return;
+
 	jobComponent.proposeJob(jobs[0].job);
 	
 	for (size_t i = 1; i < jobs.size(); i++) {
 		delete jobs[i].job;
+	}
+}
+
+void updateGuards() {
+	auto& registry = mainWorld.registry;
+	auto view = registry.view<OnGuard, JobComponent, Position>();
+
+	for (auto [e, guard, jobComponent, pos] : view.each()) {
+
+		if (jobComponent.currentJob && dynamic_cast<Guard*>(jobComponent.currentJob)) {
+			continue;
+		}
+
+		Job* job = new Guard(e, entt::null, SkillType::None);
+		job->priority = 50;
+
+		jobComponent.proposeJob(job);
 	}
 }
 
@@ -681,13 +703,13 @@ float calculateWorkAbility(entt::entity entity) {
 
 	if (tiredness) {
 
-		if (tiredness->tiredness > 80) {
+		if (tiredness->tiredness > 90) {
 			score -= 0.2f;
 		}
-		if (tiredness->tiredness > 50) {
+		if (tiredness->tiredness > 75) {
 			score -= 0.15f;
 		}
-		if (tiredness->tiredness > 30) {
+		if (tiredness->tiredness > 60) {
 			score -= 0.1f;
 		}
 	}
@@ -707,13 +729,13 @@ float calculateSpeedPenalty(entt::entity entity) {
 
 	if (tiredness) {
 
-		if (tiredness->tiredness > 90) {
+		if (tiredness->tiredness > 95) {
 			score += 0.2f;
 		}
-		else if (tiredness->tiredness > 75) {
+		else if (tiredness->tiredness > 85) {
 			score += 0.15f;
 		}
-		else if (tiredness->tiredness > 60) {
+		else if (tiredness->tiredness > 70) {
 			score += 0.1f;
 		}
 	}

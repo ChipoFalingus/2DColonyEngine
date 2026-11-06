@@ -59,7 +59,7 @@ std::vector<ItemLocation> findIngredientsForJob(const std::unordered_map<std::st
 	for (const auto& [name, quantity] : ingredients) {
 		std::cout << "Finding ingredient: " << name << " x" << quantity << std::endl;
 		for (int i = 0; i < quantity; i++) {
-			auto itemLocation = mainWorld.findUnclaimedItemInAllStockpile(name);
+			auto itemLocation = mainWorld.getColony().findUnclaimedItemInAllStockpile(name, mainWorld.registry);
 			if (!itemLocation) {
 				std::cout << "Ingredient " << name << " not found in any stockpile\n";
 				success = false;

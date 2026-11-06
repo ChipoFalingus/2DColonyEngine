@@ -141,6 +141,13 @@ struct Equipment {
 	entt::entity item;
 };
 
+struct OnGuard {
+	entt::entity guardPost = entt::null;
+
+	float clock = 0.0f;
+	float duration = 0.0f;
+};;
+
 //struct ColonyOwner {
 //	Colony* colony;
 //};

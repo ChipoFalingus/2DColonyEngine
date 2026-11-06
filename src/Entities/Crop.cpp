@@ -1,7 +1,8 @@
 #include "Jobs/Jobs/AddToFurnace.h"
-#include "World/World.h"
 #include "Jobs/JobUtils.h"
+#include "Entities/ItemComponents.h"
 #include "Entities/Crop.h"
+#include "Utility/mathUtils.h"
 
 
 void CropManager::updateCropSystem(float deltaTime) {

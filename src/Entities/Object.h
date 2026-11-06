@@ -250,6 +250,10 @@ public:
 
 				targetWorldRegistry.emplace<Gun>(newEntity, range, damage, cooldown, max_ammo);
 			}
+
+			if (name == "guard_post") {
+				targetWorldRegistry.emplace<GuardPost>(newEntity);
+			}
 		}
 
 		return newEntity;

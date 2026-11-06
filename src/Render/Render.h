@@ -386,14 +386,13 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
             Tile& tile = getTileRef(x, y);
 
             // Tile contents
-            const auto& itemsOnTile = world.objectManager.getObjectsAt(x, y);
+            const auto& itemsOnTile = world.objectManager.getTopEntity(x, y);
 
             bool entityDrawn = false;
 
-            if (!itemsOnTile.empty()) {
-                entt::entity topEntity = itemsOnTile.back();
-                if (registry.valid(topEntity) && renderablePool && renderablePool.contains(topEntity)) {
-                    const auto& renderable = renderablePool.get(topEntity);
+            if (itemsOnTile != entt::null) {
+                if (renderablePool.contains(itemsOnTile)) {
+                    const auto& renderable = renderablePool.get(itemsOnTile);
                     color = renderable.color;
                     string = renderable.character;
                     entityDrawn = true;
@@ -454,7 +453,7 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
             }
 
             if (gameState.debugState.roomView) {
-                if (auto r = mainWorld.getRoomManager().getRoomAt(x, y)) {
+                if (auto r = mainWorld.getColony().getRoomManager().getRoomAt(x, y)) {
                     string = L'R';
                     color = regionColor(r->ID);
 				}
@@ -482,6 +481,18 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                             color = glm::vec3(0.0f, 1.0f, 0.0f);
                         }
                     }
+                }
+            }
+
+            if (gameState.debugState.show_borders) {
+                const auto& b = mainWorld.getColony().getColonyBorders();
+                // Assuming b = {minX, maxX, minY, maxY} (or adjusted for your offset indices)
+                bool isLeftOrRight = (x == b[0] || x == b[1]) && (y >= b[2] && y <= b[3]);
+                bool isTopOrBottom = (y == b[2] || y == b[3]) && (x >= b[0] && x <= b[1]);
+
+                if (isLeftOrRight || isTopOrBottom) {
+                    string = L'B';
+					color = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow for borders
                 }
             }
 

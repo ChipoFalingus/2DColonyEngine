@@ -10,8 +10,11 @@ void Idle::update() {
 
 	if (!initialized) {
 
-		int nx = getRandomInt(pos.x - range, pos.x + range);
-		int ny = getRandomInt(pos.y - range, pos.y + range);
+		auto& borders = mainWorld.getColony().getColonyBorders();
+		auto& center = mainWorld.getColony().getCenter();
+
+		int nx = getRandomInt(center.first + borders[0], center.first + borders[1]);
+		int ny = getRandomInt(center.second + borders[2], center.second + borders[3]);
 
 		if (!getTileRef(nx, ny).walkable) return;
 

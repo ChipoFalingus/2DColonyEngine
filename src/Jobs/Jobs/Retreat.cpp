@@ -44,7 +44,7 @@ void Retreat::update() {
 				score += distFromSelf * 0.05f;
 
 				// rooms
-				if (auto r = mainWorld.getRoomManager().getRoomAt(worldX, worldY)) {
+				if (auto r = mainWorld.getColony().getRoomManager().getRoomAt(worldX, worldY)) {
 					score -= 5.0f;
 				}
 

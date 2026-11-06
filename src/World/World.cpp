@@ -123,7 +123,7 @@ void spawnSquad(int x, int y) {
 // Adds creatures to the world
 void World::addCreatures() {
     int range = 3;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 1; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
 
@@ -160,19 +160,6 @@ void World::addCreatures() {
 
         registry.emplace<JobComponent>(entity, nullptr);
     }
-}
-
-std::vector<entt::entity> World::getAllVillagers() {
-    std::vector<entt::entity> result;
-
-	auto view = registry.view<Villager>();
-
-    for (auto entity : view) {
-        if (registry.any_of<Villager>(entity)) {
-            result.push_back(entity);
-        }
-    }
-    return result;
 }
 
 // Central method to generate the world

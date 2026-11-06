@@ -47,6 +47,7 @@ struct DebugState {
 	bool jobDanger = false;
 	bool showTemp = false;
 	bool showLightLevel = false;
+	bool show_borders = true;
 };
 
 struct GameState {

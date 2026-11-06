@@ -6,6 +6,7 @@ private:
 	bool lookedForBed = false;
 
 	void update();
+	void onInterrupt();
 
 public:
 	Sleep(entt::entity v, entt::entity tool, SkillType skillType)

@@ -20,7 +20,7 @@ void FindFood::update() {
 			mainWorld.registry.remove<Position>(food);
 			mainWorld.objectManager.removeItem(tX, tY, food);
 
-			auto s = mainWorld.atStockpile(tX, tY);
+			auto s = mainWorld.getColony().atStockpile(tX, tY);
 			if (s) {
 				s->removeItem(tX, tY, food);
 			}

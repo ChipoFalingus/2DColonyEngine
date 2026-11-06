@@ -26,7 +26,6 @@ void Plant::update() {
 		y = closestAdj.second;
 
 		if (pos->x == x && pos->y == y) {
-			tile.changeTileType(tileType::SOIL);
 			plantState = Plant::Tilling;
 		}
 		break;
@@ -57,6 +56,8 @@ void Plant::update() {
 
 			auto produce = ObjectRegistry::getInstance().getStaticComponent<Seed>(seed);
 			tile.addObject(locX, locY, produce->produce);
+
+			mainWorld.getColony().updateBorders(locX, locY);
 			state = JobState::Completed;
 		}
 

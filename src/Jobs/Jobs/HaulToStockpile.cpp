@@ -33,7 +33,7 @@ void HaulToStockpile::update() {
 		y = closestAdj.second;
 		if (pos.x == x && pos.y == y) {
 
-			auto* s = mainWorld.atStockpile(toX, toY);
+			auto* s = mainWorld.getColony().atStockpile(toX, toY);
 			if (s) {
 				mainWorld.registry.emplace_or_replace<Position>(itemToMove, toX, toY);
 
@@ -43,14 +43,14 @@ void HaulToStockpile::update() {
 				s->placeItem(itemToMove, toX, toY);
 				mainWorld.registry.remove<NeedsMoving>(itemToMove);
 
-				// add to object mananger
+				// add to object manager
 				mainWorld.objectManager.addObject(toX, toY, itemToMove);
 
 				state = JobState::Completed;
 			}
 			else {
 				auto name = mainWorld.registry.try_get<Name>(itemToMove);
-				auto spotOpt = mainWorld.findStockpileSpotForItem(name->name, x, y);
+				auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(name->name, x, y);
 
 				if (spotOpt) {
 					auto& [stockpile, pos] = *spotOpt;

@@ -214,7 +214,7 @@ void updateNeedsMoving(entt::registry& registry, ObjectManager& objectManager, f
     for (auto [entity, pos, moving] : view.each()) {
         if (moving.foundSpot) continue;
         auto& name = registry.get<Name>(entity).name;
-        auto spotOpt = mainWorld.findStockpileSpotForItem(name, pos.x, pos.y);
+        auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(name, pos.x, pos.y);
 
         if (spotOpt) {
             auto& [stockpile, stockpilePos] = *spotOpt;

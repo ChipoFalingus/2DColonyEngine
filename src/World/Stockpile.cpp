@@ -28,12 +28,12 @@ bool Stockpile::atStockpile(int x, int y) const {
 
 // Checks if the tile at the given coordinates is claimed
 bool Stockpile::claimed(int x, int y) const {
-    return claimedTiles.find({ x, y }) != claimedTiles.end();
+    return claimedTiles.find(getKey(x, y)) != claimedTiles.end();
 }
 
 // Unclaims the tile at the given coordinates, allowing it to be used again
 void Stockpile::releaseTile(int x, int y) {
-    claimedTiles.erase({ x, y });
+    claimedTiles.erase(getKey(x, y));
 }
 
 // Adds an item to the given location. The tile is claimed if it isn't already, and the item is added to the stockpile's item list
@@ -41,7 +41,7 @@ void Stockpile::addItem(entt::entity obj, int x, int y) {
     if (obj == entt::null) {
         return;
     }
-    claimedTiles.insert({ x, y });
+    claimedTiles.insert(getKey(x, y));
 }
 
 void Stockpile::placeItem(entt::entity obj, int x, int y) {
@@ -67,7 +67,7 @@ void Stockpile::removeItem(int x, int y, entt::entity item) {
     );
 
     tileItems.erase(it);
-    claimedTiles.erase({ x, y });
+    claimedTiles.erase(getKey(x, y));
 }
 
 // Returns the item at a given location, if it exists
@@ -98,7 +98,7 @@ std::optional<std::pair<int, int>> Stockpile::findClosestOpenSpot(int xPos, int 
         for (int y = location.second; y < location.second + height; y++) {
             int dx = std::abs(xPos - x);
             int dy = std::abs(yPos - y);
-            int dist = dx * dx + dy * dy;
+            int dist = dx + dy;
 
             if (dist < bestDist && !claimed(x, y)) {
                 bestDist = dist;

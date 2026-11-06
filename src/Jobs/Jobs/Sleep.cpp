@@ -33,3 +33,10 @@ void Sleep::update() {
 		state = JobState::Completed;
 	}
 }
+
+void Sleep::onInterrupt() {
+	auto& pos = mainWorld.registry.get<Position>(villager);
+	Tile& tile = getTileRef(pos.x, pos.y - 1);
+	tile.setAnimType(NONE);
+	state = JobState::Completed;
+}

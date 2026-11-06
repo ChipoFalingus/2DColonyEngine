@@ -18,7 +18,7 @@ void BuildFurniture::update() {
 			mainWorld.registry.remove<Position>(item);
 			mainWorld.objectManager.removeItem(fX, fY, item);
 
-			auto s = mainWorld.atStockpile(fX, fY);
+			auto s = mainWorld.getColony().atStockpile(fX, fY);
 			if (s) {
 				s->removeItem(fX, fY, item);
 			}

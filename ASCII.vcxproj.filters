@@ -141,6 +141,12 @@
     <ClCompile Include="src\Entities\Movement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\World\Colony.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Guard.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="FlingGames.txt">
@@ -350,6 +356,12 @@
     </ClInclude>
     <ClInclude Include="src\Entities\Movement.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\World\Colony.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Guard.h">
+      <Filter>Header Files\Jobs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
