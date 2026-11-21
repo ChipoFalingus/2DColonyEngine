@@ -1,9 +1,25 @@
 ﻿{
     "objects": [
         {
+            "name": "WHITE_BOX",
+            "visual": {
+                "character": 9632,
+                "color": [ 255, 255, 255 ]
+            },
+            "drop_table": {
+                "drop": [
+                    {
+                        "item": "WHITE BOX",
+                        "odds": 1.0
+                    }
+                ],
+                "skill": "None"
+            }
+        },
+        {
             "name": "Guard Post",
             "visual": {
-                "character": "^",
+                "character": 8593,
                 "color": [ 200, 200, 200 ]
             },
             "recipe": {
@@ -139,10 +155,6 @@
                         "color": [ 100, 65, 23 ]
                     }
                 ]
-            },
-            "produce": {
-                "name": "Oak Tree",
-                "produce_time": 1000.0
             }
         },
         {
@@ -348,7 +360,7 @@
                         "quantity": 1
                     }
                 ],
-                "quantity": 1,
+                "quantity": 2,
                 "craft_time": 1.0,
                 "required_bench": "Carpentry Bench"
             }
@@ -1140,11 +1152,10 @@
                 "required_bench": "None"
             }
         },
-
         {
             "name": "Pistol",
             "visual": {
-                "character": "⌐",
+                "character": 8976,
                 "color": [ 135, 135, 135 ]
             },
             "recipe": {
@@ -1162,7 +1173,8 @@
                 "max_ammo": 7,
                 "damage": 10,
                 "range": 10.0,
-                "attack_cooldown": 0.7
+                "attack_cooldown": 0.7,
+                "takes": "Pistol"
             }
         },
         {
@@ -1203,6 +1215,10 @@
                 "quantity": 1,
                 "craft_time": 1.0,
                 "required_bench": "Gun Bench"
+            },
+            "magazine": {
+                "type": "Pistol",
+                "capacity": 7
             }
         },
         {
@@ -1226,7 +1242,8 @@
                 "max_ammo": 30,
                 "damage": 15,
                 "range": 20.0,
-                "attack_cooldown": 0.1
+                "attack_cooldown": 0.1,
+                "takes": "Assault_Rifle"
             }
         },
         {
@@ -1250,7 +1267,7 @@
         {
             "name": "AR Magazine",
             "visual": {
-                "character": "║",
+                "character": 9553,
                 "color": [ 100, 100, 100 ]
             },
             "recipe": {
@@ -1262,6 +1279,53 @@
                     {
                         "item": "Raw Iron Chunk",
                         "quantity": 3
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 1.0,
+                "required_bench": "Gun Bench"
+            },
+            "magazine": {
+                "type": "Assault_Rifle",
+                "capacity": 30
+            }
+        },
+        {
+            "name": "Shotgun",
+            "visual": {
+                "character": "[",
+                "color": [ 135, 135, 135 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron Chunk",
+                        "quantity": 3
+                    }
+                ],
+                "quantity": 1,
+                "craft_time": 35.0,
+                "required_bench": "Gun Bench"
+            },
+            "gun": {
+                "max_ammo": 7,
+                "damage": 10,
+                "range": 10.0,
+                "attack_cooldown": 0.7,
+                "takes":  "Shotgun"
+            }
+        },
+        {
+            "name": "Shotgun Shell",
+            "visual": {
+                "character": "|",
+                "color": [ 255, 0, 0 ]
+            },
+            "recipe": {
+                "ingredients": [
+                    {
+                        "item": "Raw Iron Chunk",
+                        "quantity": 1
                     }
                 ],
                 "quantity": 1,

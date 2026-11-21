@@ -23,5 +23,6 @@ enum class UI {
     Villager,
     Harvest,
     Plant,
-    Info
+    Info,
+    Item
 };

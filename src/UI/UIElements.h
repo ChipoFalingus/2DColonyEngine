@@ -52,6 +52,8 @@ protected:
 	int xOffset, yOffset;
 	int xPos, yPos;
 	Anchor anchor;
+
+	bool isVisible = true;
 public:
 	virtual ~UIElement() = default;
 	virtual void draw(std::vector<std::vector<wchar_t>>& buffer) = 0;
@@ -66,6 +68,12 @@ public:
 		this->lengthX = lengthX;
 		this->lengthY = lengthY;
 	}
+
+	void setVisibility(bool visible) {
+		isVisible = visible;
+	}
+
+	bool getVisibility() { return isVisible; }
 
 	int getXOffset() const { return xOffset; }
 	int getYOffset() const { return yOffset; }
@@ -165,6 +173,7 @@ public:
 	
 	void draw(std::vector<std::vector<wchar_t>>& UI) {
 		for (auto& i : elements) {
+			if (!i->getVisibility()) continue;
 			i->draw(UI);
 		}
 	}
@@ -414,6 +423,8 @@ private:
 
 	bool wasClickedLastFrame = false;
 
+	bool isActive = true;
+
 	std::function<void()> onClick;
 	std::function<void()> onHover;
 
@@ -438,6 +449,10 @@ public:
 		return (mouseX >= xPos && mouseX < xPos + staticButton[0].size()
 			&& mouseY >= yPos && mouseY < yPos + staticButton.size());
 		
+	}
+
+	void setActive(bool active) {
+		isActive = active;
 	}
 
 	void draw(std::vector<std::vector<wchar_t>>& UI) override {
@@ -468,6 +483,7 @@ public:
 
 
 	void update(int mouseX, int mouseY, bool mouseDown) {
+		if (!isActive) return;
 		isHovered = checkHover(mouseX, mouseY);
 
 		bool justPressed = mouseDown && !wasClickedLastFrame;

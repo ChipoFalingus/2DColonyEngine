@@ -57,7 +57,6 @@ void Plant::update() {
 			auto produce = ObjectRegistry::getInstance().getStaticComponent<Seed>(seed);
 			tile.addObject(locX, locY, produce->produce);
 
-			mainWorld.getColony().updateBorders(locX, locY);
 			state = JobState::Completed;
 		}
 

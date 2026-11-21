@@ -24,6 +24,7 @@
 #include "Entities/Furnace.h"
 #include "Entities/Crop.h"
 #include "Entities/Movement.h"
+#include "Entities/Inventory.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -75,17 +76,17 @@ void updateProduceSystem(entt::registry& registry, ObjectManager& objectManager,
     for (auto [entity, pos, produce] : view.each()) {
 
         produce.produceClock += deltaTime;
-        if (produce.produceClock >= produce.productionTime) {
-            for (auto& dir : dirs) {
+        if (produce.produceClock < produce.productionTime) continue;
 
-                int newX = pos.x + dir.first;
-                int newY = pos.y + dir.second;
+        for (auto& dir : dirs) {
 
-                if (objectManager.isEmpty(newX, newY) && getTileRef(newX, newY).walkable) {
-                    getTileRef(newX, newY).addGroundObject(newX, newY, produce.produce);
-                    produce.produceClock = 0.0f;
-                    break;
-                }
+            int newX = pos.x + dir.first;
+            int newY = pos.y + dir.second;
+
+            if (objectManager.isEmpty(newX, newY) && getTileRef(newX, newY).walkable) {
+                getTileRef(newX, newY).addGroundObject(newX, newY, produce.produce);
+                produce.produceClock = 0.0f;
+                break;
             }
         }
     }
@@ -108,6 +109,14 @@ void updateHealth(entt::registry& registry, ObjectManager& objectManager, float 
             }
 			job_component->clearInterruptedJobs();
         }
+
+        if (auto structure = registry.try_get<Structure>(entity)) {
+            for (auto& [dx, dy] : dirs) {
+                auto& pos = registry.get<Position>(entity);
+                mainWorld.getColony().getRoomManager().removeRoomAt(pos.x + dx, pos.y + dy);
+            }
+        }
+        mainWorld.getColony().resizeRetreatMap();
 
         auto& pos = registry.get<Position>(entity);
         getTileRef(pos.x, pos.y).removeObject(pos.x, pos.y, entity);
@@ -190,22 +199,6 @@ void updateSpawners(entt::registry& registry, ObjectManager& objectManager, floa
     }
 }
 
-void updateGuns(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
-    auto view = registry.view<Gun>();
-    for (auto [entity, gun] : view.each()) {
-
-        if (gun.reloading) {
-            gun.reload_clock += deltaTime;
-
-            if (gun.reload_clock >= gun.reload_time) {
-                int neededAmmo = gun.ammo_capacity - gun.current_ammo;
-                gun.current_ammo = neededAmmo;
-                gun.reloading = false;
-            }
-        }
-    }
-}
-
 void updateNeedsMoving(entt::registry& registry, ObjectManager& objectManager, float deltaTime) {
 
     // Stockpile item moving
@@ -213,8 +206,7 @@ void updateNeedsMoving(entt::registry& registry, ObjectManager& objectManager, f
 
     for (auto [entity, pos, moving] : view.each()) {
         if (moving.foundSpot) continue;
-        auto& name = registry.get<Name>(entity).name;
-        auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(name, pos.x, pos.y);
+        auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(pos.x, pos.y);
 
         if (spotOpt) {
             auto& [stockpile, stockpilePos] = *spotOpt;
@@ -423,6 +415,8 @@ int main() {
             VillagerSystem(dt);
             JobManager::update();
 
+
+            updateInventories(mainWorld.registry, dt);
         
         }
 

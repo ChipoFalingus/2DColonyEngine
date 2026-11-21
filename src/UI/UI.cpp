@@ -4,13 +4,15 @@
 #include "Jobs/JobType.h"
 #include "Jobs/Job.h"
 #include "Jobs/Jobs.h"
+#include "Entities/Happiness.h"
+#include "Entities/Inventory.h"
 
 #include <thread>
 #include <GLFW/glfw3.h>
 
 
 // There's probably a better way to format this but its miles better than the nested stuff i had before
-
+Button& createTabButton(Frame& frame, int x, int y, const std::wstring& label, Anchor anchor);
 std::unordered_map<std::string, int> getFurnitureList();
 
 void setupBuildButton(auto& button, std::string item, PlacementMode mode = PlacementMode::SQUARE) {
@@ -429,7 +431,7 @@ void InGameUI::update(std::string fps) {
         }
         tileType->changeText(std::wstring(type.begin(), type.end()));
 
-        std::wstring lightLevel = std::wstring(L"Altitude: " + std::to_wstring(getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).altitude));
+        std::wstring lightLevel = std::wstring(L"Retreat value: " + std::to_wstring(mainWorld.getColony().getRetreatValue(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)));
 
         waterLevel->changeText(lightLevel);
     }
@@ -1098,36 +1100,52 @@ VillagerInfoUI getVillagerInfoFrame() {
     auto frame = std::make_unique<Frame>();
     frame->setType(ui.type);
 
-    ui.infoPanel = &frame->addElement<Panel>(0, 10, 19, 19, Anchor::TOP_LEFT);
+    ui.infoPanel = &frame->addElement<Panel>(20, 10, 41, 24, Anchor::TOP_LEFT);
 
-    ui.text = &ui.infoPanel->addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
+    ui.text = &ui.infoPanel->addElement<Text>(2, 2, L"", Anchor::TOP_LEFT);
 	ui.job = &ui.infoPanel->addElement<Text>(1, 2, L"", Anchor::TOP_LEFT);
     ui.inventory = &ui.infoPanel->addElement<Text>(1, 3, L"", Anchor::TOP_LEFT);
-    ui.health = &ui.infoPanel->addElement<Text>(1, 4, L"", Anchor::TOP_LEFT);
-    ui.hunger = &ui.infoPanel->addElement<Text>(1, 5, L"", Anchor::TOP_LEFT);
+    ui.health = &ui.infoPanel->addElement<Text>(1, 9, L"", Anchor::TOP_LEFT);
+    ui.hunger = &ui.infoPanel->addElement<Text>(1, 10, L"", Anchor::TOP_LEFT);
 
-	ui.skills = &ui.infoPanel->addElement<Text>(1, 6, L"", Anchor::TOP_LEFT);
+	ui.skills = &ui.infoPanel->addElement<Text>(1, 11, L"", Anchor::TOP_LEFT);
 
     ui.log = &ui.infoPanel->addElement<Text>(20, 1, L"", Anchor::TOP_LEFT);
 
-    //ui.equipmentButton = &createButton(*frame, 10, 10, L" Unequip ", Anchor::TOP_LEFT);
+	ui.b_skills = &createTabButton(*frame, 22, 14, L"Skills", Anchor::TOP_LEFT);
+    ui.b_options = &createTabButton(*frame, 33, 14, L"Options", Anchor::TOP_LEFT);
+    ui.b_equipment = &createTabButton(*frame, 45, 14, L"Equipment", Anchor::TOP_LEFT);
+
+    ui.t_equipment = &ui.infoPanel->addElement<Text>(2, 7, L"", Anchor::TOP_LEFT);
+
+	ui.exit = &createButton(*frame, 57, 11, L"X", Anchor::TOP_LEFT);
+
+    ui.b_unequip = &createButton(*frame, 22, 16, L"Unequip", Anchor::TOP_LEFT);
+
+    ui.exit->setClickFunction([]() {
+        auto& uiManager = Game::getInstance().getUIManager();
+		Game::getInstance().v_villager = entt::null;
+        uiManager.remove(UI::Villager);
+		});
 
     Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
     return ui;
 }
 
-void VillagerInfoUI::update(entt::entity entity) {
-    if (entity == entt::null) return;
+void VillagerInfoUI::update(entt::entity villager) {
+    if (villager == entt::null) return;
 
     auto& registry = mainWorld.registry;
-    if (!registry.valid(entity)) return;
+	auto& colony = mainWorld.getColony();
 
-    auto name = registry.try_get<Name>(entity);
+    if (!registry.valid(villager)) return;
+
+    auto name = registry.try_get<Name>(villager);
     std::string str = name ? name->name : "Unknown";
     text->changeText(std::wstring(str.begin(), str.end()));
 
 
-    auto skill = registry.try_get<Skills>(entity);
+    /*auto skill = registry.try_get<Skills>(villager);
 
     std::string skillString = "Skills:|";
     if (skill) {
@@ -1136,23 +1154,72 @@ void VillagerInfoUI::update(entt::entity entity) {
         }
     }
 
+    skills->changeText(std::wstring(skillString.begin(), skillString.end()));*/
+
+    auto& inventory = registry.get<Inventory>(villager);
+
+    std::string skillString = "Inventory:|";
+    for (auto& i : inventory.items) {
+        if (auto* j = registry.try_get<Stack>(i)) {
+            auto& name = registry.get<Name>(i);
+            skillString += "x" + std::to_string(j->stack_amount) + " " + name.name + "|";
+        }
+    }
     skills->changeText(std::wstring(skillString.begin(), skillString.end()));
 
-    std::string activity = std::to_string(registry.get<HungerNeed>(entity).hunger);
+    std::string activity = std::to_string(registry.get<Happiness>(villager).current_happiness);
     hunger->changeText(std::wstring(activity.begin(), activity.end()));
 
-    /*equipmentButton->setClickFunction([&]() {
-        auto* equipment = registry.try_get<Equipment>(entity);
-        if (!equipment || !registry.valid(equipment->item)) return;
+    auto weapon = hasWeapon(registry, villager);
+    if (weapon != entt::null) {
+        auto equipment_name = registry.get<Name>(weapon).name;
+        t_equipment->changeText(std::wstring(equipment_name.begin(), equipment_name.end()));
+        b_unequip->setPosition(25 + equipment_name.size(), 16);
 
-        entt::entity itemEntity = equipment->item;
-        equipment->item = entt::null;
+        auto& cameraState = Game::getInstance().gameState.cameraState;
+        b_unequip->setAnchorPosition(cameraState.xFrustum, cameraState.yFrustum);
 
-        auto& pos = registry.get<Position>(entity);
-        registry.emplace_or_replace<Position>(itemEntity, pos.x, pos.y);
+        b_unequip->setVisibility(true);
+        b_unequip->setActive(true);
+    }
+    else {
+        b_unequip->setVisibility(false);
+        b_unequip->setActive(false);
 
-        registry.emplace_or_replace<NeedsMoving>(equipment->item);
-        });*/
+        t_equipment->changeText(L"No Weapon Equipped");
+    }
+
+    b_unequip->setClickFunction([&registry, &colony, villager]() {
+        if (!registry.all_of<JobComponent>(villager)) {
+            std::cout << "Job Component not found" << std::endl;
+            return;
+        }
+
+        entt::entity equipment = hasWeapon(registry, villager);
+        auto& jobComponent = registry.get<JobComponent>(villager);
+        auto& pos = registry.get<Position>(villager);
+
+        auto spotOpt = colony.findStockpileSpotForItem(pos.x, pos.y);
+
+        if (spotOpt) {
+            auto& [stockpile, stockpilePos] = *spotOpt;
+            stockpile->addItem(equipment, stockpilePos.first, stockpilePos.second);
+
+            Job* job = new DropEquipment(villager, entt::null, SkillType::None, stockpilePos.first, stockpilePos.second, equipment);
+            job->priority = 25;
+            jobComponent.proposeJob(job);
+
+            std::cout << stockpilePos.first << ", " << stockpilePos.second << std::endl;
+        }
+        });
+
+    b_skills->setClickFunction([&]() {
+        if (!registry.all_of<OnGuard>(villager)) {
+            registry.emplace<OnGuard>(villager);
+        } else {
+			registry.remove<OnGuard>(villager);
+        }
+        });
 }
 
 HarvestUI getHarvestFrame() {
@@ -1284,6 +1351,41 @@ void InfoUI::configureInfoFrame(std::string obj) {
     ingredients->setAnchorPosition(xFrustum, yFrustum);
 }
 
+ItemUI getItemFrame() {
+    ItemUI ui;
+    auto frame = std::make_unique<Frame>();
+    frame->setType(ui.type);
+
+    ui.panel = &frame->addElement<Panel>(10, 10, 20, 20, Anchor::TOP_LEFT);
+    ui.description = &ui.panel->addElement<Text>(1, 1, L"", Anchor::TOP_LEFT);
+
+    Game::getInstance().getUIManager().addFrame(std::move(frame), ui.type);
+    return ui;
+}
+
+void ItemUI::configureItemFrame(entt::registry& registry, entt::entity item) {
+    auto& name = registry.get<Name>(item).name;
+
+    std::wstring desc = std::wstring(name.begin(), name.end());
+
+    auto& pos = registry.get<Position>(item);
+    desc += std::format(L"|Located at {}, {}", pos.x, pos.y);
+
+    if (auto* h = registry.try_get<Health>(item)) desc += L"||Health: " + h->health;
+
+    if (auto* c = registry.try_get<Crop>(item)) {
+        desc += L"|| Im a crop :DD";
+    }
+
+    if (auto* n = registry.try_get<Nutritional>(item)) {
+        desc += L"||Nutritional Value: " + n->nutrition;
+    }
+
+    description->changeText(desc);
+
+}
+
+
 // Helpers from here down
 Button& createButton(Frame& frame, int x, int y, const std::wstring& label, Anchor anchor) {
     std::wstring padded = L"" + label + L"";
@@ -1302,6 +1404,25 @@ Button& createButton(Frame& frame, int x, int y, const std::wstring& label, Anch
         L"╔" + horizontalBold + L"╗",
         L"║" + padded + L"║",
         L"╚" + horizontalBold + L"╝"
+    };
+
+    return frame.addElement<Button>(x, y, normal, hover, hover, anchor);
+}
+
+Button& createTabButton(Frame& frame, int x, int y, const std::wstring& label, Anchor anchor) {
+    std::wstring padded = L"" + label + L"";
+    size_t width = padded.size();
+
+    std::wstring horizontal(width, L'-');
+    auto normal = std::vector<std::wstring>{
+        L" /" + horizontal + L"\\ ",
+        L"/ " + padded + L" \\",
+    };
+
+    std::wstring horizontalBold(width, L'=');
+    auto hover = std::vector<std::wstring>{
+        L" /" + horizontalBold + L"\\ ",
+        L"/ " + padded + L" \\ ",
     };
 
     return frame.addElement<Button>(x, y, normal, hover, hover, anchor);

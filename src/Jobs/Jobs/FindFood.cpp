@@ -1,6 +1,7 @@
 #include "Jobs/Jobs/FindFood.h"
 #include "World/World.h"
 #include "Jobs/JobUtils.h"
+#include "Entities/Happiness.h"
 
 void FindFood::update() {
 
@@ -82,6 +83,9 @@ void FindFood::update() {
 				if (auto i = mainWorld.registry.try_get<Nutritional>(food)) {
 					auto& hunger = mainWorld.registry.get<HungerNeed>(villager).hunger;
 					hunger -= i->nutrition;
+
+					auto& happiness = mainWorld.registry.get<Happiness>(villager);
+					addThought({ "ate", "Ate some food", 10, 60.0f }, happiness.active_thoughts);
 				}
 
 				if (place.has_value()) {

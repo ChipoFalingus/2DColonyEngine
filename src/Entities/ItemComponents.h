@@ -78,25 +78,6 @@ struct LightEmitter {
 	bool addedToLightMap = false;
 };
 
-struct Gun {
-	float range;
-	int damage;
-	float fire_rate;
-	int ammo_capacity;
-
-	float reload_time;
-	float fire_clock = 0.0f;
-	float reload_clock = 0.0f;
-	int current_ammo = 40000;
-
-	bool reloading = false;
-
-	bool isEmpty() const { return current_ammo <= 0; }
-	bool canFire() const { return current_ammo > 0 && !reloading; }
-
-	void shoot() { current_ammo--; }
-};
-
 struct Craftable {
 	std::unordered_map<std::string, int> ingredients;
 	std::string benchRequired;
@@ -133,6 +114,7 @@ struct Structure {
 struct BlocksTile {};
 
 struct Bed {};
+struct Floor{};
 
 struct BlueprintTag {};
 
@@ -140,6 +122,8 @@ struct BlueprintTag {};
 struct NeedsMoving {
 	bool foundSpot = false;
 };
+
+struct PendingDrop {};
 
 struct Equipped {};
 
@@ -150,3 +134,5 @@ struct BelongsTo {
 struct GuardPost {
 	bool active = false;
 };
+
+struct Desconstructable {};

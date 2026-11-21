@@ -24,8 +24,8 @@ public:
     [[nodiscard]] int getWidth() const { return width; }
     [[nodiscard]] int getHeight() const { return height; }
 
-    std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> getItems() const;
-    std::unordered_map<std::string, int> getItemCounts();
+    [[nodiscard]] std::unordered_map<std::pair<int, int>, std::vector<entt::entity>, pair_hash> getItems() const;
+    [[nodiscard]] std::unordered_map<std::string, int> getItemCounts();
 
     [[nodiscard]] bool atStockpile(int x, int y) const;
     [[nodiscard]] bool claimed(int x, int y) const;

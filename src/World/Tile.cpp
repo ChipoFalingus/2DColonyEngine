@@ -296,7 +296,7 @@ void Tile::getTile(int x, int y) {
                 if (r < 0.1f) {
                     addRandomCropAttributes(x, y, "Oak Tree");
                 }
-                else if (r < 0.11f) {
+                else if (r < 0.103f) {
                     addRandomCropAttributes(x, y, "Apple Tree");
                 }
             }
@@ -363,6 +363,19 @@ void Tile::getTile(int x, int y) {
         if (x < radius && x > -radius && y < radius && y > -radius) {
             addObject_Clear(x, y, "Stone Floor");
         }*/
+
+        if (x == 0 && y == 0) {
+            addObject(x, y, "Assault Rifle", true);
+            addObject(x, y, "AR Magazine", true);
+            addObject(x, y, "AR Magazine", true);
+            addObject(x, y, "AR Magazine", true);
+            addObject(x, y, "AR Magazine", true);
+            addObject(x, y, "AR Magazine", true);
+            addObject(x, y, "AR Magazine", true);
+        }
+        if (x == 0 && y == 10) {
+            addObject(x, y, "Guard Post");
+        }
     }
 
     auto display = getTileDisplay(type);

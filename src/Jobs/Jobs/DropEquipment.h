@@ -4,10 +4,11 @@
 class DropEquipment : public Job {
 private:
 
-	entt::entity item;
-	int dropX, dropY;
+	entt::entity item{ entt::null };
+	int dropX{ 0 };
+	int dropY{ 0 };
 
-	bool init = false;
+	bool init{ false };
 
 	void update();
 

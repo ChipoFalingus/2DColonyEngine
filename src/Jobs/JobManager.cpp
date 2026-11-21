@@ -9,6 +9,7 @@
 #include "World/World.h"
 #include "Utility/ItemUtils.h"
 #include "Jobs/JobUtils.h"
+#include "Entities/Movement.h"
 
 std::vector<Job*> JobManager::JobList;
 
@@ -66,8 +67,10 @@ void JobManager::assignJobs() {
 		auto villager = registry.try_get<JobComponent>(bid.villager);
 
 		if (villager->willAccept(bid.job)) {
+			registry.get<Movable>(bid.villager).walk_status = WalkStatus::Working;
 			bid.job->villager = bid.villager;
 			villager->proposeJob(bid.job);
+			bid.job->onAssignment(bid.villager);
 			assignedVillagers.insert(bid.villager);
 		}
 	}
@@ -88,6 +91,18 @@ void JobManager::update() {
 		if (!job) {
 			i++;
 			continue;
+		}
+
+		if (job->state == JobState::Waiting) {
+			auto jobComponent = mainWorld.registry.try_get<JobComponent>(job->villager);
+			if (!jobComponent) {
+				job->villager = entt::null;
+			}
+			else if (jobComponent->currentJob == job) {
+				jobComponent->currentJob = nullptr;
+			}
+
+			job->onWaiting();
 		}
 
 		if (job->state == JobState::Completed || job->state == JobState::Failed) {

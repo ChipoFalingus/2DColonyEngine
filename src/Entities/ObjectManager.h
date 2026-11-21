@@ -139,7 +139,7 @@ public:
 		auto it = m_grid[getIndex(x, y)].getEntities();
         if (it.empty()) return false; 
         for (auto entity : it) {
-            if (registry.try_get<T>(entity)) {
+            if (registry.any_of<T>(entity)) {
                 return true;
             }
         }

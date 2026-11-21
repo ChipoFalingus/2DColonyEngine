@@ -13,6 +13,7 @@
 
 #include "Entities/Furnace.h"
 #include "Entities/Crop.h"
+#include "Entities/Gun.h"
 
 using json = nlohmann::json;
 
@@ -248,7 +249,16 @@ public:
 				int damage = data.at("damage").get<int>();
 				int max_ammo = data.at("max_ammo").get<int>();
 
-				targetWorldRegistry.emplace<Gun>(newEntity, range, damage, cooldown, max_ammo);
+				std::string type = data.at("takes").get<std::string>();
+
+				targetWorldRegistry.emplace<Gun>(newEntity, range, damage, cooldown, str_to_ammo_type(type));
+			}
+
+			if (name == "magazine") {
+				std::string type = data.at("type").get<std::string>();
+				int capacity = data.at("capacity").get<int>();
+
+				targetWorldRegistry.emplace<Magazine>(newEntity, str_to_ammo_type(type), capacity, capacity);
 			}
 
 			if (name == "guard_post") {

@@ -34,8 +34,9 @@ struct Job {
 	virtual ~Job() = default;
 
 	virtual void update() {}
+	virtual void onAssignment(entt::entity villager) {}
 	virtual void onInterrupt() {}
-	//virtual void waitingUpdate() {}
+	virtual void onWaiting() {}
 	//virtual void onFail() {}
 };
 
@@ -59,12 +60,3 @@ public:
 	static void assignJobs();
 	static void update();
 };
-
-//class JobSpatial {
-//private:
-//	std::unordered_map<std::pair<int, int>, Job*, pair_hash> jobLocations;
-//
-//public:
-//	
-//
-//};

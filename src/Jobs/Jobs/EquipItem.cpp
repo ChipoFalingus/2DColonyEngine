@@ -1,6 +1,7 @@
 #include "Jobs/Jobs/EquipItem.h"
 #include "World/World.h"
 #include "Jobs/JobUtils.h"
+#include "Entities/Inventory.h"
 
 void EquipItem::update() {
 
@@ -13,18 +14,23 @@ void EquipItem::update() {
 	y = adj.second;
 
 	if (pos.x == x && pos.y == y) {
-		mainWorld.registry.emplace<Equipment>(villager, item);
-
-		mainWorld.objectManager.removeItem(itemPos.x, itemPos.y, item);
-		if (mainWorld.registry.any_of<Position>(item)) {
-			mainWorld.registry.remove<Position>(item);
-		}
-
 		if (auto* s = mainWorld.getColony().atStockpile(itemPos.x, itemPos.y)) {
 			s->removeItem(itemPos.x, itemPos.y, item);
 		}
 
-		std::cout << "Villager " << int(villager) << " equipped item " << int(item) << std::endl;
+		//mainWorld.registry.emplace<Equipment>(villager, item);
+
+		auto& inventory = mainWorld.registry.get<Inventory>(villager);
+
+		if (!inventory.add_to_inventory(item, mainWorld.registry)) {
+			state = JobState::Completed;
+			return;
+		}
+
+		mainWorld.objectManager.removeItem(itemPos.x, itemPos.y, item);
+		mainWorld.registry.remove<Position>(item);
+
+		std::cout << "Villager " << int(villager) << " added item " << int(item) << " to inventory" << std::endl;
 		state = JobState::Completed;
 	}
 }

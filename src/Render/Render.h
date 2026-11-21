@@ -404,6 +404,14 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
                 color = tile.color;
             }
 
+            entt::entity below = world.objectManager.getTopEntity(x, y + 1);
+            if (below != entt::null) {
+                if (auto* icon = registry.try_get<Icon>(below)) {
+                    string = icon->icon;
+                    color = glm::vec3(1.0f, 0.0f, 0.0f);
+                }
+            }
+
             if (tile.anim.type != animType::NONE) applyAnimation(tile, color, string);
 
             if (gameState.placingState.placing) {
@@ -486,7 +494,6 @@ void drawMap(Shader& shader, const Settings& settings, World& world) {
 
             if (gameState.debugState.show_borders) {
                 const auto& b = mainWorld.getColony().getColonyBorders();
-                // Assuming b = {minX, maxX, minY, maxY} (or adjusted for your offset indices)
                 bool isLeftOrRight = (x == b[0] || x == b[1]) && (y >= b[2] && y <= b[3]);
                 bool isTopOrBottom = (y == b[2] || y == b[3]) && (x >= b[0] && x <= b[1]);
 

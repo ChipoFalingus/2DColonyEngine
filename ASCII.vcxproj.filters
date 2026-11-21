@@ -84,12 +84,6 @@
     <ClCompile Include="src\Jobs\Jobs\HaulToStockpile.cpp">
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
-    <ClCompile Include="src\Jobs\Jobs\Retreat.cpp">
-      <Filter>Header Files\Jobs</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Jobs\Jobs\Attack.cpp">
-      <Filter>Header Files\Jobs</Filter>
-    </ClCompile>
     <ClCompile Include="src\Jobs\Jobs\Sleep.cpp">
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
@@ -123,9 +117,6 @@
     <ClCompile Include="src\Jobs\Jobs\EquipItem.cpp">
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
-    <ClCompile Include="src\Jobs\Jobs\DropEquipment.cpp">
-      <Filter>Header Files\Jobs</Filter>
-    </ClCompile>
     <ClCompile Include="src\Jobs\Jobs\AddToFurnace.cpp">
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
@@ -145,6 +136,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Jobs\Jobs\Guard.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\DropEquipment.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Happiness.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Combat.cpp">
+      <Filter>Header Files\Jobs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Inventory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jobs\Jobs\Deconstruct.cpp">
       <Filter>Header Files\Jobs</Filter>
     </ClCompile>
   </ItemGroup>
@@ -297,12 +303,6 @@
     <ClInclude Include="src\Jobs\Jobs\HaulToStockpile.h">
       <Filter>Header Files\Jobs</Filter>
     </ClInclude>
-    <ClInclude Include="src\Jobs\Jobs\Retreat.h">
-      <Filter>Header Files\Jobs</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Jobs\Jobs\Attack.h">
-      <Filter>Header Files\Jobs</Filter>
-    </ClInclude>
     <ClInclude Include="src\Jobs\Jobs\Sleep.h">
       <Filter>Header Files\Jobs</Filter>
     </ClInclude>
@@ -333,16 +333,10 @@
     <ClInclude Include="src\Jobs\JobUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Jobs\Jobs\Harvest.h">
-      <Filter>Header Files\Jobs</Filter>
-    </ClInclude>
     <ClInclude Include="src\Jobs\Jobs\HarvestTile.h">
       <Filter>Header Files\Jobs</Filter>
     </ClInclude>
     <ClInclude Include="src\Jobs\Jobs\EquipItem.h">
-      <Filter>Header Files\Jobs</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Jobs\Jobs\DropEquipment.h">
       <Filter>Header Files\Jobs</Filter>
     </ClInclude>
     <ClInclude Include="src\Jobs\Jobs\AddToFurnace.h">
@@ -361,6 +355,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Jobs\Jobs\Guard.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\DropEquipment.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entities\Happiness.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Combat.h">
+      <Filter>Header Files\Jobs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entities\Inventory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entities\Gun.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jobs\Jobs\Deconstruct.h">
       <Filter>Header Files\Jobs</Filter>
     </ClInclude>
   </ItemGroup>

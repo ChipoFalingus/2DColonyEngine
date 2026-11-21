@@ -1,5 +1,6 @@
 #include "Idle.h"
 #include "World/World.h"
+#include "Entities/Movement.h"
 
 void Idle::update() {
 

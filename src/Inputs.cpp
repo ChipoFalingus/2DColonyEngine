@@ -7,6 +7,9 @@
 #include "Entities/ItemComponents.h"
 #include "Entities/CreatureComponents.h"
 #include "Entities/Squad.h"
+#include "Entities/Gun.h"
+#include "Entities/Inventory.h"
+#include "Entities/Movement.h"
 #include "Jobs/Jobs.h"
 
 double lastTime = glfwGetTime();
@@ -14,8 +17,6 @@ int nbFrames = 0;
 std::string fps;
 
 float moveClock = 0.0f;
-
-entt::entity viewing = entt::null;
 
 
 void handleMode();
@@ -25,12 +26,44 @@ void harvest(int left, int right, int top, int bottom);
 void plant(int left, int right, int top, int bottom);
 void stockpile(int left, int right, int top, int bottom);
 
+
+class Inputs {
+private:
+    std::unordered_set<int> held_keys;
+
+public:
+    bool is_key_pressed(GLFWwindow* window, int key, bool can_hold) {
+        bool is_down = (glfwGetKey(window, key) == GLFW_PRESS);
+
+        if (!is_down) {
+            held_keys.erase(key);
+            return false;
+        }
+
+        if (can_hold) {
+            return true;
+        }
+
+        if (held_keys.find(key) != held_keys.end()) {
+            return false;
+        }
+
+        held_keys.insert(key);
+        return true;
+    }
+};
+
+Inputs inputs;
+
 // have you ever gotten post-code clarity and realized this is bad
 void processInput(GLFWwindow* window) {
 
     moveClock += Clock::deltaTime;
 
     GameState& gameState = Game::getInstance().gameState;
+
+    int mX = gameState.inputState.mouseTileX;
+    int mY = gameState.inputState.mouseTileY;
 
     if (moveClock > 1.0f / (float)Game::getInstance().getSettingsManager().get().camera_speed) {
         moveClock = 0.0f;
@@ -53,11 +86,9 @@ void processInput(GLFWwindow* window) {
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !gameState.inputState.clicked) {
 
-        viewing = entt::null;
-
         if (gameState.placingState.currentMode != Mode::NONE) {
             if (!gameState.placingState.placing) {
-                gameState.placingState.corner = { gameState.inputState.mouseTileX, gameState.inputState.mouseTileY };
+                gameState.placingState.corner = { mX, mY };
                 gameState.placingState.placing = true;
             }
             else {
@@ -74,9 +105,9 @@ void processInput(GLFWwindow* window) {
 
             if (mainWorld.isRendered()) {
                 gameState.placingState.placing = false;
-                handleClickedItem(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+                handleClickedItem(mX, mY);
 
-				getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Guard Post");
+				//getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Guard Post");
             }
         }
 
@@ -90,30 +121,49 @@ void processInput(GLFWwindow* window) {
         gameState.placingState.placing = false;
         setMode(Mode::NONE);
 
-        if (viewing != entt::null) {
-			auto& jobComponent = mainWorld.registry.get<JobComponent>(viewing);
-            for (auto item : mainWorld.objectManager.getObjectsAt(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
-                if (mainWorld.registry.any_of<Gun>(item) && !mainWorld.registry.any_of<Equipment>(viewing)) {
-                    Job* job = new EquipItem(viewing, entt::null, SkillType::None, item);
-                    job->priority = 100.0f;
-                    jobComponent.proposeJob(job);
+        if (Game::getInstance().v_villager != entt::null) {
+            entt::entity v = Game::getInstance().v_villager;
+
+            auto& jobComponent = mainWorld.registry.get<JobComponent>(v);
+            for (auto item : mainWorld.objectManager.getObjectsAt(mX, mY)) {
+
+                if (!mainWorld.registry.all_of<Gun>(item)) continue;
+
+                auto* claimable = mainWorld.registry.try_get<Claimable>(item);
+                if (claimable && claimable->claimed) continue;
+
+                Job* job = new EquipItem(v, entt::null, SkillType::None, item);
+                job->priority = 100.0f;
+                if (jobComponent.willAccept(job) && !mainWorld.registry.get<Inventory>(v).is_full()) {
+                    if (claimable) claimable->claimed = true;
+                    jobComponent.proposeJob(std::move(job));
                     break;
+                }
+                else {
+                    delete job;
                 }
             }
         }
     }
 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS) {
+    if (inputs.is_key_pressed(window, GLFW_KEY_U, false)) {
         gameState.placingState.placing = false;
         setMode(Mode::NONE);
 
-        if (mainWorld.objectManager.isEmpty(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
-            getTileRef(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY).
-                addObject(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, "Apple");
+        for (auto& i : mainWorld.objectManager.getObjectsAt(mX, mY)) {
+            if (mainWorld.registry.all_of<Desconstructable>(i)) {
+                std::printf("Added deconstruction job");
+
+                // job here
+                Job* job = new Deconstruct(entt::null, entt::null, SkillType::None, i);
+                job->priority = 25;
+
+                JobManager::addJob(std::move(job));
+            }
         }
     }
 
-    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+    if (inputs.is_key_pressed(window, GLFW_KEY_M, false)) {
         if (!gameState.viewState.viewMiniMap) {
             gameState.viewState.viewMiniMap = true;
         }
@@ -132,7 +182,7 @@ void processInput(GLFWwindow* window) {
         gameState.cameraState.xPlayer = 0;
         gameState.cameraState.yPlayer = 0;
     }
-    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+    if (inputs.is_key_pressed(window, GLFW_KEY_F2, false)) {
         gameState.viewState.viewUI = !gameState.viewState.viewUI;
     }
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
@@ -151,7 +201,7 @@ void processInput(GLFWwindow* window) {
         std::cout << "Entities with Positions:  " << physicalObjects << std::endl;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+    if (inputs.is_key_pressed(window, GLFW_KEY_R, false)) {
 		gameState.debugState.roomView = !gameState.debugState.roomView;
     }
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
@@ -171,18 +221,15 @@ void processInput(GLFWwindow* window) {
         entt::entity squadEntity = registry.create();
         auto& controller = registry.emplace<SquadController>(squadEntity);
 
-        int mouseX = gameState.inputState.mouseTileX;
-        int mouseY = gameState.inputState.mouseTileY;
-
-        controller.groupTargetPos = { mouseX, mouseY };
+        controller.groupTargetPos = { mX, mY };
         controller.state = SquadState::IDLE;
 
         int attemptCount = 0;
         int maxAttempts = 100;
         for (int i = 0; i < 1; i++) {
 
-            int spawnX = getRandomInt(mouseX - 10, mouseX + 10);
-            int spawnY = getRandomInt(mouseY - 10, mouseY + 10);
+            int spawnX = getRandomInt(mX - 10, mX + 10);
+            int spawnY = getRandomInt(mY - 10, mY + 10);
 
             if (!getTileRef(spawnX, spawnY).walkable) {
                 attemptCount++;
@@ -225,12 +272,12 @@ void processInput(GLFWwindow* window) {
 
 
     auto& i = Game::getInstance().getVillagerInfoUI();
-    if (viewing != entt::null) {
-        i.update(viewing);
+    if (Game::getInstance().v_villager != entt::null) {
+        i.update(Game::getInstance().v_villager);
         Game::getInstance().getUIManager().push(UI::Villager);
     }
     else {
-        Game::getInstance().getUIManager().remove(UI::Villager);
+        //Game::getInstance().getUIManager().remove(UI::Villager);
     }
 	
 }
@@ -282,7 +329,7 @@ void handleClickedItem(int x, int y) {
     }
 
     if (clickedVillager != entt::null) {
-        viewing = clickedVillager;
+        Game::getInstance().v_villager = clickedVillager;
     } 
     else if (manager->has(x, y, "Carpentry Bench")) {
         uiManager.addOrRemoveFrame(UI::Carpentry);
@@ -299,20 +346,18 @@ void handleClickedItem(int x, int y) {
     else if (manager->has(x, y, "Stockpile")) {
         auto s = mainWorld.getColony().atStockpile(x, y);
         Game::getInstance().getStockpileUI().updateStockpileUI(*s);
-        Game::getInstance().getUIManager().addOrRemoveFrame(UI::Stockpile);
+        uiManager.addOrRemoveFrame(UI::Stockpile);
 
         auto& frame = Game::getInstance().getStockpileUI();
         frame.infoPanel->setPosition(mouseX, mouseY);
     }
-    // Debugging
     else if (manager->has(x, y, "Furnace")) {
-        /*for (auto& o : manager->getObjectsAt(x, y)) {
-            if (auto* furnace = mainWorld.registry.try_get<Furnace>(o)) {
-                furnace->itemToCook = "Iron Bar";
-            }
-        }*/
-        Game::getInstance().getUIManager().addOrRemoveFrame(UI::Furnace);
+        uiManager.addOrRemoveFrame(UI::Furnace);
     }
+    /*else if (!itemList.empty()) {
+        Game::getInstance().getItemUI().configureItemFrame(mainWorld.registry, manager->getTopEntity(mouseX, mouseY));
+        uiManager.addOrRemoveFrame(UI::Item);
+    }*/
 }
 
 void addBlueprint(int x, int y, std::string item) {
@@ -347,12 +392,16 @@ bool hasBlueprint(int x, int y) {
 void build(int left, int right, int top, int bottom) {
 
     GameState& gameState = Game::getInstance().gameState;
+    ObjectManager& manager = mainWorld.objectManager;
 
     std::string itemName = Game::getInstance().getBuildItem();
 
+    int mX = gameState.inputState.mouseTileX;
+    int mY = gameState.inputState.mouseTileY;
+
     if (mainWorld.placementMode == PlacementMode::SINGLE) {
-        if (hasBlueprint(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY)) {
-            std::cout << "Tile (" << gameState.inputState.mouseTileX << ", " << gameState.inputState.mouseTileY << ") already has a blueprint. Skipping build job." << std::endl;
+        if (hasBlueprint(mX, mY)) {
+            std::cout << "Tile (" << mX << ", " << mY << ") already has a blueprint. Skipping build job." << std::endl;
             return;
         }
 
@@ -363,16 +412,22 @@ void build(int left, int right, int top, int bottom) {
                 gameState.placingState.placing = false;
                 return;
             }
-            addBlueprint(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, itemName);
+            
+            if (!manager.hasComponent<Floor>(mX, mY, mainWorld.registry)) return;
+            if (manager.hasComponent<Structure>(mX, mY, mainWorld.registry)) return;
+
+            addBlueprint(mX, mY, itemName);
             mainWorld.registry.get<Claimable>(loc.value().item).claimed = true;
 
-            Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->item, loc->x, loc->y, gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+            Job* job = new BuildFurniture(entt::null, entt::null, SkillType::None, loc->item, loc->x, loc->y, mX, mY);
             job->priority = 30;
             JobManager::addJob(job);
         } else {
-			addBlueprint(gameState.inputState.mouseTileX, gameState.inputState.mouseTileY, itemName);
 
-            Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, gameState.inputState.mouseTileX, gameState.inputState.mouseTileY);
+            if (!manager.isEmpty(mX, mY)) return;
+			addBlueprint(mX, mY, itemName);
+
+            Job* job = new Build(entt::null, entt::null, SkillType::Building, itemName, mX, mY);
             job->priority = 30;
             JobManager::addJob(job);
         }
@@ -387,6 +442,8 @@ void build(int left, int right, int top, int bottom) {
                         std::cout << "Tile (" << x << ", " << y << ") already has a blueprint. Skipping build job." << std::endl;
                         continue;
 					}
+
+                    if (!mainWorld.objectManager.isEmpty(x, y)) continue;
 
 					addBlueprint(x, y, itemName);
 
@@ -405,6 +462,8 @@ void build(int left, int right, int top, int bottom) {
                     std::cout << "Tile (" << x << ", " << y << ") already has a blueprint. Skipping build job." << std::endl;
                     continue;
                 }
+
+                if (!mainWorld.objectManager.isEmpty(x, y)) continue;
 
                 addBlueprint(x, y, itemName);
 
@@ -430,7 +489,7 @@ void harvest(int left, int right, int top, int bottom) {
             if (manager.has(x, y, "Stockpile")) continue;
             if (objectList.empty()) continue;
 			if (tile.markedForHarvest) continue;
-            if (!mainWorld.getColony().isInsideColony(x, y, 100)) continue;
+            if (!mainWorld.getColony().isInsideColony(x, y, 75)) continue;
 
             if (auto* i = registry.try_get<Crop>(topObject)) {
                 if (i->state == CropState::SPROUT) continue;
@@ -456,23 +515,20 @@ void plant(int left, int right, int top, int bottom) {
     ObjectManager& manager = mainWorld.objectManager;
     for (int x = left; x <= right; x++) {
         for (int y = top; y <= bottom; y++) {
-            if (!manager.has(x, y, "Stockpile")) {
 
-                auto itemLocation = mainWorld.getColony().findUnclaimedItemInAllStockpile(Game::getInstance().selectedPlantItem, mainWorld.registry);
+            if (manager.has(x, y, "Stockpile")) continue;
+            if (getTileRef(x, y).type != tileType::GRASS && getTileRef(x, y).type != tileType::SOIL) continue;
 
-                if (itemLocation) {
+            auto itemLocation = mainWorld.getColony().findUnclaimedItemInAllStockpile(Game::getInstance().selectedPlantItem, mainWorld.registry);
 
-                    mainWorld.registry.get<Claimable>(itemLocation->item).claimed = true;
+            if (itemLocation) {
 
-                    addBlueprint(x, y, Game::getInstance().selectedPlantItem);
-                    Job* job = new Plant(entt::null, entt::null, SkillType::Farming, Game::getInstance().selectedPlantItem, itemLocation.value(), x, y);
-                    job->priority = 30;
-                    JobManager::JobList.push_back(job);
+                mainWorld.registry.get<Claimable>(itemLocation->item).claimed = true;
 
-                }
-            }
-            else {
-				std::cout << "Selected item is not a crop. Cannot plant at (" << x << ", " << y << ").\n";
+                addBlueprint(x, y, Game::getInstance().selectedPlantItem);
+                Job* job = new Plant(entt::null, entt::null, SkillType::Farming, Game::getInstance().selectedPlantItem, itemLocation.value(), x, y);
+                job->priority = 30;
+                JobManager::JobList.push_back(job);
             }
         }
     }

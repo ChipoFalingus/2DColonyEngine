@@ -2,17 +2,17 @@
 
 class WarmUp : public Job {
 private:
-	std::optional<ItemLocation> location = std::nullopt;
+	entt::entity heat_source{entt::null};
 
-	float clock = 0.0f;
-	bool init = false;
+	float clock{0.0f};
+	bool init{false};
 
 	void update();
 	void onInterrupt();
 
 public:
-	WarmUp(entt::entity v, entt::entity tool, SkillType skillType)
-		: Job(v, tool, skillType)
+	WarmUp(entt::entity v, entt::entity tool, SkillType skillType, entt::entity heat_source)
+		: Job(v, tool, skillType), heat_source(heat_source)
 	{
 	}
 };

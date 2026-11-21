@@ -4,51 +4,38 @@
 void WarmUp::update() {
 	auto& pos = mainWorld.registry.get<Position>(villager);
 	auto& tempNeed = mainWorld.registry.get<TemperatureNeed>(villager);
+	auto& h_pos = mainWorld.registry.get<Position>(heat_source);
 
 	if (!init) {
-		location = findClosestItemType(pos.x, pos.y, 50, [&](entt::entity entity, entt::registry& reg, int x, int y) {
-			auto* temp = reg.try_get<HeatEmitter>(entity);
-			return temp;
-			});
 
-		if (location.has_value()) {
+		if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(heat_source)) {
 
-			if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(location->item)) {
-				FirePitSlot* closestSlot = nullptr;
-				int shortest = std::numeric_limits<int>::max();
-				for (auto& slot : slots->slots) {
-					if (slot.entity != entt::null) continue;
+			FirePitSlot* closestSlot = nullptr;
+			int shortest = std::numeric_limits<int>::max();
+			for (auto& slot : slots->slots) {
+				if (slot.entity != entt::null) continue;
 
-					int slotX = slot.x + location->x;
-					int slotY = slot.y + location->y;
+				int slotX = slot.x + h_pos.x;
+				int slotY = slot.y + h_pos.y;
 
-					int dx = std::abs(pos.x - slotX);
-					int dy = std::abs(pos.y - slotY);
+				int dx = std::abs(pos.x - slotX);
+				int dy = std::abs(pos.y - slotY);
 
-					if (dx + dy < shortest) {
-						closestSlot = &slot;
-						shortest = dx + dy;
-					}
-				}
-
-				if (closestSlot) {
-					closestSlot->entity = villager;
-					x = closestSlot->x + location->x;
-					y = closestSlot->y + location->y;
-
-					std::cout << "Moving to " << x << ", " << y << std::endl;
-				}
-				else {
-					std::cout << "No available slots at heat source, staying in place" << std::endl;
-					state = JobState::Completed;
-					return;
+				if (dx + dy < shortest) {
+					closestSlot = &slot;
+					shortest = dx + dy;
 				}
 			}
-		}
-		else {
-			//std::cout << "No heat source found, staying in place" << std::endl;
-			state = JobState::Completed;
-			return;
+
+			if (closestSlot) {
+				closestSlot->entity = villager;
+				x = closestSlot->x + h_pos.x;
+				y = closestSlot->y + h_pos.y;
+			}
+			else {
+				state = JobState::Completed;
+				return;
+			}
 		}
 
 		init = true;
@@ -60,10 +47,8 @@ void WarmUp::update() {
 		clock = 0.0f;
 		priority--;
 
-		std::cout << priority << std::endl;
-
 		if (priority <= 0) {
-			if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(location->item)) {
+			if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(heat_source)) {
 				for (auto& slot : slots->slots) {
 					if (slot.entity == villager) {
 						slot.entity = entt::null;
@@ -78,7 +63,7 @@ void WarmUp::update() {
 }
 
 void WarmUp::onInterrupt() {
-	if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(location->item)) {
+	if (auto* slots = mainWorld.registry.try_get<FirePitComponent>(heat_source)) {
 		for (auto& slot : slots->slots) {
 			if (slot.entity == villager) {
 				slot.entity = entt::null;

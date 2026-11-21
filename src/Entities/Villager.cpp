@@ -8,6 +8,9 @@
 #include "World/World.h"
 #include "Utility/CreatureUtils.h"
 #include "Jobs/Jobs.h"
+#include "Entities/Happiness.h"
+#include "Entities/Inventory.h"
+#include "Entities/Movement.h"
 
 std::vector<std::string> names = {
 	"Wyatt",
@@ -210,15 +213,14 @@ entt::entity spawnVillager(int x, int y) {
 	registry.emplace<TiredNeed>(entity, 0);
 	registry.emplace<TemperatureNeed>(entity, getRandomFloat(70.0f, 80.0f));
 
-	auto gun = ObjectRegistry::getInstance().createInstance("Assault Rifle", registry);
-	registry.emplace<Equipment>(entity, gun);
-
 	registry.emplace<JobComponent>(entity, nullptr);
 	registry.emplace<CombatComponent>(entity);
 	registry.emplace<Social>(entity);
 	registry.emplace<LightNeed>(entity);
+	registry.emplace<Happiness>(entity);
+	registry.emplace<Inventory>(entity);
 
-	registry.emplace<OnGuard>(entity);
+	registry.emplace<Icon>(entity, L'!');
 
 	auto skillList = getAllSkillTypes();
 	int rand = getRandomInt(0, skillList.size() - 1);
@@ -262,6 +264,7 @@ void VillagerSystem(float deltaTime) {
 	updateWork();
 	updateAttack();
 	updateGuards();
+	updateHappiness(registry, deltaTime);
 	//updateSocialNeeds();
 }
 
@@ -296,7 +299,7 @@ void updateTiredness() {
 		float score = std::pow(tiredness.tiredness * 0.01f, 3) * 100.0f;
 
 		if (mainWorld.dayCycle.getTimePeriod() == TimePeriod::Night) {
-			score *= 2.0f;
+			score *= 1.5f;
 		}
 
 		auto* ownership = registry.try_get<Ownership>(entity);
@@ -329,7 +332,7 @@ void updateTiredness() {
 		Job* job = new Sleep(entity, entt::null, SkillType::None);
 		job->priority = score;
 
-		jobComponent.proposeJob(job);
+		jobComponent.proposeJob(std::move(job));
 	}
 }
 
@@ -385,7 +388,6 @@ void updateHunger() {
 			Job* job = new FindFood(entity, entt::null, SkillType::None, foodLocation->x, foodLocation->y, foodLocation->item);
 
 			job->priority = score;
-			std::cout << score << std::endl;
 
 			if (jobComponent.willAccept(job)) {
 
@@ -393,10 +395,7 @@ void updateHunger() {
 					claim->claimed = true;
 				}
 
-				jobComponent.proposeJob(job);
-
-				std::cout << "Food job assigned" << std::endl;
-
+				jobComponent.proposeJob(std::move(job));
 			}
 			else {
 				delete job;
@@ -408,11 +407,11 @@ void updateHunger() {
 // this needs an overhaul
 void updateSocialNeeds() {
 	auto& registry = mainWorld.registry;
-	auto view = registry.view<JobComponent, Movable, Social>();
+	auto view = registry.view<Social, JobComponent>();
 
-	for (auto [entity, jobComponent, movable, social] : view.each()) {
+	for (auto [entity, social, jobComponent] : view.each()) {
 		social.clock += Clock::deltaTime;
-		if (social.clock >= 2.0f) {
+		if (social.clock >= 10.0f) {
 			social.clock = 0.0f;
 			social.social -= 1;
 			if (social.social < 0) {
@@ -420,59 +419,42 @@ void updateSocialNeeds() {
 			}
 		}
 
-		if (jobComponent.currentJob && dynamic_cast<Talk*>(jobComponent.currentJob)) {
+		if (jobComponent.currentJob && dynamic_cast<FindFood*>(jobComponent.currentJob)) {
 			continue;
 		}
 
 		bool queued = false;
 		for (Job* i : jobComponent.interrupted) {
-			if (dynamic_cast<Talk*>(i)) queued = true;
+			if (dynamic_cast<FindFood*>(i)) queued = true;
 		}
 
 		if (queued) continue;
 
-		if (social.social >= 80) continue;
 
-		social.searchClock += Clock::deltaTime;
-		if (social.searchClock < 0.5f) continue;
-		social.searchClock = 0.0f;
+		float bestScore = -1.0f;
+		entt::entity bestColonist = entt::null;
 
-		auto& pos = mainWorld.registry.get<Position>(entity);
-
-		auto other = findClosestItemType(pos.x, pos.y, 50, [entity](entt::entity e, entt::registry& reg, int x, int y) {
-			if (e == entity) return false;
-			auto* job = reg.try_get<JobComponent>(e);
-			if (job && job->currentJob) {
-				if (dynamic_cast<Talk*>(job->currentJob)) {
-					return false;
-				}
+		auto view = registry.view<Villager>();
+		for (auto& i : view) {
+			if (auto* j = registry.try_get<JobComponent>(i)) {
+				if (i == entity) continue;
+				if (j->currentJob) continue;
+				if (j->interrupted.size() > 0) continue;
 			}
-			auto* social = reg.try_get<Social>(e);
-			return social != nullptr;
-			});
 
-		if (other.has_value()) {
-			auto* otherJobComp = mainWorld.registry.try_get<JobComponent>(other->item);
-			auto* otherSocial = mainWorld.registry.try_get<Social>(other->item);
+			float score = 50.0f;
 
-			if (!otherJobComp || !otherSocial) continue;
-
-			float myNeedScore = std::pow((100.0f - social.social) * 0.01f, 2) * 100.0f;
-			float otherNeedScore = std::pow((100.0f - otherSocial->social) * 0.01f, 2) * 100.0f;
-
-			float combinedScore = myNeedScore + otherNeedScore;
-
-			if (combinedScore > 10.0f) {
-				Job* myJob = new Talk(entity, entt::null, SkillType::None, other->item);
-				myJob->priority = combinedScore;
-				jobComponent.proposeJob(myJob);
-
-				Job* otherJob = new Talk(other->item, entt::null, SkillType::None, entity);
-				otherJob->priority = combinedScore;
-				otherJobComp->proposeJob(otherJob);
-
-				std::cout << "assigned talk jobs" << std::endl;
+			if (score > bestScore) {
+				bestScore = score;
+				bestColonist = i;
 			}
+		}
+
+		if (bestColonist != entt::null) {
+			Job* job = new Talk(entity, entt::null, SkillType::None, bestColonist);
+			job->priority = bestScore;
+
+			jobComponent.proposeJob(std::move(job));
 		}
 	}
 }
@@ -482,7 +464,7 @@ void updateWork() {
 	auto& registry = mainWorld.registry;
 	auto view = registry.view<JobComponent, Movable, HungerNeed>();
 	for (auto [entity, work, movable, hunger] : view.each()) {
-		work.panicClock += Clock::deltaTime;
+
 		if (!work.interrupted.empty()) {
 			std::sort(work.interrupted.begin(), work.interrupted.end(), [](const Job* a, const Job* b) {
 				return a->priority > b->priority;
@@ -502,6 +484,7 @@ void updateWork() {
 		}
 
 		if (!work.currentJob) {
+			movable.walk_status = WalkStatus::Idling;
 			chooseIdle(entity);
 			continue;
 		}
@@ -531,7 +514,7 @@ void updateAttack() {
 
 	for (auto [e, attack, job, pos] : view.each()) {
 
-		if (job.currentJob && dynamic_cast<Retreat*>(job.currentJob)) {
+		if (job.currentJob && dynamic_cast<Combat*>(job.currentJob)) {
 			continue;
 		}
 
@@ -543,17 +526,9 @@ void updateAttack() {
 				});
 
 			if (closestThreat.has_value()) {
-				if (attack.bravery <= -1.5f) {
-					Job* newJob = new Retreat(e, entt::null, SkillType::None, closestThreat.value().item);
-					newJob->priority = 1000;
-					job.proposeJob(newJob);
-
-				}
-				else {
-					Job* newJob = new Attack(e, entt::null, SkillType::None, closestThreat.value().item);
-					newJob->priority = 1000;
-					job.proposeJob(newJob);
-				}
+				Job* newJob = new Combat(e, entt::null, SkillType::None, closestThreat->item);
+				newJob->priority = 1000;
+				job.proposeJob(std::move(newJob));
 			}
 		}
 	}
@@ -587,7 +562,7 @@ void chooseIdle(entt::entity entity) {
 		Claimable* claimed = reg.try_get<Claimable>(entity);
 		NeedsMoving* needsMoving = reg.try_get<NeedsMoving>(entity);
 
-		return (claimed && sit && !claimed->claimed && !needsMoving);
+		return (claimed && sit && !claimed->claimed && !needsMoving && !mainWorld.getColony().atStockpile(x, y));
 		});
 
 	if (chair.has_value()) {
@@ -615,9 +590,15 @@ void chooseIdle(entt::entity entity) {
 	// ------------------------------------
 	//     Go To Better Temperature Job
 	// ------------------------------------
+	auto heat_source = findClosestItemType(pos.x, pos.y, 25, [&](entt::entity entity, entt::registry& reg, int x, int y) {
+		auto* temp = reg.try_get<HeatEmitter>(entity);
+		return temp;
+		});
+
 	float t = mainWorld.getTemperatureMapIndex(pos.x, pos.y);
-	if (float j = bellCurve(t, tempNeed.preferredTemp, 8) < 0.2f && t < tempNeed.preferredTemp) {
-		Job* job = new WarmUp(entity, entt::null, SkillType::None);
+	if (float j = bellCurve(t, tempNeed.preferredTemp, 8) < 0.2f && t < tempNeed.preferredTemp && heat_source.has_value()) {
+		std::cout << "giving warmup job" << std::endl;
+		Job* job = new WarmUp(entity, entt::null, SkillType::None, heat_source->item);
 
 		float score = 20 / (j + 0.01f) + (tiredness.tiredness / 20);
 		job->priority = score;
@@ -632,7 +613,7 @@ void chooseIdle(entt::entity entity) {
 
 	if (jobs.empty()) return;
 
-	jobComponent.proposeJob(jobs[0].job);
+	jobComponent.proposeJob(std::move(jobs[0].job));
 	
 	for (size_t i = 1; i < jobs.size(); i++) {
 		delete jobs[i].job;
@@ -652,7 +633,7 @@ void updateGuards() {
 		Job* job = new Guard(e, entt::null, SkillType::None);
 		job->priority = 50;
 
-		jobComponent.proposeJob(job);
+		jobComponent.proposeJob(std::move(job));
 	}
 }
 
@@ -726,30 +707,30 @@ float calculateSpeedPenalty(entt::entity entity) {
 
 	auto* tiredness = mainWorld.registry.try_get<TiredNeed>(entity);
 	auto* hunger = mainWorld.registry.try_get<HungerNeed>(entity);
+	auto& movement = mainWorld.registry.get<Movable>(entity);
 
 	if (tiredness) {
+		if (tiredness->tiredness > 95) score += 0.2f;
+		else if (tiredness->tiredness > 85) score += 0.15f;
+		else if (tiredness->tiredness > 70) score += 0.1f;
+	}
 
-		if (tiredness->tiredness > 95) {
-			score += 0.2f;
-		}
-		else if (tiredness->tiredness > 85) {
-			score += 0.15f;
-		}
-		else if (tiredness->tiredness > 70) {
-			score += 0.1f;
-		}
-	}
 	if (hunger) {
-		if (hunger->hunger > 90) {
-			score += 0.15f;
-		}
-		else if (hunger->hunger > 65) {
-			score += 0.1f;
-		}
-		else if (hunger->hunger > 40) {
-			score += 0.05f;
-		}
+		if (hunger->hunger > 90) score += 0.15f;
+		else if (hunger->hunger > 65) score += 0.1f;
+		else if (hunger->hunger > 40) score += 0.05f;
 	}
+
+	/*switch (movement.walk_status) {
+	case(WalkStatus::Idling):
+		score = std::max(movement.speed * 1.5f, score);
+		break;
+	case(WalkStatus::Running):
+		score = std::max(movement.speed * 0.66f, score);
+		break;
+	case(WalkStatus::Working):
+		break;
+	}*/
 
 	return score;
 }

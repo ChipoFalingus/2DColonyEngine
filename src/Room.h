@@ -9,7 +9,7 @@
 enum class RoomType : uint8_t {
     Unassigned,
     Bedroom,
-    DiningRoom,
+    Tavern,
     Workshop,
     Storage,
     Hospital
@@ -19,7 +19,7 @@ inline std::string roomTypeToString(RoomType type) {
     switch (type) {
         case RoomType::Unassigned: return "Unassigned";
         case RoomType::Bedroom: return "Bedroom";
-        case RoomType::DiningRoom: return "Dining Room";
+        case RoomType::Tavern: return "Tavern";
         case RoomType::Workshop: return "Workshop";
         case RoomType::Storage: return "Storage";
         case RoomType::Hospital: return "Hospital";
@@ -41,12 +41,12 @@ private:
 
 public:
 
-    Room* getRoom(uint32_t id) {
+    [[nodiscard]] Room* getRoom(uint32_t id) {
         if (rooms.find(id) == rooms.end()) return nullptr;
         return &rooms[id];
     }
 
-    Room* getRoomAt(int x, int y) {
+    [[nodiscard]] Room* getRoomAt(int x, int y) {
         for (auto& [id, room] : rooms) {
             for (auto& tile : room.roomTiles) {
                 if (tile.first == x && tile.second == y) {
@@ -56,6 +56,12 @@ public:
         }
         return nullptr;
 	}
+
+    void removeRoomAt(int x, int y) {
+        Room* room = getRoomAt(x, y);
+        if (room == nullptr) return;
+        removeRoom(room->ID);
+    }
 
     void addRoom(const Room& room) {
         rooms[room.ID] = room;

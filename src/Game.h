@@ -37,6 +37,7 @@ private:
 	HarvestUI harvestUI;
 	PlantUI plantUI;
 	InfoUI infoUI;
+    ItemUI itemUI;
 
 	HeatManager heatManager;
 
@@ -44,6 +45,7 @@ private:
     SettingsManager settingsManager;
 
 public:
+    entt::entity v_villager = entt::null;
 
     std::string selectedPlantItem;
 
@@ -78,6 +80,7 @@ public:
         infoUI = getInfoFrame();
 		harvestUI = getHarvestFrame();
 		plantUI = getPlantFrame();
+        itemUI = getItemFrame();
     }
 
     SettingsManager& getSettingsManager() {
@@ -175,6 +178,10 @@ public:
     InfoUI& getInfoUI() {
         return infoUI;
 	}
+
+    ItemUI& getItemUI() {
+        return itemUI;
+    }
 
     UIManager& getUIManager() {
         return uiManager;

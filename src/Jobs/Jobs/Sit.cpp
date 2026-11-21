@@ -16,9 +16,10 @@ void Sit::update() {
 	clock += Clock::deltaTime;
 	auto& tiredNeed = mainWorld.registry.get<TiredNeed>(villager);
 
-	if (clock > 2.0f) {
+	if (clock > 5.0f) {
 		tiredNeed.tiredness--;
-		priority = tiredNeed.tiredness * 0.25f;
+		//priority = tiredNeed.tiredness * 0.25f;
+		priority *= 0.95f;
 		clock = 0.0f;
 	}
 

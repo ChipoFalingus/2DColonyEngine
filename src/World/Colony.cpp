@@ -11,7 +11,7 @@
     return nullptr;
 }
 
-[[nodiscard]] std::optional<std::pair<Stockpile*, std::pair<int, int>>> Colony::findStockpileSpotForItem(const std::string& itemName, int villagerX, int villagerY) {
+[[nodiscard]] std::optional<std::pair<Stockpile*, std::pair<int, int>>> Colony::findStockpileSpotForItem(int villagerX, int villagerY) {
 
     Stockpile* bestStockpile = nullptr;
     std::optional<std::pair<int, int>> bestSpot;
@@ -68,6 +68,59 @@
     return std::nullopt;
 }
 
+[[nodiscard]] bool Colony::isInsideColony(int x, int y, int padding) const {
+    int dx = x - center.first;
+    int dy = y - center.second;
+    return (dx + padding >= borders[0] &&
+        dx - padding <= borders[1] &&
+        dy + padding >= borders[2] &&
+        dy - padding <= borders[3]);
+}
+
+void Colony::resizeRetreatMap() {
+    int top = borders[0];
+    int bottom = borders[1];
+    int left = borders[2];
+    int right = borders[3];
+
+    int width = right - left;
+    int height = bottom - top;
+
+    retreatMap.resize(width * height, 9999);
+
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            int worldX = i + left;
+            int worldY = j + top;
+
+            if (roomManager.getRoomAt(worldX, worldY)) {
+                retreatMap[j * width + i] = 10;
+            }
+            else {
+                retreatMap[j * width + i] = 9999;
+            }
+        }
+    }
+}
+
+[[nodiscard]] int Colony::getRetreatValue(int x, int y) {
+    int top = borders[0];
+    int bottom = borders[1];
+    int left = borders[2];
+    int right = borders[3];
+
+    if (x < left || x >= right || y < top || y >= bottom) {
+        return 9999999;
+    }
+
+    int localX = x - left;
+    int localY = y - top;
+
+    int width = right - left;
+
+    return retreatMap[localY * width + localX];
+}
+
 void Colony::updateBorders(int x, int y) {
     int dx = x - center.first;
     int dy = y - center.second;
@@ -86,4 +139,6 @@ void Colony::updateBorders(int x, int y) {
     if (dy + expansionPadding > borders[3]) {
         borders[3] = static_cast<int16_t>(dy + expansionPadding);
     }
+
+    resizeRetreatMap();
 }

@@ -14,15 +14,10 @@ private:
 	float craftTime{0.0f};
 
 	bool grabbedAllItems{ false };
-	bool init{ false };
 
 	void update();
+	void onWaiting();
 
 public:
-	Build(entt::entity v, entt::entity tool, SkillType skillType, std::string itemName, int locX, int locY)
-		: Job(v, tool, skillType), itemName(itemName), locX(locX), locY(locY)
-	{
-		x = locX;
-		y = locY;
-	}
+	Build(entt::entity v, entt::entity tool, SkillType skillType, std::string itemName, int locX, int locY);
 };

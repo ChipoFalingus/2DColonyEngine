@@ -4,6 +4,7 @@
 #include "Utility/ItemUtils.h"
 #include "CreatureComponents.h"
 #include "World/World.h"
+#include "Entities/Movement.h"
 
 
 void SquadManager::updateSquadMovement(entt::entity squad, entt::registry& registry) {
@@ -94,7 +95,7 @@ void SquadManager::onAttack(entt::entity squad, entt::registry& registry) {
 			}
 		}
 		else {
-			memberComponent.attackClock = 0.0f;
+			//memberComponent.attackClock = 0.0f;
 
 			int dx = targetPos.x - pos.x;
 			int dy = targetPos.y - pos.y;
@@ -105,8 +106,26 @@ void SquadManager::onAttack(entt::entity squad, entt::registry& registry) {
 			int newX = pos.x + moveX;
 			int newY = pos.y + moveY;
 
-			movable.dirX = moveX;
-			movable.dirY = moveY;
+			auto& list = mainWorld.objectManager.getObjectsAt(newX, newY);
+			bool blockedByStructure = false;
+
+			for (auto& i : list) {
+				if (registry.try_get<Structure>(i)) {
+					blockedByStructure = true;
+
+					auto& health = registry.get<Health>(i);
+					memberComponent.attackClock += Clock::deltaTime;
+					if (memberComponent.attackClock > 0.5f) {
+						memberComponent.attackClock = 0.0f;
+						health.health--;
+					}
+				}
+			}
+
+			if (!blockedByStructure) {
+				movable.dirX = moveX;
+				movable.dirY = moveY;
+			}
 		}
 	}
 }

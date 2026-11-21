@@ -3,46 +3,48 @@
 #include "Jobs/JobUtils.h"
 #include "Entities/Furnace.h"
 
+void AddToFurnace::onAssignment(entt::entity villager) {
+
+	auto& pos = mainWorld.registry.get<Position>(villager);
+
+	FurnaceManager furnaceObject(mainWorld.registry);
+	furnace = furnaceObject.findAndClaimFurnace(pos.x, pos.y);
+
+	if (furnace == entt::null) {
+		std::cout << "No Availabe Furnace Found" << std::endl;
+		state = JobState::Completed;
+		return;
+	}
+
+	staticRecipeEntity = ObjectRegistry::getInstance().getStaticObject(item);
+
+	if (staticRecipeEntity == entt::null) {
+		std::cout << "Could not find blueprint recipe for: " << item << std::endl;
+		state = JobState::Completed;
+		return;
+	}
+
+	auto& staticRegistry = ObjectRegistry::getInstance().getStaticRegistry();
+	Craftable* c = staticRegistry.try_get<Craftable>(staticRecipeEntity);
+
+	if (!c) {
+		std::cout << "Craftable component not found for item " << item << ", cancelling job." << std::endl;
+		state = JobState::Completed;
+		return;
+	}
+
+	craftTime = c->craftTime;
+	auto& ingredients = c->ingredients;
+	reserve = findIngredientsForJob(ingredients);
+	if (reserve.empty()) {
+		std::cout << "No ingredients found for crafting job, cancelling job." << std::endl;
+		state = JobState::Completed;
+		return;
+	}
+}
+
 void AddToFurnace::update() {
 	auto pos = mainWorld.registry.try_get<Position>(villager);
-	auto& staticRegistry = ObjectRegistry::getInstance().getStaticRegistry();
-
-	if (!init) {
-		FurnaceManager furnaceObject(mainWorld.registry);
-		furnace = furnaceObject.findAndClaimFurnace(pos->x, pos->y);
-
-		if (furnace == entt::null) {
-			std::cout << "No Availabe Furnace Found" << std::endl;
-			state = JobState::Completed;
-			return;
-		}
-
-		staticRecipeEntity = ObjectRegistry::getInstance().getStaticObject(item);
-
-		if (staticRecipeEntity == entt::null) {
-			std::cout << "Could not find blueprint recipe for: " << item << std::endl;
-			state = JobState::Completed;
-			return;
-		}
-
-		Craftable* c = staticRegistry.try_get<Craftable>(staticRecipeEntity);
-
-		if (!c) {
-			std::cout << "Craftable component not found for item " << item << ", cancelling job." << std::endl;
-			state = JobState::Completed;
-			return;
-		}
-
-		craftTime = c->craftTime;
-		auto& ingredients = c->ingredients;
-		reserve = findIngredientsForJob(ingredients);
-		init = true;
-		if (reserve.empty()) {
-			std::cout << "No ingredients found for crafting job, cancelling job." << std::endl;
-			state = JobState::Completed;
-			return;
-		}
-	}
 
 	switch (jobState) {
 	case (State::FetchingItems): {
@@ -67,7 +69,7 @@ void AddToFurnace::update() {
 		break;
 	}
 	case (State::Crafting): {
-
+		auto& staticRegistry = ObjectRegistry::getInstance().getStaticRegistry();
 		auto* craftableComp = staticRegistry.try_get<Craftable>(staticRecipeEntity);
 		if (!craftableComp) {
 			state = JobState::Completed;
@@ -94,4 +96,34 @@ void AddToFurnace::update() {
 	}
 	}
 
+}
+
+void AddToFurnace::onWaiting() {
+
+	clock += Clock::deltaTime;
+
+	if (clock > 1.0f) {
+		clock = 0.0f;
+
+		staticRecipeEntity = ObjectRegistry::getInstance().getStaticObject(item);
+		Craftable* c = ObjectRegistry::getInstance().getStaticRegistry().try_get<Craftable>(staticRecipeEntity);
+
+		auto pos = mainWorld.registry.try_get<Position>(villager);
+
+		FurnaceManager furnaceObject(mainWorld.registry);
+		furnace = furnaceObject.findAndClaimFurnace(pos->x, pos->y);
+
+		if (furnace != entt::null) {
+
+			reserve = findIngredientsForJob(c->ingredients);
+			if (!reserve.empty()) {
+				state = JobState::Queued;
+				return;
+			}
+			else {
+				mainWorld.registry.get<Claimable>(furnace).claimed = false;
+				std::cout << "Ingredients Not Found" << std::endl;
+			}
+		}
+	}
 }

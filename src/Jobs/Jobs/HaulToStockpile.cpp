@@ -31,6 +31,7 @@ void HaulToStockpile::update() {
 		std::pair<int, int> closestAdj = findClosestAdjTile(pos.x, pos.y, toX, toY);
 		x = closestAdj.first;
 		y = closestAdj.second;
+		
 		if (pos.x == x && pos.y == y) {
 
 			auto* s = mainWorld.getColony().atStockpile(toX, toY);
@@ -50,7 +51,7 @@ void HaulToStockpile::update() {
 			}
 			else {
 				auto name = mainWorld.registry.try_get<Name>(itemToMove);
-				auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(name->name, x, y);
+				auto spotOpt = mainWorld.getColony().findStockpileSpotForItem(x, y);
 
 				if (spotOpt) {
 					auto& [stockpile, pos] = *spotOpt;

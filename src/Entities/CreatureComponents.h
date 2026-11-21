@@ -10,39 +10,6 @@ struct CreatureName {
 	std::string last_name;
 };
 
-enum class MovementMode : uint8_t {
-	Idle,
-	Directional,
-	Path
-};
-
-struct Movable {
-	float speed = 0.8f;
-	float currentSpeed = 0.2f;
-
-	float movementClock = 0.0f;
-
-	int targetX = 0;
-	int targetY = 0;
-	bool hasTarget = false;
-
-	std::vector<std::pair<int, int>> path;
-
-	MovementMode movementMode = MovementMode::Idle;
-
-	// Squad movement
-	int dirX = 0;
-	int dirY = 0;
-
-	bool ignoreSeparation = false;
-
-	void newPath(int newX, int newY) {
-		path.clear();
-		targetX = newX;
-		targetY = newY;
-	}
-};
-
 struct Hostile {
 	bool e = false;
 };
@@ -87,7 +54,7 @@ struct JobComponent {
 
 	void proposeJob(Job* newJob) {
 		if (!currentJob) {
-			currentJob = newJob;
+			currentJob = std::move(newJob);
 			currentJob->state = JobState::Active;
 			return;
 		}
@@ -95,7 +62,7 @@ struct JobComponent {
 		if (newJob->priority > currentJob->priority) {
 			interrupted.push_back(currentJob);
 			currentJob->onInterrupt();
-			currentJob = newJob;
+			currentJob = std::move(newJob);
 			currentJob->state = JobState::Active;
 		}
 	}
@@ -111,11 +78,6 @@ struct JobComponent {
 struct Villager {};
 struct Zombie {};
 
-struct Inventory {
-	entt::entity itemInHand;
-	std::vector<entt::entity> inventory;
-};
-
 struct CombatComponent {
 	int base_damage = 1;
 	int base_attack_speed = 1.0f;
@@ -127,7 +89,7 @@ struct CombatComponent {
 };
 
 struct Social {
-	int social = getRandomInt(85, 100);
+	int social = 100;
 
 	float searchClock = 0.0f;
 	float clock = 0.0f;
@@ -151,3 +113,7 @@ struct OnGuard {
 //struct ColonyOwner {
 //	Colony* colony;
 //};
+
+struct Icon {
+	wchar_t icon = L'!';
+};

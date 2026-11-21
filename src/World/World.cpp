@@ -8,6 +8,7 @@
 #include "Game.h"
 #include "Entities/Squad.h"
 #include "Entities/CreatureComponents.h"
+#include "Entities/Movement.h"
 
 World& World::get() {
     static World instance;
@@ -123,7 +124,7 @@ void spawnSquad(int x, int y) {
 // Adds creatures to the world
 void World::addCreatures() {
     int range = 3;
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 5; i++) {
         int x = getRandomInt(-range, range);
         int y = getRandomInt(-range, range);
 

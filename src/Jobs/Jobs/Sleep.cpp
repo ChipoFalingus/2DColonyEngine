@@ -1,5 +1,6 @@
 #include "Sleep.h"
 #include "World/World.h"
+#include "Entities/Happiness.h"
 
 void Sleep::update() {
 	mainWorld.registry.get<JobComponent>(villager).activity_state = ActivityState::Sleeping;
@@ -11,6 +12,7 @@ void Sleep::update() {
 		auto& bedPos = mainWorld.registry.get<Position>(ownership->ownedBed);
 		x = bedPos.x;
 		y = bedPos.y;
+		foundBed = true;
 	}
 	else {
 		x = pos.x;
@@ -30,6 +32,11 @@ void Sleep::update() {
 
 		sleeping = false;
 		tiredComponent.tiredness = 0;
+		if (!foundBed) {
+			auto& happiness = mainWorld.registry.get<Happiness>(villager);
+			addThought({"no_bed", "Did not sleep on a bed", -10, 400.0f}, happiness.active_thoughts);
+		}
+
 		state = JobState::Completed;
 	}
 }

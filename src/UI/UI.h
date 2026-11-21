@@ -289,7 +289,14 @@ struct VillagerInfoUI {
     Text* skills;
     Text* log;
 
-    Button* equipmentButton;
+    Button* b_skills;
+    Button* b_options;
+    Button* b_equipment;
+
+    Text* t_equipment;
+    Button* b_unequip;
+
+    Button* exit;
 
     void update(entt::entity entity);
 };
@@ -331,6 +338,18 @@ struct InfoUI {
 };
 
 InfoUI getInfoFrame();
+
+struct ItemUI {
+    UI type = UI::Item;
+
+    Panel* panel;
+    Button* demolish;
+
+    Text* description;
+    void configureItemFrame(entt::registry& registry, entt::entity item);
+};
+
+ItemUI getItemFrame();
 
 Button& createButton(
     Frame& frame,

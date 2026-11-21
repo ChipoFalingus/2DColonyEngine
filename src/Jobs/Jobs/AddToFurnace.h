@@ -27,10 +27,13 @@ private:
 	float craftTime{ 0.0f };
 
 	void update();
+	void onAssignment(entt::entity villager);
+	void onWaiting();
 
 public:
 	AddToFurnace(entt::entity v, entt::entity tool, SkillType skillType, std::string item)
 		: Job(v, tool, skillType), item(item)
 	{
 	}
+
 };

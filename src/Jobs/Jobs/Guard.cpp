@@ -1,25 +1,33 @@
 #include "Jobs/Jobs/Guard.h"
 #include "World/World.h"
 #include "Jobs/JobUtils.h"
+#include "Entities/Movement.h"
 
 void Guard::update() {
 	auto& registry = mainWorld.registry;
-	auto& guard = registry.get<OnGuard>(villager);
+
+	auto* guard = registry.try_get<OnGuard>(villager);
+	if (!guard) {
+		registry.get<GuardPost>(currentPost).active = false;
+		state = JobState::Completed;
+		return;
+	}
+
 	auto& pos = registry.get<Position>(villager);
 
-	if (guard.guardPost == entt::null) {
+	if (guard->guardPost == entt::null) {
 		auto post = findClosestItemType(pos.x, pos.y, 50, [&](entt::entity entity, entt::registry& reg, int, int) {
 			auto* guardPost = reg.try_get<GuardPost>(entity);
-			return guardPost && !guardPost->active && postToIgnore != entity;
+			return guardPost && !guardPost->active /*&& postToIgnore != entity*/;
 			});
 
 		if (post.has_value()) {
-			postToIgnore = post->item;
-			guard.guardPost = post->item;
+			currentPost = post->item;
+			guard->guardPost = post->item;
 			searchClock = 0.0f;
 			clock = 0.0f;
 
-			registry.get<GuardPost>(guard.guardPost).active = true;
+			registry.get<GuardPost>(guard->guardPost).active = true;
 		}
 		else {
 			return;
@@ -30,10 +38,11 @@ void Guard::update() {
 	clock += Clock::deltaTime;
 
 	if (searchClock > 30.0f) {
-		if (registry.valid(guard.guardPost)) {
-			registry.get<GuardPost>(guard.guardPost).active = false;
+		searchClock = 0.0f;
+		if (registry.valid(guard->guardPost)) {
+			registry.get<GuardPost>(guard->guardPost).active = false;
 		}
-		guard.guardPost = entt::null;
+		guard->guardPost = entt::null;
 		return;
 	}
 
@@ -41,9 +50,21 @@ void Guard::update() {
 		clock = 0.0f;
 
 		auto& movable = registry.get<Movable>(villager);
-		auto& gPos = registry.get<Position>(guard.guardPost);
+		auto& gPos = registry.get<Position>(guard->guardPost);
 
 		x = getRandomInt(gPos.x - 2, gPos.x + 2);
 		y = getRandomInt(gPos.y - 2, gPos.y + 2);
 	}
+}
+
+void Guard::onInterrupt() {
+	std::cout << "guard job interrupted" << std::endl;
+
+	auto& registry = mainWorld.registry;
+	auto& guard = registry.get<OnGuard>(villager);
+	if (registry.valid(guard.guardPost)) {
+		registry.get<GuardPost>(guard.guardPost).active = false;
+	}
+	guard.guardPost = entt::null;
+	state = JobState::Completed;
 }

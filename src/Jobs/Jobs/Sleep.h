@@ -4,6 +4,7 @@ class Sleep : public Job {
 private:
 	bool sleeping = false;
 	bool lookedForBed = false;
+	bool foundBed = false;
 
 	void update();
 	void onInterrupt();

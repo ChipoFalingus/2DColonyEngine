@@ -7,6 +7,7 @@
 class Colony {
 
 private:
+    std::vector<int> retreatMap;
 	std::vector<Stockpile> stockpiles;
 	RoomManager roomManager;
 
@@ -19,6 +20,10 @@ private:
     std::array<int16_t, 4> borders = { -25, 25, -25, 25 };
 
 public:
+
+    Colony() {
+        resizeRetreatMap();
+    };
 
     [[nodiscard]] RoomManager& getRoomManager() noexcept { return roomManager; }
 	[[nodiscard]] const RoomManager& getRoomManager() const noexcept { return roomManager; }
@@ -35,21 +40,18 @@ public:
 
     [[nodiscard]] Stockpile* atStockpile(int x, int y);
 
-    [[nodiscard]] std::optional<std::pair<Stockpile*, std::pair<int, int>>> findStockpileSpotForItem(const std::string& itemName, int villagerX, int villagerY);
+    [[nodiscard]] std::optional<std::pair<Stockpile*, std::pair<int, int>>> findStockpileSpotForItem(int villagerX, int villagerY);
 
     // returns both location and the stockpile its found on
     [[nodiscard]] std::optional<std::pair<Stockpile*, std::pair<int, int>>> findItemInAllStockpile(const std::string& name);
 
     [[nodiscard]] std::optional<ItemLocation> findUnclaimedItemInAllStockpile(const std::string& name, const entt::registry& registry);
 
-    [[nodiscard]] bool isInsideColony(int x, int y, int padding = 0) const {
-        int dx = x - center.first;
-        int dy = y - center.second;
-        return (dx + padding >= borders[0] && 
-            dx - padding <= borders[1] && 
-            dy + padding >= borders[2] && 
-            dy - padding <= borders[3]);
-	}
+    [[nodiscard]] bool isInsideColony(int x, int y, int padding = 0) const;
+
+    void resizeRetreatMap();
+
+    [[nodiscard]] int getRetreatValue(int x, int y);
 
     // takes in where new thing was built
     void updateBorders(int x, int y);

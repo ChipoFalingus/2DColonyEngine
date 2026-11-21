@@ -8,16 +8,9 @@ void Talk::update() {
 		state = JobState::Completed;
 		return;
 	}
+
 	auto& jobComponent = mainWorld.registry.get<JobComponent>(villager);
-	auto& otherJobComponent = mainWorld.registry.get<JobComponent>(other);
-
 	jobComponent.activity_state = ActivityState::Socializing;
-	otherJobComponent.activity_state = ActivityState::Socializing;
-
-	if (!dynamic_cast<Talk*>(otherJobComponent.currentJob)) {
-		state = JobState::Completed;
-		return;
-	}
 
 	auto& pos = mainWorld.registry.get<Position>(villager);
 	auto& otherPos = mainWorld.registry.get<Position>(other);
@@ -27,7 +20,7 @@ void Talk::update() {
 		int dx = std::abs(pos.x - otherPos.x);
 		int dy = std::abs(pos.y - otherPos.y);
 
-		if (dx + dy <= 4) {
+		if (dx + dy <= 2) {
 			x = pos.x;
 			y = pos.y;
 
@@ -51,14 +44,6 @@ void Talk::update() {
 		auto& socialNeed = mainWorld.registry.get<Social>(villager);
 		auto& otherSocialNeed = mainWorld.registry.get<Social>(other);
 
-		if (!dynamic_cast<Talk*>(otherJobComponent.currentJob)) {
-			otherTile.setAnimType(NONE);
-			tile.setAnimType(NONE);
-
-			socialNeed.social = 100;
-			state = JobState::Completed;
-		}
-
 		if (clock > 10.0f) {
 			socialNeed.social = 100;
 			otherSocialNeed.social = 100;
@@ -66,7 +51,6 @@ void Talk::update() {
 			otherTile.setAnimType(NONE);
 			tile.setAnimType(NONE);
 
-			otherJobComponent.currentJob->state = JobState::Completed;
 			state = JobState::Completed;
 		}
 

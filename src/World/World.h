@@ -40,9 +40,6 @@ private:
     std::atomic<bool> currentlyRendering{false};
     std::atomic<int> chunksRendered{0};
 
-    // to be implemented
-    static constexpr int CREATURE_CAP = 5000;
-
     std::unordered_map<std::pair<int, int>, Chunk, pair_hash> chunks;
 
     LightManager lightManager;
